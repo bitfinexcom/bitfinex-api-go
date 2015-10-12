@@ -1,1 +1,0 @@
-# bitfinex-api-go
