@@ -41,13 +41,13 @@ func main() {
 ### Order create
 
 ``` go
-	order, err := client.Orders.Create(bitfinex.BTCUSD, -0.01, 260.99, bitfinex.ORDER_TYPE_EXCHANGE_LIMIT)
+order, err := client.Orders.Create(bitfinex.BTCUSD, -0.01, 260.99, bitfinex.ORDER_TYPE_EXCHANGE_LIMIT)
 
-	if err != nil {
-        return error
-	} else {
-        return order
-	}
+if err != nil {
+    return error
+} else {
+    return order
+}
 ```
 
 See [examples](https://github.com/bitfinexcom/bitfinex-api-go/tree/master/examples) and [doc.go](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/doc.go) for more examples.
