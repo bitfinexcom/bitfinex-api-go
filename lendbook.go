@@ -25,7 +25,7 @@ type Lendbook struct {
 // currency: BTC LTC DRK USD
 // GET /lendbook/:currency
 func (s *LendbookService) Get(currency string) (Lendbook, error) {
-	req, err := s.client.NewRequest("GET", "lendbook/"+currency, nil)
+	req, err := s.client.NewRequest("GET", "lendbook/"+currency)
 	if err != nil {
 		return Lendbook{}, err
 	}
@@ -49,7 +49,7 @@ type Lends struct {
 // currency: BTC LTC DRK USD
 // GET /lends/:currency
 func (s *LendbookService) Lends(currency string) ([]Lends, error) {
-	req, err := s.client.NewRequest("GET", "lends/"+currency, nil)
+	req, err := s.client.NewRequest("GET", "lends/"+currency)
 	if err != nil {
 		return nil, err
 	}

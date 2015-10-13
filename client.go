@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
@@ -61,7 +60,7 @@ func NewClient() *Client {
 }
 
 // NewRequest create new API request. Relative url can be provided in refUrl.
-func (c *Client) NewRequest(method string, refUrl string, values url.Values) (*http.Request, error) {
+func (c *Client) NewRequest(method string, refUrl string) (*http.Request, error) {
 	rel, err := url.Parse(refUrl)
 	if err != nil {
 		return nil, err
@@ -69,11 +68,7 @@ func (c *Client) NewRequest(method string, refUrl string, values url.Values) (*h
 
 	var req *http.Request
 	u := c.BaseURL.ResolveReference(rel)
-	if values != nil {
-		req, err = http.NewRequest(method, u.String(), nil)
-	} else {
-		req, err = http.NewRequest(method, u.String(), strings.NewReader(values.Encode()))
-	}
+	req, err = http.NewRequest(method, u.String(), nil)
 
 	if err != nil {
 		return nil, err
@@ -83,15 +78,21 @@ func (c *Client) NewRequest(method string, refUrl string, values url.Values) (*h
 }
 
 // NewAuthenticatedRequest creates new http request for authenticated routes
-func (c *Client) NewAuthenticatedRequest(m string, refUrl string, values url.Values) (*http.Request, error) {
-	req, err := c.NewRequest(m, refUrl, values)
+func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[string]interface{}) (*http.Request, error) {
+	req, err := c.NewRequest(m, refUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	payload := map[string]string{
+	payload := map[string]interface{}{
 		"request": "/v1/" + refUrl,
 		"nonce":   fmt.Sprintf("%v", time.Now().Unix()*10000),
+	}
+
+	if len(data) > 0 {
+		for k, v := range data {
+			payload[k] = v
+		}
 	}
 
 	payload_json, _ := json.Marshal(payload)

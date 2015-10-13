@@ -8,7 +8,7 @@ type Pairs []string
 
 // GET /symbols
 func (p *PairsService) All() (*Pairs, error) {
-	req, err := p.client.NewRequest("GET", "symbols", nil)
+	req, err := p.client.NewRequest("GET", "symbols")
 	if err != nil {
 		return nil, err
 	}
