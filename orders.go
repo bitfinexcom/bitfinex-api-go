@@ -93,7 +93,7 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
 		"amount":   fmt.Sprintf("%f", amount),
 		"price":    fmt.Sprintf("%f", price),
 		"side":     side,
-		"type":     "exchange limit",
+		"type":     orderType,
 		"exchange": "bitfinex",
 	}
 
