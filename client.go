@@ -138,7 +138,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	if v != nil {
 		err = json.Unmarshal(response.Body, v)
 		if err != nil {
-			return nil, err
+			return response, err
 		}
 	}
 
