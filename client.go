@@ -125,9 +125,9 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	response := newResponse(resp)
-	// fmt.Println("API RESP:", response.String())
 
 	err = checkResponse(resp)
 	if err != nil {
@@ -136,7 +136,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	}
 
 	if v != nil {
-		err = json.NewDecoder(resp.Body).Decode(v)
+		err = json.Unmarshal(response.Body, v)
 		if err != nil {
 			return nil, err
 		}
@@ -149,22 +149,25 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 // more methods.
 type Response struct {
 	Response *http.Response
+	Body     []byte
 }
 
 // newResponse creates new wrapper.
 func newResponse(r *http.Response) *Response {
-	return &Response{Response: r}
+	resp := &Response{Response: r}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		resp.Body = []byte(`Error reading body:` + err.Error())
+	}
+	resp.Body = body
+
+	return resp
 }
 
 // String converts response body to string.
 // An empty string will be returned if error.
 func (r *Response) String() string {
-	body, err := ioutil.ReadAll(r.Response.Body)
-	if err != nil {
-		return ""
-	}
-
-	return string(body)
+	return string(r.Body)
 }
 
 // In case if API will wrong response code
