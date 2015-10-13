@@ -154,14 +154,12 @@ type Response struct {
 
 // newResponse creates new wrapper.
 func newResponse(r *http.Response) *Response {
-	resp := &Response{Response: r}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		resp.Body = []byte(`Error reading body:` + err.Error())
+		body = []byte(`Error reading body:` + err.Error())
 	}
-	resp.Body = body
 
-	return resp
+	return &Response{r, body}
 }
 
 // String converts response body to string.
