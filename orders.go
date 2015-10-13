@@ -110,3 +110,22 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
 
 	return order, nil
 }
+
+// POST order/cancel
+func (s *OrderService) Cancel(order_id int) error {
+	payload := map[string]interface{}{
+		"order_id": order_id,
+	}
+
+	req, err := s.client.NewAuthenticatedRequest("POST", "order/cancel", payload)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.client.Do(req, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
