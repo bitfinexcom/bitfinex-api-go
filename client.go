@@ -129,7 +129,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 
 	response := newResponse(resp)
 
-	err = checkResponse(resp)
+	err = checkResponse(response)
 	if err != nil {
 		// Return response in case caller need to debug it.
 		return response, err
@@ -171,29 +171,29 @@ func (r *Response) String() string {
 // In case if API will wrong response code
 // ErrorResponse will be returned to caller
 type ErrorResponse struct {
-	Response *http.Response
+	Response *Response
 	Message  string `json:"message"`
 }
 
 func (r *ErrorResponse) Error() string {
 	return fmt.Sprintf("%v %v: %d %v",
-		r.Response.Request.Method,
-		r.Response.Request.URL,
-		r.Response.StatusCode,
+		r.Response.Response.Request.Method,
+		r.Response.Response.Request.URL,
+		r.Response.Response.StatusCode,
 		r.Message,
 	)
 }
 
 // checkResponse checks response status code and response
 // for errors.
-func checkResponse(r *http.Response) error {
-	if c := r.StatusCode; 200 <= c && c <= 299 {
+func checkResponse(r *Response) error {
+	if c := r.Response.StatusCode; 200 <= c && c <= 299 {
 		return nil
 	}
 
 	// Try to decode error message
 	errorResponse := &ErrorResponse{Response: r}
-	err := json.NewDecoder(r.Body).Decode(errorResponse)
+	err := json.Unmarshal(r.Body, errorResponse)
 	if err != nil {
 		errorResponse.Message = "Error decoding response error message. " +
 			"Please see response body for more information."

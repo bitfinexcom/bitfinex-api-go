@@ -52,6 +52,17 @@ if err != nil {
 
 See [examples](https://github.com/bitfinexcom/bitfinex-api-go/tree/master/examples) and [doc.go](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/doc.go) for more examples.
 
+## Testing
+
+All integration tests are stored in `tests/integration` directory. Because these tests are running using live data, there is a much higher probability of false positives in test failures due to network issues, test data having been changed, etc.
+
+Run tests using:
+``` bash
+export BFX_API_KEY="api-key"
+export BFX_API_SECRET="api-secret"
+go test -v ./tests/integration
+```
+
 ## Contributing
 
 1. Fork it (https://github.com/bitfinexcom/bitfinex-api-go/fork)
