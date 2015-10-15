@@ -31,7 +31,7 @@ type WebSocketService struct {
 	ws *websocket.Conn
 	// special web socket for private messages
 	privateWs *websocket.Conn
-	// map internal channles to websocket's
+	// map internal channels to websocket's
 	chanMap    map[float64]chan []float64
 	subscribes []subscribeToChannel
 }
