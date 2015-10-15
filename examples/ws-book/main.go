@@ -8,6 +8,7 @@ import (
 // This example shows how to work with WebSocket book api
 func main() {
 	api := bitfinex.NewClient()
+	// Create new connection
 	err := api.WebSocket.Connect()
 	if err != nil {
 		log.Fatal("Error connecting to web socket")
@@ -19,14 +20,15 @@ func main() {
 	trades_chan := make(chan []float64)
 	ticker_chan := make(chan []float64)
 
-	go api.WebSocket.Watch(bitfinex.CHAN_BOOK, bitfinex.BTCUSD, book_btcusd_chan)
-	go api.WebSocket.Watch(bitfinex.CHAN_BOOK, bitfinex.LTCUSD, book_ltcusd_chan)
-	go api.WebSocket.Watch(bitfinex.CHAN_TRADE, bitfinex.BTCUSD, trades_chan)
-	go api.WebSocket.Watch(bitfinex.CHAN_TICKER, bitfinex.BTCUSD, ticker_chan)
+	api.WebSocket.AddSubscribe(bitfinex.CHAN_BOOK, bitfinex.BTCUSD, book_btcusd_chan)
+	api.WebSocket.AddSubscribe(bitfinex.CHAN_BOOK, bitfinex.LTCUSD, book_ltcusd_chan)
+	api.WebSocket.AddSubscribe(bitfinex.CHAN_TRADE, bitfinex.BTCUSD, trades_chan)
+	api.WebSocket.AddSubscribe(bitfinex.CHAN_TICKER, bitfinex.BTCUSD, ticker_chan)
+	go api.WebSocket.Subscribe()
 
-	// After api client successfully connect to remote web socket
+	// after api client successfully connect to remote web socket
 	// channel will reveive current payload as separate messages.
-	// Each channel will receive order book updates: [PRICE, COUNT, ±AMOUNT]
+	// each channel will receive order book updates: [price, count, ±amount]
 	for {
 		select {
 		case btcusd_msg := <-book_btcusd_chan:

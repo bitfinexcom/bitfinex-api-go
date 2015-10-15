@@ -32,14 +32,8 @@ type WebSocketService struct {
 	// special web socket for private messages
 	privateWs *websocket.Conn
 	// map internal channles to websocket's
-	chanMap map[float64]chan []float64
-}
-
-func NewWebSocketService(c *Client) *WebSocketService {
-	return &WebSocketService{
-		client:  c,
-		chanMap: make(map[float64]chan []float64),
-	}
+	chanMap    map[float64]chan []float64
+	subscribes []subscribeToChannel
 }
 
 type SubscribeMsg struct {
@@ -47,6 +41,20 @@ type SubscribeMsg struct {
 	Channel string  `json:"channel"`
 	Pair    string  `json:"pair"`
 	ChanId  float64 `json:"chanId,omitempty"`
+}
+
+type subscribeToChannel struct {
+	Channel string
+	Pair    string
+	Chan    chan []float64
+}
+
+func NewWebSocketService(c *Client) *WebSocketService {
+	return &WebSocketService{
+		client:     c,
+		chanMap:    make(map[float64]chan []float64),
+		subscribes: make([]subscribeToChannel, 0),
+	}
 }
 
 // Connect create new bitfinex websocket connection
@@ -64,24 +72,40 @@ func (w *WebSocketService) Close() {
 	w.ws.Close()
 }
 
-// Watch allows to subsribe to channels and watch for new updates.
-// This method supports next channels: book, trade, ticker.
-func (w *WebSocketService) Watch(channel string, pair string, c chan []float64) {
-	msg, _ := json.Marshal(SubscribeMsg{
-		Event:   "subscribe",
+func (w *WebSocketService) AddSubscribe(channel string, pair string, c chan []float64) {
+	s := subscribeToChannel{
 		Channel: channel,
 		Pair:    pair,
-	})
+		Chan:    c,
+	}
+	w.subscribes = append(w.subscribes, s)
+}
 
-	_, err := w.ws.Write(msg)
-	if err != nil {
-		// Can't send message to web socket.
-		log.Fatal(err)
+func (w *WebSocketService) ClearSubscriptions() {
+	w.subscribes = make([]subscribeToChannel, 0)
+}
+
+// Watch allows to subsribe to channels and watch for new updates.
+// This method supports next channels: book, trade, ticker.
+func (w *WebSocketService) Subscribe() {
+	// Subscribe to each channel
+	for _, s := range w.subscribes {
+		msg, _ := json.Marshal(SubscribeMsg{
+			Event:   "subscribe",
+			Channel: s.Channel,
+			Pair:    s.Pair,
+		})
+
+		_, err := w.ws.Write(msg)
+		if err != nil {
+			// Can't send message to web socket.
+			log.Fatal(err)
+		}
 	}
 
 	var clientMessage string
 	for {
-		if err = websocket.Message.Receive(w.ws, &clientMessage); err != nil {
+		if err := websocket.Message.Receive(w.ws, &clientMessage); err != nil {
 			log.Fatal("Error reading message: ", err)
 		} else {
 			// Check for first message(event:subscribed)
@@ -98,11 +122,10 @@ func (w *WebSocketService) Watch(channel string, pair string, c chan []float64) 
 					w.chanMap[chanId] <- dataUpdate[1:]
 				} else {
 					// Payload received
-					// TODO: Refactor this!
 					var fullPayload []interface{}
 					err = json.Unmarshal([]byte(clientMessage), &fullPayload)
 					if err != nil {
-						log.Println("Error decoding fullPayload", err)
+						// log.Println("Error decoding fullPayload", err)
 					} else {
 						itemsSlice := fullPayload[1]
 						i, _ := json.Marshal(itemsSlice)
@@ -117,9 +140,12 @@ func (w *WebSocketService) Watch(channel string, pair string, c chan []float64) 
 					}
 				}
 			} else {
-				// Received "subscribed" resposne. Lets link channles.
-				if event.Event == "subscribed" {
-					w.chanMap[event.ChanId] = c
+				// Received "subscribed" resposne. Link channels.
+				for _, k := range w.subscribes {
+					if event.Event == "subscribed" && event.Pair == k.Pair && event.Channel == k.Channel {
+						fmt.Println("!!!", event, "r:", k.Channel, k.Pair)
+						w.chanMap[event.ChanId] = k.Chan
+					}
 				}
 			}
 		}
