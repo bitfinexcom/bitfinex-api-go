@@ -3,7 +3,10 @@ package bitfinex
 import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
+	"fmt"
 	"log"
+	"reflect"
+	"time"
 )
 
 // Pairs available
@@ -26,6 +29,8 @@ type WebSocketService struct {
 	client *Client
 	// websocket client
 	ws *websocket.Conn
+	// special web socket for private messages
+	privateWs *websocket.Conn
 	// map internal channles to websocket's
 	chanMap map[float64]chan []float64
 }
@@ -38,11 +43,10 @@ func NewWebSocketService(c *Client) *WebSocketService {
 }
 
 type SubscribeMsg struct {
-	Event   string `json:"Event"`
-	Channel string `json:"Channel"`
-	Pair    string `json:"Pair"`
-	// in response
-	ChanId float64 `json:"ChanId,omitempty"`
+	Event   string  `json:"event"`
+	Channel string  `json:"channel"`
+	Pair    string  `json:"pair"`
+	ChanId  float64 `json:"chanId,omitempty"`
 }
 
 // Connect create new bitfinex websocket connection
@@ -116,6 +120,118 @@ func (w *WebSocketService) Watch(channel string, pair string, c chan []float64) 
 				// Received "subscribed" resposne. Lets link channles.
 				if event.Event == "subscribed" {
 					w.chanMap[event.ChanId] = c
+				}
+			}
+		}
+	}
+}
+
+/////////////////////////////
+// Private websocket messages
+/////////////////////////////
+
+type privateConnect struct {
+	Event       string `json:"event"`
+	ApiKey      string `json:"apiKey"`
+	AuthSig     string `json:"authSig"`
+	AuthPayload string `json:"authPayload"`
+}
+
+// Private channel auth response
+type privateResponse struct {
+	Event  string  `json:"event"`
+	Status string  `json:"status"`
+	ChanId float64 `json:"chanId,omitempty"`
+	UserId float64 `json:"userId"`
+}
+
+type TermData struct {
+	// Data term. E.g: ps, ws, ou, etc... See official documentation for more details.
+	Term string
+	// Data will contain different number of elements for each term.
+	// Examples:
+	// Term: ws, Data: ["exchange","BTC",0.01410829,0]
+	// Term: oc, Data: [0,"BTCUSD",0,-0.01,"","CANCELED",270,0,"2015-10-15T11:26:13Z",0]
+	Data  []interface{}
+	Error string
+}
+
+func (c *TermData) HasError() bool {
+	return len(c.Error) > 0
+}
+
+func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
+	ws, err := websocket.Dial(WebSocketURL, "", "http://localhost/")
+	if err != nil {
+		ch <- TermData{
+			Error: err.Error(),
+		}
+		return
+	}
+
+	payload := "AUTH" + fmt.Sprintf("%v", time.Now().Unix())
+	connectMsg, _ := json.Marshal(&privateConnect{
+		Event:       "auth",
+		ApiKey:      w.client.ApiKey,
+		AuthSig:     w.client.SignPayload(payload),
+		AuthPayload: payload,
+	})
+
+	// Send auth message
+	_, err = ws.Write(connectMsg)
+	if err != nil {
+		ch <- TermData{
+			Error: err.Error(),
+		}
+		ws.Close()
+		return
+	}
+
+	var msg string
+	for {
+		if err = websocket.Message.Receive(ws, &msg); err != nil {
+			ch <- TermData{
+				Error: err.Error(),
+			}
+			ws.Close()
+			return
+		} else {
+			event := &privateResponse{}
+			err = json.Unmarshal([]byte(msg), &event)
+			if err != nil {
+				// received data update
+				var data []interface{}
+				err = json.Unmarshal([]byte(msg), &data)
+				if err == nil {
+					dataTerm := data[1].(string)
+					dataList := data[2].([]interface{})
+
+					// check for empty data
+					if len(dataList) > 0 {
+						if reflect.TypeOf(dataList[0]) == reflect.TypeOf([]interface{}{}) {
+							// received list of lists
+							for _, v := range dataList {
+								ch <- TermData{
+									Term: dataTerm,
+									Data: v.([]interface{}),
+								}
+							}
+						} else {
+							// received flat list
+							ch <- TermData{
+								Term: dataTerm,
+								Data: dataList,
+							}
+						}
+					}
+				}
+			} else {
+				// received auth response
+				if event.Event == "auth" && event.Status != "OK" {
+					ch <- TermData{
+						Error: "Error connecting to private web socket channel.",
+					}
+					ws.Close()
 				}
 			}
 		}

@@ -98,16 +98,19 @@ func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[strin
 	payload_json, _ := json.Marshal(payload)
 	payload_enc := base64.StdEncoding.EncodeToString(payload_json)
 
-	sig := hmac.New(sha512.New384, []byte(c.ApiSecret))
-	sig.Write([]byte(payload_enc))
-
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-BFX-APIKEY", c.ApiKey)
 	req.Header.Add("X-BFX-PAYLOAD", payload_enc)
-	req.Header.Add("X-BFX-SIGNATURE", hex.EncodeToString(sig.Sum(nil)))
+	req.Header.Add("X-BFX-SIGNATURE", c.SignPayload(payload_enc))
 
 	return req, nil
+}
+
+func (c *Client) SignPayload(payload string) string {
+	sig := hmac.New(sha512.New384, []byte(c.ApiSecret))
+	sig.Write([]byte(payload))
+	return hex.EncodeToString(sig.Sum(nil))
 }
 
 // Auth sets api key and secret for usage is requests that
