@@ -1,9 +1,9 @@
 package bitfinex
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/net/websocket"
 	"log"
 	"reflect"
 	"time"
