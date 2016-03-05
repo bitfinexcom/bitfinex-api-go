@@ -35,7 +35,7 @@ type Client struct {
 	Balances   *BalancesService
 	Credits    *CreditsService
 	Lendbook   *LendbookService
-	MarginInfo *MarginInfoServive
+	MarginInfo *MarginInfoService
 	OrderBook  *OrderBookServive
 	Orders     *OrderService
 	WebSocket  *WebSocketService
@@ -51,7 +51,7 @@ func NewClient() *Client {
 	c.Balances = &BalancesService{client: c}
 	c.Credits = &CreditsService{client: c}
 	c.Lendbook = &LendbookService{client: c}
-	c.MarginInfo = &MarginInfoServive{client: c}
+	c.MarginInfo = &MarginInfoService{client: c}
 	c.OrderBook = &OrderBookServive{client: c}
 	c.Orders = &OrderService{client: c}
 	c.WebSocket = NewWebSocketService(c)
