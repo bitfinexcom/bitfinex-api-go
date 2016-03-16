@@ -86,7 +86,7 @@ func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[strin
 
 	payload := map[string]interface{}{
 		"request": "/v1/" + refUrl,
-		"nonce":   fmt.Sprintf("%v", time.Now().Unix()*10000),
+		"nonce":   fmt.Sprintf("%v", time.Now().UnixNano()),
 	}
 
 	if len(data) > 0 {
