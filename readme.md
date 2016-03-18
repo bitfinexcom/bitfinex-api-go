@@ -1,5 +1,7 @@
-# Bitfinex Trading API for Golang. REST and WebSockets support
-## Bitcoin, Ethereum and Litecoin trading
+# Bitfinex Trading API for Golang. Bitcoin, Ethereum and Litecoin trading
+* Official implementation
+* REST API
+* WebSockets API 
 
 ## Installation
 
