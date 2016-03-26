@@ -38,6 +38,7 @@ type Client struct {
 	MarginInfo *MarginInfoService
 	OrderBook  *OrderBookServive
 	Orders     *OrderService
+	Positions  *PositionsService
 	WebSocket  *WebSocketService
 }
 
@@ -54,6 +55,7 @@ func NewClient() *Client {
 	c.MarginInfo = &MarginInfoService{client: c}
 	c.OrderBook = &OrderBookServive{client: c}
 	c.Orders = &OrderService{client: c}
+	c.Positions = &PositionsService{client: c}
 	c.WebSocket = NewWebSocketService(c)
 
 	return c
