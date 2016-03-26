@@ -19,6 +19,8 @@ const (
 	WebSocketURL = "wss://api2.bitfinex.com:3000/ws"
 )
 
+var nonce int64
+
 type Client struct {
 	// HTTP client used to communicate with the API.
 	httpClient *http.Client
@@ -79,6 +81,16 @@ func (c *Client) NewRequest(method string, refUrl string) (*http.Request, error)
 	return req, nil
 }
 
+// GetNonce - getting unique nonce
+
+func GetNonce() int64 {
+	if nonce == 0 {
+		nonce = time.Now().UnixNano()
+	}
+	nonce++
+	return nonce
+}
+
 // NewAuthenticatedRequest creates new http request for authenticated routes
 func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[string]interface{}) (*http.Request, error) {
 	req, err := c.NewRequest(m, refUrl)
@@ -88,7 +100,7 @@ func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[strin
 
 	payload := map[string]interface{}{
 		"request": "/v1/" + refUrl,
-		"nonce":   fmt.Sprintf("%v", time.Now().UnixNano()),
+		"nonce":   fmt.Sprintf("%v", GetNonce()),
 	}
 
 	if len(data) > 0 {
