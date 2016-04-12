@@ -141,6 +141,7 @@ var httpDo = func(req *http.Request) (*http.Response, error) {
 // Do executes API request created by NewRequest method or custom *http.Request.
 func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	resp, err := httpDo(req)
+
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +157,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 
 	if v != nil {
 		err = json.Unmarshal(response.Body, v)
+
 		if err != nil {
 			return response, err
 		}

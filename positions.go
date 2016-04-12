@@ -1,5 +1,10 @@
 package bitfinex
 
+import (
+	"strconv"
+	"time"
+)
+
 // PositionsService structure
 type PositionsService struct {
 	client *Client
@@ -9,12 +14,21 @@ type PositionsService struct {
 type Position struct {
 	ID        int
 	Symbol    string
-	Amount    float64 `json:",string"`
+	Amount    string
 	Status    string
-	Base      float64 `json:",string"`
-	Timestamp float64 `json:",string"`
-	Swap      float64 `json:",string"`
-	Pl        float64 `json:",string"`
+	Base      string
+	Timestamp string
+	Swap      string
+	Pl        string
+}
+
+func (p *Position) ParseTime() (*time.Time, error) {
+	i, err := strconv.ParseFloat(p.Timestamp, 64)
+	if err != nil {
+		return nil, err
+	}
+	t := time.Unix(int64(i), 0)
+	return &t, nil
 }
 
 // All - gets all positions
@@ -31,4 +45,29 @@ func (b *PositionsService) All() ([]Position, error) {
 	}
 
 	return positions, nil
+}
+
+// Claim a position
+func (b *PositionsService) Claim(positionId, amount string) (*Position, error) {
+
+	request := map[string]interface{}{
+		"position_id": positionId,
+		"amount":      amount,
+	}
+
+	req, err := b.client.NewAuthenticatedRequest("POST", "position/claim", request)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var position = &Position{}
+
+	_, err = b.client.Do(req, position)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return position, nil
 }
