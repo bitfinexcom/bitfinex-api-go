@@ -11,6 +11,7 @@ type Stats struct {
 	Volume float64 `json:"volume,string"`
 }
 
+// All(pair) - Volume stats for specified pair
 func (s *StatsService) All(pair string) ([]Stats, error) {
 	pair = strings.ToUpper(pair)
 	req, err := s.client.NewRequest("GET", "stats/"+pair)

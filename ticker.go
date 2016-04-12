@@ -21,6 +21,7 @@ type Tick struct {
 	Timestamp string
 }
 
+// ParseTime - return Timestamp in time.Time format
 func (el *Tick) ParseTime() (*time.Time, error) {
 	i, err := strconv.ParseFloat(el.Timestamp, 64)
 	if err != nil {
@@ -30,6 +31,7 @@ func (el *Tick) ParseTime() (*time.Time, error) {
 	return &t, nil
 }
 
+// Get(pair) - return last Tick for specified pair
 func (s *TickerService) Get(pair string) (Tick, error) {
 	pair = strings.ToUpper(pair)
 	req, err := s.client.NewRequest("GET", "pubticker/"+pair)
