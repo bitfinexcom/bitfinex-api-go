@@ -2,6 +2,7 @@ package bitfinex
 
 import (
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -30,6 +31,7 @@ func (el *Tick) ParseTime() (*time.Time, error) {
 }
 
 func (s *TickerService) Get(pair string) (Tick, error) {
+	pair = strings.ToUpper(pair)
 	req, err := s.client.NewRequest("GET", "pubticker/"+pair)
 
 	if err != nil {
