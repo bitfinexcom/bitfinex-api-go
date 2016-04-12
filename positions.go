@@ -48,7 +48,7 @@ func (b *PositionsService) All() ([]Position, error) {
 }
 
 // Claim a position
-func (b *PositionsService) Claim(positionId, amount string) (*Position, error) {
+func (b *PositionsService) Claim(positionId, amount string) (Position, error) {
 
 	request := map[string]interface{}{
 		"position_id": positionId,
@@ -58,7 +58,7 @@ func (b *PositionsService) Claim(positionId, amount string) (*Position, error) {
 	req, err := b.client.NewAuthenticatedRequest("POST", "position/claim", request)
 
 	if err != nil {
-		return nil, err
+		return Position{}, err
 	}
 
 	var position = &Position{}
@@ -66,8 +66,8 @@ func (b *PositionsService) Claim(positionId, amount string) (*Position, error) {
 	_, err = b.client.Do(req, position)
 
 	if err != nil {
-		return nil, err
+		return Position{}, err
 	}
 
-	return position, nil
+	return *position, nil
 }

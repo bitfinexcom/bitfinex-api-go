@@ -31,6 +31,7 @@ type Client struct {
 
 	// Services
 	Pairs      *PairsService
+	Ticker     *TickerService
 	Account    *AccountService
 	Balances   *BalancesService
 	Credits    *CreditsService
@@ -49,6 +50,7 @@ func NewClient() *Client {
 	c := &Client{BaseURL: baseURL}
 	c.Pairs = &PairsService{client: c}
 	c.Account = &AccountService{client: c}
+	c.Ticker = &TickerService{client: c}
 	c.Balances = &BalancesService{client: c}
 	c.Credits = &CreditsService{client: c}
 	c.Lendbook = &LendbookService{client: c}
