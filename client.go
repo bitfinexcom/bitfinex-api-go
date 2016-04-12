@@ -22,8 +22,6 @@ const (
 var nonce int64
 
 type Client struct {
-	// HTTP client used to communicate with the API.
-	httpClient *http.Client
 	// Base URL for API requests.
 	BaseURL *url.URL
 
@@ -48,7 +46,7 @@ type Client struct {
 func NewClient() *Client {
 	baseURL, _ := url.Parse(BaseURL)
 
-	c := &Client{httpClient: http.DefaultClient, BaseURL: baseURL}
+	c := &Client{BaseURL: baseURL}
 	c.Pairs = &PairsService{client: c}
 	c.Account = &AccountService{client: c}
 	c.Balances = &BalancesService{client: c}
@@ -136,9 +134,13 @@ func (c *Client) Auth(key string, secret string) *Client {
 	return c
 }
 
+var httpDo = func(req *http.Request) (*http.Response, error) {
+	return http.DefaultClient.Do(req)
+}
+
 // Do executes API request created by NewRequest method or custom *http.Request.
 func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
-	resp, err := c.httpClient.Do(req)
+	resp, err := httpDo(req)
 	if err != nil {
 		return nil, err
 	}
