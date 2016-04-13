@@ -1,6 +1,8 @@
 package bitfinex
 
 import (
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -23,9 +25,17 @@ func (el *Trade) Time() *time.Time {
 	return &t
 }
 
-func (s *TradesService) All(pair string) ([]Trade, error) {
+func (s *TradesService) All(pair string, timestamp time.Time, limitTrades int) ([]Trade, error) {
 	pair = strings.ToUpper(pair)
-	req, err := s.client.NewRequest("GET", "trades/"+pair, nil)
+
+	params := url.Values{}
+	if timestamp != nil {
+		params.Add("timestamp", strconv.Itoa(timestamp.Unix()))
+	}
+	if limitTrades != 0 {
+		params.Add("limit_trades", strconv.Itoa(limitTrades))
+	}
+	req, err := s.client.NewRequest("GET", "trades/"+pair, params)
 	if err != nil {
 		return nil, err
 	}

@@ -25,7 +25,7 @@ func TestTradesServiceGet(t *testing.T) {
 		return &resp, nil
 	}
 
-	trades, err := NewClient().Trades.All("ethusd")
+	trades, err := NewClient().Trades.All("ethusd", nil, 0)
 
 	if err != nil {
 		t.Error(err)
