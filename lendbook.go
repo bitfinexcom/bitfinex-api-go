@@ -1,64 +1,89 @@
 package bitfinex
 
+import (
+    "net/url"
+    "strconv"
+    "strings"
+    "time"
+)
+
 type LendbookService struct {
-	client *Client
+    client *Client
+}
+
+type Lend struct {
+    Rate      string
+    Amount    string
+    Period    int
+    Timestamp string
+    Frr       string
+}
+
+func (el *Lend) ParseTime() (*time.Time, error) {
+    i, err := strconv.ParseFloat(el.Timestamp, 64)
+    if err != nil {
+        return nil, err
+    }
+    t := time.Unix(int64(i), 0)
+    return &t, nil
 }
 
 type Lendbook struct {
-	Bids []struct {
-		Rate      string
-		Amount    string
-		Period    float64
-		Timestamp string
-		Frr       string
-	}
-	Asks []struct {
-		Rate      string
-		Amount    string
-		Period    float64
-		Timestamp string
-		Frr       string
-	}
+    Bids []Lend
+    Asks []Lend
 }
 
-// TODO: Convert Rate and Amount to float64
-// currency: BTC LTC DRK USD
 // GET /lendbook/:currency
-func (s *LendbookService) Get(currency string) (Lendbook, error) {
-	req, err := s.client.NewRequest("GET", "lendbook/"+currency)
-	if err != nil {
-		return Lendbook{}, err
-	}
+func (s *LendbookService) Get(currency string, limitBids, limitAsks int) (Lendbook, error) {
+    currency = strings.ToUpper(currency)
 
-	var v Lendbook
-	_, err = s.client.Do(req, &v)
-	if err != nil {
-		return Lendbook{}, err
-	}
+    params := url.Values{}
+    if limitBids != 0 {
+        params.Add("limit_bids", strconv.Itoa(limitBids))
+    }
+    if limitAsks != 0 {
+        params.Add("limit_asks", strconv.Itoa(limitAsks))
+    }
 
-	return v, nil
+    req, err := s.client.NewRequest("GET", "lendbook/"+currency, params)
+    if err != nil {
+        return Lendbook{}, err
+    }
+
+    var v Lendbook
+    _, err = s.client.Do(req, &v)
+    if err != nil {
+        return Lendbook{}, err
+    }
+
+    return v, nil
 }
 
 type Lends struct {
-	Rate       string
-	AmountLent string `json:"amount_lent"`
-	AmountUsed string `json:"amount_used"`
-	Timestamp  float64
+    Rate       string
+    AmountLent string `json:"amount_lent"`
+    AmountUsed string `json:"amount_used"`
+    Timestamp  int64
 }
 
-// currency: BTC LTC DRK USD
+func (el *Lends) Time() *time.Time {
+    t := time.Unix(el.Timestamp, 0)
+    return &t
+}
+
 // GET /lends/:currency
 func (s *LendbookService) Lends(currency string) ([]Lends, error) {
-	req, err := s.client.NewRequest("GET", "lends/"+currency)
-	if err != nil {
-		return nil, err
-	}
+    currency = strings.ToUpper(currency)
+    req, err := s.client.NewRequest("GET", "lends/"+currency, nil)
+    if err != nil {
+        return nil, err
+    }
 
-	var v []Lends
-	_, err = s.client.Do(req, &v)
-	if err != nil {
-		return nil, err
-	}
+    var v []Lends
+    _, err = s.client.Do(req, &v)
+    if err != nil {
+        return nil, err
+    }
 
-	return v, nil
+    return v, nil
 }
