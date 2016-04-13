@@ -44,3 +44,45 @@ func (s *HistoryService) Balance(currency, wallet string, since, until time.Time
 
     return v, nil
 }
+
+type Movement struct {
+    ID          int64 `json:",int"`
+    Currency    string
+    Method      string
+    Type        string
+    Amount      string
+    Description string
+    Status      string
+    Timestamp   string
+}
+
+func (s *HistoryService) Movements(currency, method string, since, until time.Time, limit int) ([]Movement, error) {
+
+    payload := map[string]interface{}{"currency": currency, "method": method}
+
+    if !since.IsZero() {
+        payload["since"] = since.Unix()
+    }
+    if !until.IsZero() {
+        payload["until"] = until.Unix()
+    }
+    if limit != 0 {
+        payload["limit"] = limit
+    }
+
+    req, err := s.client.NewAuthenticatedRequest("POST", "history/movements", payload)
+
+    if err != nil {
+        return nil, err
+    }
+
+    var v []Movement
+
+    _, err = s.client.Do(req, &v)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return v, nil
+}

@@ -36,3 +36,35 @@ func TestHistoryBalance(t *testing.T) {
     }
 
 }
+
+func TestHistoryMovements(t *testing.T) {
+    httpDo = func(req *http.Request) (*http.Response, error) {
+        msg := `[{
+            "id":581183,
+            "currency":"BTC",
+            "method":"BITCOIN",
+            "type":"WITHDRAWAL",
+            "amount":".01",
+            "description":"3QXYWgRGX2BPYBpUDBssGbeWEa5zq6snBZ, offchain transfer ",
+            "status":"COMPLETED",
+            "timestamp":"1443833327.0"
+        }]`
+        resp := http.Response{
+            Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+            StatusCode: 200,
+        }
+        return &resp, nil
+    }
+
+    movements, err := NewClient().History.Movements("BTC", "", time.Time{}, time.Time{}, 0)
+
+    if err != nil {
+        t.Error(err)
+    }
+
+    if len(movements) != 1 {
+        t.Error("Expected", 1)
+        t.Error("Actual ", len(movements))
+    }
+
+}
