@@ -33,7 +33,7 @@ func TestLendbookGet(t *testing.T) {
 		return &resp, nil
 	}
 
-	book, err := NewClient().Lendbook.Get("usd")
+	book, err := NewClient().Lendbook.Get("usd", 0, 0)
 
 	if err != nil {
 		t.Error(err)

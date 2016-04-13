@@ -1,32 +1,62 @@
 package bitfinex
 
+import (
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+)
+
 type OrderBookServive struct {
 	client *Client
 }
 
-type OrderBook struct {
-	Bids []struct {
-		Price     string
-		Amount    string
-		Timestamp string
-	}
-	Asks []struct {
-		Price     string
-		Amount    string
-		Timestamp string
-	}
+type OrderBookEntry struct {
+	Rate      string
+	Amount    string
+	Period    int
+	Timestamp string
+	Frr       string
 }
 
-// TODO Convert price, amount to float64
-// GET /book
-func (s *OrderBookServive) Get(currency string) (OrderBook, error) {
-	req, err := s.client.NewAuthenticatedRequest("GET", "book/"+currency, nil)
+type OrderBook struct {
+	Bids []OrderBookEntry
+	Asks []OrderBookEntry
+}
+
+func (el *OrderBookEntry) ParseTime() (*time.Time, error) {
+	i, err := strconv.ParseFloat(el.Timestamp, 64)
 	if err != nil {
-		return OrderBook{}, nil
+		return nil, err
+	}
+	t := time.Unix(int64(i), 0)
+	return &t, nil
+}
+
+// GET /book
+func (s *OrderBookServive) Get(pair string, limitBids, limitAsks int, noGroup bool) (OrderBook, error) {
+	pair = strings.ToUpper(pair)
+
+	params := url.Values{}
+	if limitBids != 0 {
+		params.Add("limit_bids", strconv.Itoa(limitBids))
+	}
+	if limitAsks != 0 {
+		params.Add("limit_asks", strconv.Itoa(limitAsks))
+	}
+	if noGroup {
+		params.Add("group", "0")
+	}
+
+	req, err := s.client.NewRequest("GET", "book/"+pair, params)
+
+	if err != nil {
+		return OrderBook{}, err
 	}
 
 	var v OrderBook
 	_, err = s.client.Do(req, &v)
+
 	if err != nil {
 		return OrderBook{}, err
 	}

@@ -1,6 +1,7 @@
 package bitfinex
 
 import (
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -33,9 +34,18 @@ type Lendbook struct {
 }
 
 // GET /lendbook/:currency
-func (s *LendbookService) Get(currency string) (Lendbook, error) {
+func (s *LendbookService) Get(currency string, limitBids, limitAsks int) (Lendbook, error) {
 	currency = strings.ToUpper(currency)
-	req, err := s.client.NewRequest("GET", "lendbook/"+currency)
+
+	params := url.Values{}
+	if limitBids != 0 {
+		params.Add("limit_bids", strconv.Itoa(limitBids))
+	}
+	if limitAsks != 0 {
+		params.Add("limit_asks", strconv.Itoa(limitAsks))
+	}
+
+	req, err := s.client.NewRequest("GET", "lendbook/"+currency, params)
 	if err != nil {
 		return Lendbook{}, err
 	}
@@ -64,7 +74,7 @@ func (el *Lends) Time() *time.Time {
 // GET /lends/:currency
 func (s *LendbookService) Lends(currency string) ([]Lends, error) {
 	currency = strings.ToUpper(currency)
-	req, err := s.client.NewRequest("GET", "lends/"+currency)
+	req, err := s.client.NewRequest("GET", "lends/"+currency, nil)
 	if err != nil {
 		return nil, err
 	}

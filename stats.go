@@ -1,6 +1,9 @@
 package bitfinex
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
 
 type StatsService struct {
 	client *Client
@@ -12,9 +15,17 @@ type Stats struct {
 }
 
 // All(pair) - Volume stats for specified pair
-func (s *StatsService) All(pair string) ([]Stats, error) {
+func (s *StatsService) All(pair string, period, volume string) ([]Stats, error) {
 	pair = strings.ToUpper(pair)
-	req, err := s.client.NewRequest("GET", "stats/"+pair)
+
+	params := url.Values{}
+	if period != "" {
+		params.Add("period", period)
+	}
+	if volume != "" {
+		params.Add("volume", volume)
+	}
+	req, err := s.client.NewRequest("GET", "stats/"+strings.ToUpper(pair), params)
 
 	if err != nil {
 		return nil, err

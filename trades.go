@@ -25,7 +25,7 @@ func (el *Trade) Time() *time.Time {
 
 func (s *TradesService) All(pair string) ([]Trade, error) {
 	pair = strings.ToUpper(pair)
-	req, err := s.client.NewRequest("GET", "trades/"+pair)
+	req, err := s.client.NewRequest("GET", "trades/"+pair, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -34,7 +34,7 @@ func (el *Tick) ParseTime() (*time.Time, error) {
 // Get(pair) - return last Tick for specified pair
 func (s *TickerService) Get(pair string) (Tick, error) {
 	pair = strings.ToUpper(pair)
-	req, err := s.client.NewRequest("GET", "pubticker/"+pair)
+	req, err := s.client.NewRequest("GET", "pubticker/"+pair, nil)
 
 	if err != nil {
 		return Tick{}, err

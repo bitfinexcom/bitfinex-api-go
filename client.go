@@ -21,6 +21,11 @@ const (
 
 var nonce int64
 
+type Param struct {
+	Key string
+	Val string
+}
+
 type Client struct {
 	// Base URL for API requests.
 	BaseURL *url.URL
@@ -68,12 +73,14 @@ func NewClient() *Client {
 }
 
 // NewRequest create new API request. Relative url can be provided in refUrl.
-func (c *Client) NewRequest(method string, refUrl string) (*http.Request, error) {
+func (c *Client) NewRequest(method string, refUrl string, params url.Values) (*http.Request, error) {
 	rel, err := url.Parse(refUrl)
 	if err != nil {
 		return nil, err
 	}
-
+	if params != nil {
+		rel.RawQuery = params.Encode()
+	}
 	var req *http.Request
 	u := c.BaseURL.ResolveReference(rel)
 	req, err = http.NewRequest(method, u.String(), nil)
@@ -97,7 +104,7 @@ func GetNonce() int64 {
 
 // NewAuthenticatedRequest creates new http request for authenticated routes
 func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[string]interface{}) (*http.Request, error) {
-	req, err := c.NewRequest(m, refUrl)
+	req, err := c.NewRequest(m, refUrl, nil)
 	if err != nil {
 		return nil, err
 	}

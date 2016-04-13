@@ -26,7 +26,7 @@ func TestStatsAll(t *testing.T) {
 		return &resp, nil
 	}
 
-	stats, err := NewClient().Stats.All("btcusd")
+	stats, err := NewClient().Stats.All("btcusd", "10", "")
 
 	if err != nil {
 		t.Error(err)
