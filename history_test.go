@@ -68,3 +68,40 @@ func TestHistoryMovements(t *testing.T) {
     }
 
 }
+
+func TestHistoryTrades(t *testing.T) {
+    httpDo = func(req *http.Request) (*http.Response, error) {
+        msg := `[{
+            "price":"246.94",
+            "amount":"1.0",
+            "timestamp":"1444141857.0",
+            "exchange":"",
+            "type":"Buy",
+            "fee_currency":"USD",
+            "fee_amount":"-0.49388",
+            "tid":11970839,
+            "order_id":446913929
+        }]`
+        resp := http.Response{
+            Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+            StatusCode: 200,
+        }
+        return &resp, nil
+    }
+
+    trades, err := NewClient().History.Trades("BTC", time.Time{}, time.Time{}, 0, false)
+
+    if err != nil {
+        t.Error(err)
+    }
+
+    if len(trades) != 1 {
+        t.Error("Expected", 1)
+        t.Error("Actual ", len(trades))
+    }
+    if trades[0].TID != 11970839 {
+        t.Error("Expected", 11970839)
+        t.Error("Actual ", trades[0].TID)
+    }
+
+}

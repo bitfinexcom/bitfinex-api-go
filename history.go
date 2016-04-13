@@ -86,3 +86,48 @@ func (s *HistoryService) Movements(currency, method string, since, until time.Ti
 
     return v, nil
 }
+
+type PastTrade struct {
+    Price       string
+    Amount      string
+    Timestamp   string
+    Exchange    string
+    Type        string
+    FeeCurrency string `json:"fee_currency"`
+    FeeAmount   string `json:"fee_amount"`
+    TID         int64
+    OrderId     int64 `json:"order_id,int"`
+}
+
+func (s *HistoryService) Trades(pair string, since, until time.Time, limit int, reverse bool) ([]PastTrade, error) {
+    payload := map[string]interface{}{"symbol": pair}
+
+    if !since.IsZero() {
+        payload["timestamp"] = since.Unix()
+    }
+    if !until.IsZero() {
+        payload["until"] = until.Unix()
+    }
+    if limit != 0 {
+        payload["limit_trades"] = limit
+    }
+    if reverse {
+        payload["reverse"] = 1
+    }
+
+    req, err := s.client.NewAuthenticatedRequest("POST", "mytrades", payload)
+
+    if err != nil {
+        return nil, err
+    }
+
+    var v []PastTrade
+
+    _, err = s.client.Do(req, &v)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return v, nil
+}
