@@ -30,7 +30,7 @@ func (s *DepositService) New(method, walletName string, renew int) (DepositRespo
         "renew":       renew,
     }
 
-    req, err := s.client.NewAuthenticatedRequest("POST", "/deposit/new", payload)
+    req, err := s.client.NewAuthenticatedRequest("POST", "deposit/new", payload)
 
     if err != nil {
         return DepositResponse{}, err
