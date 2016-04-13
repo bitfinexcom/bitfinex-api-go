@@ -41,6 +41,7 @@ type Client struct {
     Account    *AccountService
     Balances   *BalancesService
     Credits    *CreditsService
+    Deposit    *DepositService
     Lendbook   *LendbookService
     MarginInfo *MarginInfoService
     OrderBook  *OrderBookServive
@@ -61,6 +62,7 @@ func NewClient() *Client {
     c.Ticker = &TickerService{client: c}
     c.Balances = &BalancesService{client: c}
     c.Credits = &CreditsService{client: c}
+    c.Deposit = &DepositService{client: c}
     c.Lendbook = &LendbookService{client: c}
     c.MarginInfo = &MarginInfoService{client: c}
     c.OrderBook = &OrderBookServive{client: c}

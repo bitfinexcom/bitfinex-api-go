@@ -77,7 +77,6 @@ func TestPairsAllDetailed(t *testing.T) {
     if (pairMargin-expectedMargin) > 0.1 || (expectedMargin-pairMargin) > 0.1 {
         t.Error("Expected", expectedMargin)
         t.Error("Actual ", pairMargin)
-
     }
 
 }
