@@ -5,6 +5,7 @@ import (
     "io/ioutil"
     "net/http"
     "testing"
+    "time"
 )
 
 func TestTradesServiceGet(t *testing.T) {
@@ -25,7 +26,7 @@ func TestTradesServiceGet(t *testing.T) {
         return &resp, nil
     }
 
-    trades, err := NewClient().Trades.All("ethusd", nil, 0)
+    trades, err := NewClient().Trades.All("ethusd", time.Time{}, 0)
 
     if err != nil {
         t.Error(err)

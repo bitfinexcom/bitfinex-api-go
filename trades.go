@@ -29,8 +29,8 @@ func (s *TradesService) All(pair string, timestamp time.Time, limitTrades int) (
     pair = strings.ToUpper(pair)
 
     params := url.Values{}
-    if timestamp != nil {
-        params.Add("timestamp", strconv.Itoa(timestamp.Unix()))
+    if !time.Time.IsZero(timestamp) {
+        params.Add("timestamp", strconv.FormatInt(timestamp.Unix(), 10))
     }
     if limitTrades != 0 {
         params.Add("limit_trades", strconv.Itoa(limitTrades))
