@@ -35,14 +35,14 @@ func (s *TradesService) All(pair string, timestamp time.Time, limitTrades int) (
     if limitTrades != 0 {
         params.Add("limit_trades", strconv.Itoa(limitTrades))
     }
-    req, err := s.client.NewRequest("GET", "trades/"+pair, params)
+    req, err := s.client.newRequest("GET", "trades/"+pair, params)
     if err != nil {
         return nil, err
     }
 
     var v []Trade
 
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
     if err != nil {
         return nil, err
     }

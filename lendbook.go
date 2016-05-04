@@ -45,13 +45,13 @@ func (s *LendbookService) Get(currency string, limitBids, limitAsks int) (Lendbo
         params.Add("limit_asks", strconv.Itoa(limitAsks))
     }
 
-    req, err := s.client.NewRequest("GET", "lendbook/"+currency, params)
+    req, err := s.client.newRequest("GET", "lendbook/"+currency, params)
     if err != nil {
         return Lendbook{}, err
     }
 
     var v Lendbook
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
     if err != nil {
         return Lendbook{}, err
     }
@@ -74,13 +74,13 @@ func (el *Lends) Time() *time.Time {
 // GET /lends/:currency
 func (s *LendbookService) Lends(currency string) ([]Lends, error) {
     currency = strings.ToUpper(currency)
-    req, err := s.client.NewRequest("GET", "lends/"+currency, nil)
+    req, err := s.client.newRequest("GET", "lends/"+currency, nil)
     if err != nil {
         return nil, err
     }
 
     var v []Lends
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
     if err != nil {
         return nil, err
     }

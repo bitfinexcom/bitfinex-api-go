@@ -25,14 +25,14 @@ func (s *StatsService) All(pair string, period, volume string) ([]Stats, error) 
     if volume != "" {
         params.Add("volume", volume)
     }
-    req, err := s.client.NewRequest("GET", "stats/"+strings.ToUpper(pair), params)
+    req, err := s.client.newRequest("GET", "stats/"+strings.ToUpper(pair), params)
 
     if err != nil {
         return nil, err
     }
 
     var stats []Stats
-    _, err = s.client.Do(req, &stats)
+    _, err = s.client.do(req, &stats)
 
     if err != nil {
         return nil, err

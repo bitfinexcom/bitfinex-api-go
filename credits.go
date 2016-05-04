@@ -16,13 +16,13 @@ type Credit struct {
 
 // GET /credits
 func (c *CreditsService) All() ([]Credit, error) {
-    req, err := c.client.NewAuthenticatedRequest("GET", "credits", nil)
+    req, err := c.client.newAuthenticatedRequest("GET", "credits", nil)
     if err != nil {
         return nil, err
     }
 
     credits := make([]Credit, 0)
-    _, err = c.client.Do(req, &credits)
+    _, err = c.client.do(req, &credits)
     if err != nil {
         return nil, err
     }

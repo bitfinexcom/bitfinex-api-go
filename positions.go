@@ -33,13 +33,13 @@ func (p *Position) ParseTime() (*time.Time, error) {
 
 // All - gets all positions
 func (b *PositionsService) All() ([]Position, error) {
-    req, err := b.client.NewAuthenticatedRequest("GET", "positions", nil)
+    req, err := b.client.newAuthenticatedRequest("GET", "positions", nil)
     if err != nil {
         return nil, err
     }
 
     var positions []Position
-    _, err = b.client.Do(req, &positions)
+    _, err = b.client.do(req, &positions)
     if err != nil {
         return nil, err
     }
@@ -55,7 +55,7 @@ func (b *PositionsService) Claim(positionId, amount string) (Position, error) {
         "amount":      amount,
     }
 
-    req, err := b.client.NewAuthenticatedRequest("POST", "position/claim", request)
+    req, err := b.client.newAuthenticatedRequest("POST", "position/claim", request)
 
     if err != nil {
         return Position{}, err
@@ -63,7 +63,7 @@ func (b *PositionsService) Claim(positionId, amount string) (Position, error) {
 
     var position = &Position{}
 
-    _, err = b.client.Do(req, position)
+    _, err = b.client.do(req, position)
 
     if err != nil {
         return Position{}, err

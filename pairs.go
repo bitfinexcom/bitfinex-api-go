@@ -8,13 +8,13 @@ type Pairs []string
 
 // GET /symbols
 func (p *PairsService) All() (*Pairs, error) {
-    req, err := p.client.NewRequest("GET", "symbols", nil)
+    req, err := p.client.newRequest("GET", "symbols", nil)
     if err != nil {
         return nil, err
     }
 
     v := &Pairs{}
-    _, err = p.client.Do(req, v)
+    _, err = p.client.do(req, v)
     if err != nil {
         return nil, err
     }
@@ -34,13 +34,13 @@ type Pair struct {
 
 // GET /symbols
 func (p *PairsService) AllDetailed() ([]Pair, error) {
-    req, err := p.client.NewRequest("GET", "symbols_details", nil)
+    req, err := p.client.newRequest("GET", "symbols_details", nil)
     if err != nil {
         return nil, err
     }
 
     var v []Pair
-    _, err = p.client.Do(req, &v)
+    _, err = p.client.do(req, &v)
     if err != nil {
         return nil, err
     }

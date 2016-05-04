@@ -18,14 +18,14 @@ type AccountInfo struct {
 
 // GET account_infos
 func (a *AccountService) Info() (AccountInfo, error) {
-    req, err := a.client.NewAuthenticatedRequest("GET", "account_infos", nil)
+    req, err := a.client.newAuthenticatedRequest("GET", "account_infos", nil)
 
     if err != nil {
         return AccountInfo{}, err
     }
 
     var v []AccountInfo
-    _, err = a.client.Do(req, &v)
+    _, err = a.client.do(req, &v)
 
     if err != nil {
         return AccountInfo{}, err
@@ -50,14 +50,14 @@ type Permissions struct {
 }
 
 func (a *AccountService) KeyPermission() (Permissions, error) {
-    req, err := a.client.NewAuthenticatedRequest("GET", "key_info", nil)
+    req, err := a.client.newAuthenticatedRequest("GET", "key_info", nil)
 
     if err != nil {
         return Permissions{}, err
     }
 
     var v Permissions
-    _, err = a.client.Do(req, &v)
+    _, err = a.client.do(req, &v)
     if err != nil {
         return Permissions{}, err
     }

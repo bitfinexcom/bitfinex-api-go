@@ -42,13 +42,13 @@ type Order struct {
 
 // GET orders
 func (s *OrderService) All() ([]Order, error) {
-    req, err := s.client.NewAuthenticatedRequest("GET", "orders", nil)
+    req, err := s.client.newAuthenticatedRequest("GET", "orders", nil)
     if err != nil {
         return nil, err
     }
 
     v := []Order{}
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
     if err != nil {
         return nil, err
     }
@@ -58,12 +58,12 @@ func (s *OrderService) All() ([]Order, error) {
 
 // POST order/cancel/all
 func (s *OrderService) CancelAll() error {
-    req, err := s.client.NewAuthenticatedRequest("POST", "order/cancel/all", nil)
+    req, err := s.client.newAuthenticatedRequest("POST", "order/cancel/all", nil)
     if err != nil {
         return err
     }
 
-    _, err = s.client.Do(req, nil)
+    _, err = s.client.do(req, nil)
     if err != nil {
         return err
     }
@@ -97,13 +97,13 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
         "exchange": "bitfinex",
     }
 
-    req, err := s.client.NewAuthenticatedRequest("POST", "order/new", payload)
+    req, err := s.client.newAuthenticatedRequest("POST", "order/new", payload)
     if err != nil {
         return nil, err
     }
 
     order := new(Order)
-    _, err = s.client.Do(req, order)
+    _, err = s.client.do(req, order)
     if err != nil {
         return nil, err
     }
@@ -117,12 +117,12 @@ func (s *OrderService) Cancel(order_id int) error {
         "order_id": order_id,
     }
 
-    req, err := s.client.NewAuthenticatedRequest("POST", "order/cancel", payload)
+    req, err := s.client.newAuthenticatedRequest("POST", "order/cancel", payload)
     if err != nil {
         return err
     }
 
-    _, err = s.client.Do(req, nil)
+    _, err = s.client.do(req, nil)
     if err != nil {
         return err
     }

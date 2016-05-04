@@ -26,13 +26,13 @@ type MarginLimit struct {
 
 // GET /margin_infos
 func (s *MarginInfoService) All() ([]MarginInfo, error) {
-    req, err := s.client.NewAuthenticatedRequest("GET", "margin_infos", nil)
+    req, err := s.client.newAuthenticatedRequest("GET", "margin_infos", nil)
     if err != nil {
         return nil, err
     }
 
     var v []MarginInfo
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
 
     return v, err
 }

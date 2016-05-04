@@ -13,10 +13,9 @@ import (
     "time"
 )
 
-//TODO: use var instead of const
 const (
-    BaseURL      = "https://api.bitfinex.com/v1/"
-    WebSocketURL = "wss://api2.bitfinex.com:3000/ws"
+    DefaultBaseURL      = "https://api.bitfinex.com/v1/"
+    DefaultWebSocketURL = "wss://api2.bitfinex.com:3000/ws"
 )
 
 var nonce int64
@@ -28,7 +27,8 @@ type Param struct {
 
 type Client struct {
     // Base URL for API requests.
-    BaseURL *url.URL
+    BaseURL      *url.URL
+    WebSocketURL string
 
     // Auth data
     ApiKey    string
@@ -55,9 +55,9 @@ type Client struct {
 
 // NewClient creates new Bitfinex.com API http client
 func NewClient() *Client {
-    baseURL, _ := url.Parse(BaseURL)
+    baseURL, _ := url.Parse(DefaultBaseURL)
 
-    c := &Client{BaseURL: baseURL}
+    c := &Client{BaseURL: baseURL, WebSocketURL: DefaultWebSocketURL}
     c.Pairs = &PairsService{client: c}
     c.Stats = &StatsService{client: c}
     c.Account = &AccountService{client: c}
@@ -79,7 +79,7 @@ func NewClient() *Client {
 }
 
 // NewRequest create new API request. Relative url can be provided in refUrl.
-func (c *Client) NewRequest(method string, refUrl string, params url.Values) (*http.Request, error) {
+func (c *Client) newRequest(method string, refUrl string, params url.Values) (*http.Request, error) {
     rel, err := url.Parse(refUrl)
     if err != nil {
         return nil, err
@@ -98,9 +98,8 @@ func (c *Client) NewRequest(method string, refUrl string, params url.Values) (*h
     return req, nil
 }
 
-// GetNonce - getting unique nonce
-
-func GetNonce() int64 {
+// getNonce - getting unique nonce
+func getNonce() int64 {
     if nonce == 0 {
         nonce = time.Now().UnixNano()
     }
@@ -109,15 +108,15 @@ func GetNonce() int64 {
 }
 
 // NewAuthenticatedRequest creates new http request for authenticated routes
-func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[string]interface{}) (*http.Request, error) {
-    req, err := c.NewRequest(m, refUrl, nil)
+func (c *Client) newAuthenticatedRequest(m string, refUrl string, data map[string]interface{}) (*http.Request, error) {
+    req, err := c.newRequest(m, refUrl, nil)
     if err != nil {
         return nil, err
     }
 
     payload := map[string]interface{}{
         "request": "/v1/" + refUrl,
-        "nonce":   fmt.Sprintf("%v", GetNonce()),
+        "nonce":   fmt.Sprintf("%v", getNonce()),
     }
 
     if len(data) > 0 {
@@ -133,12 +132,12 @@ func (c *Client) NewAuthenticatedRequest(m string, refUrl string, data map[strin
     req.Header.Add("Accept", "application/json")
     req.Header.Add("X-BFX-APIKEY", c.ApiKey)
     req.Header.Add("X-BFX-PAYLOAD", payload_enc)
-    req.Header.Add("X-BFX-SIGNATURE", c.SignPayload(payload_enc))
+    req.Header.Add("X-BFX-SIGNATURE", c.signPayload(payload_enc))
 
     return req, nil
 }
 
-func (c *Client) SignPayload(payload string) string {
+func (c *Client) signPayload(payload string) string {
     sig := hmac.New(sha512.New384, []byte(c.ApiSecret))
     sig.Write([]byte(payload))
     return hex.EncodeToString(sig.Sum(nil))
@@ -158,7 +157,7 @@ var httpDo = func(req *http.Request) (*http.Response, error) {
 }
 
 // Do executes API request created by NewRequest method or custom *http.Request.
-func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
+func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
     resp, err := httpDo(req)
 
     if err != nil {
