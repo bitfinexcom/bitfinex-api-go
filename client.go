@@ -1,3 +1,4 @@
+// Package bitfinex is the official client to access to bitfinex.com API
 package bitfinex
 
 import (
@@ -40,6 +41,7 @@ type Client struct {
     Ticker        *TickerService
     Account       *AccountService
     Balances      *BalancesService
+    Offers        *OffersService
     Credits       *CreditsService
     Deposit       *DepositService
     Lendbook      *LendbookService
@@ -51,6 +53,7 @@ type Client struct {
     Positions     *PositionsService
     History       *HistoryService
     WebSocket     *WebSocketService
+    Wallet        *WalletService
 }
 
 // NewClient creates new Bitfinex.com API http client
@@ -63,6 +66,7 @@ func NewClient() *Client {
     c.Account = &AccountService{client: c}
     c.Ticker = &TickerService{client: c}
     c.Balances = &BalancesService{client: c}
+    c.Offers = &OffersService{client: c}
     c.Credits = &CreditsService{client: c}
     c.Deposit = &DepositService{client: c}
     c.Lendbook = &LendbookService{client: c}
@@ -73,6 +77,7 @@ func NewClient() *Client {
     c.History = &HistoryService{client: c}
     c.Trades = &TradesService{client: c}
     c.Positions = &PositionsService{client: c}
+    c.Wallet = &WalletService{client: c}
     c.WebSocket = NewWebSocketService(c)
 
     return c

@@ -40,7 +40,7 @@ type Order struct {
     ExecutedAmount    string `json:"executed_amount"`
 }
 
-// GET orders
+// get all active orders
 func (s *OrderService) All() ([]Order, error) {
     req, err := s.client.newAuthenticatedRequest("GET", "orders", nil)
     if err != nil {
@@ -56,7 +56,7 @@ func (s *OrderService) All() ([]Order, error) {
     return v, nil
 }
 
-// POST order/cancel/all
+// Cancel all active orders
 func (s *OrderService) CancelAll() error {
     req, err := s.client.newAuthenticatedRequest("POST", "order/cancel/all", nil)
     if err != nil {
@@ -71,14 +71,7 @@ func (s *OrderService) CancelAll() error {
     return nil
 }
 
-// POST order/new
-// symbol   # The name of the symbol (see `/symbols`).
-// price    # Price to buy or sell at. May omit if a market order.
-// amount   # Order size: how much to buy or sell. Use negative amount to create sell order.
-// side     # Either "buy" or "sell".
-// type     # Either "market" / "limit" / "stop" / "trailing-stop" / "fill-or-kill" /
-//                   "exchange market" / "exchange limit" / "exchange stop" /
-//                   "exchange trailing-stop" / "exchange fill-or-kill"
+// Create a new order
 func (s *OrderService) Create(symbol string, amount float64, price float64, orderType string) (*Order, error) {
     var side string
     if amount < 0 {
@@ -111,10 +104,10 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
     return order, nil
 }
 
-// POST order/cancel
-func (s *OrderService) Cancel(order_id int) error {
+// Cancel the order with id `orderId`
+func (s *OrderService) Cancel(orderId int) error {
     payload := map[string]interface{}{
-        "order_id": order_id,
+        "order_id": orderId,
     }
 
     req, err := s.client.newAuthenticatedRequest("POST", "order/cancel", payload)
