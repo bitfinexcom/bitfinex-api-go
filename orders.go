@@ -190,3 +190,62 @@ func (s *OrderService) CancelMulti(orderIDS []int64) (string, error) {
 
     return response["result"], err
 }
+
+// Replace an Order
+func (s *OrderService) Replace(orderId int64, useRemaining bool, newOrder SubmitOrder) (Order, error) {
+
+    var side string
+    if newOrder.Amount < 0 {
+        newOrder.Amount = math.Abs(newOrder.Amount)
+        side = "sell"
+    } else {
+        side = "buy"
+    }
+
+    payload := map[string]interface{}{
+        "order_id":      strconv.FormatInt(orderId, 10),
+        "symbol":        newOrder.Symbol,
+        "amount":        strconv.FormatFloat(newOrder.Amount, 'f', -1, 32),
+        "price":         strconv.FormatFloat(newOrder.Price, 'f', -1, 32),
+        "exchange":      "bitfinex",
+        "side":          side,
+        "type":          newOrder.Type,
+        "use_remaining": useRemaining,
+    }
+
+    req, err := s.client.newAuthenticatedRequest("POST", "order/cancel/replace", payload)
+    if err != nil {
+        return Order{}, err
+    }
+
+    order := new(Order)
+    _, err = s.client.do(req, order)
+    if err != nil {
+        return *order, err
+    }
+
+    return *order, nil
+}
+
+// Retrieve the status of an order
+func (s *OrderService) Status(orderId int64) (Order, error) {
+
+    payload := map[string]interface{}{
+        "order_id": orderId,
+    }
+
+    req, err := s.client.newAuthenticatedRequest("POST", "order/status", payload)
+
+    if err != nil {
+        return Order{}, err
+    }
+
+    order := new(Order)
+    _, err = s.client.do(req, order)
+    if err != nil {
+        return *order, err
+    }
+
+    return *order, nil
+
+}
