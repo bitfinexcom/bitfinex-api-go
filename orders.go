@@ -3,6 +3,7 @@ package bitfinex
 import (
     "fmt"
     "math"
+    "strconv"
 )
 
 const (
@@ -121,4 +122,53 @@ func (s *OrderService) Cancel(orderId int) error {
     }
 
     return nil
+}
+
+type SubmitOrder struct {
+    Symbol string
+    Amount float64
+    Price  float64
+    Type   string
+}
+
+type MultipleOrderResponse struct {
+    Orders []Order `json:"order_ids"`
+    Status string
+}
+
+// Create Multiple Orders
+func (s *OrderService) CreateMulti(orders []SubmitOrder) (MultipleOrderResponse, error) {
+
+    ordersMap := make([]interface{}, 0)
+    for _, order := range orders {
+        var side string
+        if order.Amount < 0 {
+            order.Amount = math.Abs(order.Amount)
+            side = "sell"
+        } else {
+            side = "buy"
+        }
+        ordersMap = append(ordersMap, map[string]interface{}{
+            "symbol":   order.Symbol,
+            "amount":   strconv.FormatFloat(order.Amount, 'f', -1, 32),
+            "price":    strconv.FormatFloat(order.Price, 'f', -1, 32),
+            "exchange": "bitfinex",
+            "side":     side,
+            "type":     order.Type,
+        })
+    }
+    payload := map[string]interface{}{
+        "orders": ordersMap,
+    }
+
+    req, err := s.client.newAuthenticatedRequest("POST", "order/new/multi", payload)
+    if err != nil {
+        return MultipleOrderResponse{}, err
+    }
+
+    response := new(MultipleOrderResponse)
+    _, err = s.client.do(req, response)
+
+    return *response, err
+
 }
