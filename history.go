@@ -28,7 +28,7 @@ func (s *HistoryService) Balance(currency, wallet string, since, until time.Time
         payload["limit"] = limit
     }
 
-    req, err := s.client.NewAuthenticatedRequest("POST", "history", payload)
+    req, err := s.client.newAuthenticatedRequest("POST", "history", payload)
 
     if err != nil {
         return nil, err
@@ -36,7 +36,7 @@ func (s *HistoryService) Balance(currency, wallet string, since, until time.Time
 
     var v []Balance
 
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
 
     if err != nil {
         return nil, err
@@ -70,7 +70,7 @@ func (s *HistoryService) Movements(currency, method string, since, until time.Ti
         payload["limit"] = limit
     }
 
-    req, err := s.client.NewAuthenticatedRequest("POST", "history/movements", payload)
+    req, err := s.client.newAuthenticatedRequest("POST", "history/movements", payload)
 
     if err != nil {
         return nil, err
@@ -78,7 +78,7 @@ func (s *HistoryService) Movements(currency, method string, since, until time.Ti
 
     var v []Movement
 
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
 
     if err != nil {
         return nil, err
@@ -115,7 +115,7 @@ func (s *HistoryService) Trades(pair string, since, until time.Time, limit int, 
         payload["reverse"] = 1
     }
 
-    req, err := s.client.NewAuthenticatedRequest("POST", "mytrades", payload)
+    req, err := s.client.newAuthenticatedRequest("POST", "mytrades", payload)
 
     if err != nil {
         return nil, err
@@ -123,7 +123,7 @@ func (s *HistoryService) Trades(pair string, since, until time.Time, limit int, 
 
     var v []PastTrade
 
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
 
     if err != nil {
         return nil, err

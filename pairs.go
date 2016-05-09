@@ -4,17 +4,16 @@ type PairsService struct {
     client *Client
 }
 
-type Pairs []string
-
-// GET /symbols
-func (p *PairsService) All() (*Pairs, error) {
-    req, err := p.client.NewRequest("GET", "symbols", nil)
+// Get all Pair names as array of strings
+func (p *PairsService) All() ([]string, error) {
+    req, err := p.client.newRequest("GET", "symbols", nil)
     if err != nil {
         return nil, err
     }
 
-    v := &Pairs{}
-    _, err = p.client.Do(req, v)
+    var v []string
+
+    _, err = p.client.do(req, &v)
     if err != nil {
         return nil, err
     }
@@ -22,6 +21,7 @@ func (p *PairsService) All() (*Pairs, error) {
     return v, nil
 }
 
+// Detailed Pair
 type Pair struct {
     Pair             string
     PricePrecision   int     `json:"price_precision,int"`
@@ -32,15 +32,15 @@ type Pair struct {
     Espiration       string
 }
 
-// GET /symbols
+// Return a list of detailed pairs
 func (p *PairsService) AllDetailed() ([]Pair, error) {
-    req, err := p.client.NewRequest("GET", "symbols_details", nil)
+    req, err := p.client.newRequest("GET", "symbols_details", nil)
     if err != nil {
         return nil, err
     }
 
     var v []Pair
-    _, err = p.client.Do(req, &v)
+    _, err = p.client.do(req, &v)
     if err != nil {
         return nil, err
     }

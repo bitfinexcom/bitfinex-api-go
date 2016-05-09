@@ -7,7 +7,7 @@ import (
     "testing"
 )
 
-func TestOfferNew(t *testing.T) {
+func TestDepositNew(t *testing.T) {
     httpDo = func(req *http.Request) (*http.Response, error) {
         msg := `{
             "result":"success",
@@ -22,12 +22,12 @@ func TestOfferNew(t *testing.T) {
         return &resp, nil
     }
 
-    offer, err := NewClient().Deposit.New("bitcoin", "trading", 0)
+    deposit, err := NewClient().Deposit.New("bitcoin", "trading", 0)
 
     if err != nil {
         t.Error(err)
     }
-    success, err := offer.Success()
+    success, err := deposit.Success()
 
     if err != nil || !success {
         t.Error("Expected", true)

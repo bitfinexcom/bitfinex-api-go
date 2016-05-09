@@ -18,7 +18,8 @@ func TestPairsGetAll(t *testing.T) {
     }
 
     pairs, err := NewClient().Pairs.All()
-    numPairs := len(*pairs)
+
+    numPairs := len(pairs)
 
     if err != nil {
         t.Error(err)
@@ -29,9 +30,9 @@ func TestPairsGetAll(t *testing.T) {
         t.Error("Actual ", numPairs)
     }
 
-    if (*pairs)[0] != "btcusd" {
+    if (pairs)[0] != "btcusd" {
         t.Error("Expected", "btcusd")
-        t.Error("Actual ", (*pairs)[0])
+        t.Error("Actual ", pairs[0])
     }
 }
 

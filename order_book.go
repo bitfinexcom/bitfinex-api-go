@@ -48,14 +48,14 @@ func (s *OrderBookServive) Get(pair string, limitBids, limitAsks int, noGroup bo
         params.Add("group", "0")
     }
 
-    req, err := s.client.NewRequest("GET", "book/"+pair, params)
+    req, err := s.client.newRequest("GET", "book/"+pair, params)
 
     if err != nil {
         return OrderBook{}, err
     }
 
     var v OrderBook
-    _, err = s.client.Do(req, &v)
+    _, err = s.client.do(req, &v)
 
     if err != nil {
         return OrderBook{}, err
