@@ -114,5 +114,28 @@ func TestCreateMulti(t *testing.T) {
         t.Error("Expected", 2)
         t.Error("Actual ", len(response.Orders))
     }
+}
+
+func TestCancelMulti(t *testing.T) {
+    httpDo = func(req *http.Request) (*http.Response, error) {
+        msg := `{"result":"Orders cancelled"}`
+        resp := http.Response{
+            Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+            StatusCode: 200,
+        }
+        return &resp, nil
+    }
+
+    orders := []int64{1000, 1001, 1002}
+    response, err := NewClient().Orders.CancelMulti(orders)
+
+    if err != nil {
+        t.Error(err)
+    }
+
+    if response != "Orders cancelled" {
+        t.Error("Expected", "Orders cancelled")
+        t.Error("Actual ", response)
+    }
 
 }

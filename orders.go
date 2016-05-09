@@ -172,3 +172,21 @@ func (s *OrderService) CreateMulti(orders []SubmitOrder) (MultipleOrderResponse,
     return *response, err
 
 }
+
+// Cancel multiple orders
+func (s *OrderService) CancelMulti(orderIDS []int64) (string, error) {
+    payload := map[string]interface{}{
+        "order_ids": orderIDS,
+    }
+
+    req, err := s.client.newAuthenticatedRequest("POST", "order/cancel/multi", payload)
+
+    if err != nil {
+        return "", err
+    }
+
+    response := make(map[string]string, 0)
+    _, err = s.client.do(req, &response)
+
+    return response["result"], err
+}
