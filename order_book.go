@@ -12,6 +12,7 @@ type OrderBookServive struct {
 }
 
 type OrderBookEntry struct {
+    Price     string
     Rate      string
     Amount    string
     Period    int
