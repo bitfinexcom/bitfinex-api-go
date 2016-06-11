@@ -19,7 +19,7 @@ const (
 
     // Channels
     CHAN_BOOK   = "book"
-    CHAN_TRADE  = "trade"
+    CHAN_TRADE  = "trades"
     CHAN_TICKER = "ticker"
 )
 
