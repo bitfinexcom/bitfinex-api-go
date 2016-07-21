@@ -1,48 +1,38 @@
 package bitfinex
 
-import (
-	"fmt"
-)
-
-type MarginInfoServive struct {
-	client *Client
+type MarginInfoService struct {
+    client *Client
 }
 
 type MarginInfo struct {
-	MarginBalance     string        `json:"margin_balance"`
-	TradableBalance   string        `json:"tradable_balance"`
-	UnrealizedPl      float64       `json:"unrealized_pl"`
-	UnrealizedSwap    float64       `json:"unrealized_swap"`
-	NetValue          string        `json:"net_value"`
-	RequiredMargin    float64       `json:"required_margin"`
-	Leverage          string        `json:"leverage"`
-	MarginRequirement string        `json:"margin_requirement"`
-	MarginLimits      []MarginLimit `json:"margin_limits"`
-	Message           string        `json:"message"`
+    MarginBalance     float64       `json:"margin_balance,string"`
+    TradableBalance   float64       `json:"tradable_balance,string"`
+    UnrealizedPl      float64       `json:"unrealized_pl,string"`
+    UnrealizedSwap    float64       `json:"unrealized_swap,string"`
+    NetValue          float64       `json:"net_value,string"`
+    RequiredMargin    float64       `json:"required_margin,string"`
+    Leverage          float64       `json:"leverage,string"`
+    MarginRequirement float64       `json:"margin_requirement,string"`
+    MarginLimits      []MarginLimit `json:"margin_limits,string"`
+    Message           string        `json:"message"`
 }
 
 type MarginLimit struct {
-	OnPair            string `json:"on_pair"`
-	InitialMargin     string `json:"initial_margin"`
-	MarginRequirement string `json:"margin_requirement"`
-	TradableBalance   string `json:"tradable_balance"`
+    OnPair            string  `json:"on_pair"`
+    InitialMargin     float64 `json:"initial_margin,string"`
+    MarginRequirement float64 `json:"margin_requirement,string"`
+    TradableBalance   float64 `json:"tradable_balance,string"`
 }
 
 // GET /margin_infos
-func (s *MarginInfoServive) All() ([]MarginInfo, error) {
-	req, err := s.client.NewAuthenticatedRequest("GET", "margin_infos", nil)
-	if err != nil {
-		return make([]MarginInfo, 0), err
-	}
+func (s *MarginInfoService) All() ([]MarginInfo, error) {
+    req, err := s.client.newAuthenticatedRequest("GET", "margin_infos", nil)
+    if err != nil {
+        return nil, err
+    }
 
-	var v []MarginInfo
-	resp, err := s.client.Do(req, &v)
-	if err != nil {
-		return make([]MarginInfo, 0), err
-	}
+    var v []MarginInfo
+    _, err = s.client.do(req, &v)
 
-	fmt.Println(v)
-	println(resp)
-
-	return make([]MarginInfo, 0), nil
+    return v, err
 }
