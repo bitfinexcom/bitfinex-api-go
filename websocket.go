@@ -16,6 +16,8 @@ const (
     BTCUSD = "BTCUSD"
     LTCUSD = "LTCUSD"
     LTCBTC = "LTCBTC"
+    ETHUSD = "ETHUSD"
+    ETHBTC = "ETHBTC"
 
     // Channels
     CHAN_BOOK   = "book"
