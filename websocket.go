@@ -125,31 +125,31 @@ func (w *WebSocketService) Subscribe() {
                     // Payload received
                     var fullPayload []interface{}
                     err = json.Unmarshal([]byte(clientMessage), &fullPayload)
-                    					if err != nil {
-						log.Println("Error decoding fullPayload", err)
-					} else {
-						if len(fullPayload) > 3 {
-							itemsSlice := fullPayload[3:]
-							i, _ := json.Marshal(itemsSlice)
-							var item []float64
-							err = json.Unmarshal(i, &item)
-							if err == nil {
-								chanID := fullPayload[0].(float64)
-								w.chanMap[chanID] <- item
-							}
-						} else {
-							itemsSlice := fullPayload[1]
-							i, _ := json.Marshal(itemsSlice)
-							var items [][]float64
-							err = json.Unmarshal(i, &items)
-							if err == nil {
-								chanId := fullPayload[0].(float64)
-								for _, v := range items {
-									w.chanMap[chanId] <- v
-								}
-							}
-						}
-					}
+                    if err != nil {
+                        log.Println("Error decoding fullPayload", err)
+                    } else {
+                        if len(fullPayload) > 3 {
+                            itemsSlice := fullPayload[3:]
+                            i, _ := json.Marshal(itemsSlice)
+                            var item []float64
+                            err = json.Unmarshal(i, &item)
+                            if err == nil {
+                                chanID := fullPayload[0].(float64)
+                                w.chanMap[chanID] <- item
+                            }
+                        } else {
+                            itemsSlice := fullPayload[1]
+                            i, _ := json.Marshal(itemsSlice)
+                            var items [][]float64
+                            err = json.Unmarshal(i, &items)
+                            if err == nil {
+                                chanId := fullPayload[0].(float64)
+                                for _, v := range items {
+                                    w.chanMap[chanId] <- v
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 // Received "subscribed" resposne. Link channels.
