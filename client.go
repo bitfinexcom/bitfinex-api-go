@@ -28,8 +28,9 @@ type Param struct {
 
 type Client struct {
     // Base URL for API requests.
-    BaseURL      *url.URL
-    WebSocketURL string
+    BaseURL                *url.URL
+    WebSocketURL           string
+    WebSocketTLSSkipVerify bool
 
     // Auth data
     ApiKey    string
@@ -79,6 +80,7 @@ func NewClient() *Client {
     c.Positions = &PositionsService{client: c}
     c.Wallet = &WalletService{client: c}
     c.WebSocket = NewWebSocketService(c)
+    c.WebSocketTLSSkipVerify = false
 
     return c
 }
