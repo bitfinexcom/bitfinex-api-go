@@ -1,13 +1,16 @@
 package bitfinex
 
 import (
+    "crypto/tls"
     "encoding/json"
     "fmt"
     "log"
+    "net/http"
     "reflect"
+    "strings"
     "time"
 
-    "golang.org/x/net/websocket"
+    "github.com/gorilla/websocket"
 )
 
 // Pairs available
@@ -62,7 +65,18 @@ func NewWebSocketService(c *Client) *WebSocketService {
 
 // Connect create new bitfinex websocket connection
 func (w *WebSocketService) Connect() error {
-    ws, err := websocket.Dial(w.client.WebSocketURL, "", "http://localhost/")
+    var d = websocket.Dialer{
+        Subprotocols:    []string{"p1", "p2"},
+        ReadBufferSize:  1024,
+        WriteBufferSize: 1024,
+        Proxy:           http.ProxyFromEnvironment,
+    }
+
+    if w.client.WebSocketTLSSkipVerify {
+        d.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+    }
+
+    ws, _, err := d.Dial(w.client.WebSocketURL, nil)
     if err != nil {
         return err
     }
@@ -88,10 +102,7 @@ func (w *WebSocketService) ClearSubscriptions() {
     w.subscribes = make([]subscribeToChannel, 0)
 }
 
-// Watch allows to subsribe to channels and watch for new updates.
-// This method supports next channels: book, trade, ticker.
-func (w *WebSocketService) Subscribe() {
-    // Subscribe to each channel
+func (w *WebSocketService) sendSubscribeMessages() {
     for _, s := range w.subscribes {
         msg, _ := json.Marshal(SubscribeMsg{
             Event:   "subscribe",
@@ -99,67 +110,92 @@ func (w *WebSocketService) Subscribe() {
             Pair:    s.Pair,
         })
 
-        _, err := w.ws.Write(msg)
+        fmt.Println("Subscribe to channel ", s.Channel, s.Pair)
+        err := w.ws.WriteMessage(websocket.TextMessage, msg)
         if err != nil {
             // Can't send message to web socket.
             log.Fatal(err)
         }
     }
+}
 
-    var clientMessage string
+// Watch allows to subsribe to channels and watch for new updates.
+// This method supports next channels: book, trade, ticker.
+func (w *WebSocketService) Subscribe() error {
+    // Subscribe to each channel
+    w.sendSubscribeMessages()
+
+    var msg string
+
     for {
-        if err := websocket.Message.Receive(w.ws, &clientMessage); err != nil {
-            log.Fatal("Error reading message: ", err)
+        _, p, err := w.ws.ReadMessage()
+        msg = string(p)
+        if err != nil {
+            return err
+        }
+
+        if strings.Contains(msg, "event") {
+            w.handleEventMessage(msg)
         } else {
-            // Check for first message(event:subscribed)
-            event := &SubscribeMsg{}
-            err = json.Unmarshal([]byte(clientMessage), &event)
-            if err != nil {
-                // Received payload or data update
-                var dataUpdate []float64
-                err = json.Unmarshal([]byte(clientMessage), &dataUpdate)
-                if err == nil {
-                    chanId := dataUpdate[0]
-                    // Remove chanId from data update
-                    // and send message to internal chan
-                    w.chanMap[chanId] <- dataUpdate[1:]
-                } else {
-                    // Payload received
-                    var fullPayload []interface{}
-                    err = json.Unmarshal([]byte(clientMessage), &fullPayload)
-                    if err != nil {
-                        log.Println("Error decoding fullPayload", err)
-                    } else {
-                        if len(fullPayload) > 3 {
-                            itemsSlice := fullPayload[3:]
-                            i, _ := json.Marshal(itemsSlice)
-                            var item []float64
-                            err = json.Unmarshal(i, &item)
-                            if err == nil {
-                                chanID := fullPayload[0].(float64)
-                                w.chanMap[chanID] <- item
-                            }
-                        } else {
-                            itemsSlice := fullPayload[1]
-                            i, _ := json.Marshal(itemsSlice)
-                            var items [][]float64
-                            err = json.Unmarshal(i, &items)
-                            if err == nil {
-                                chanId := fullPayload[0].(float64)
-                                for _, v := range items {
-                                    w.chanMap[chanId] <- v
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                // Received "subscribed" resposne. Link channels.
-                for _, k := range w.subscribes {
-                    if event.Event == "subscribed" && event.Pair == k.Pair && event.Channel == k.Channel {
-                        fmt.Println("!!!", event, "r:", k.Channel, k.Pair)
-                        w.chanMap[event.ChanId] = k.Chan
-                    }
+            w.handleDataMessage(msg)
+        }
+    }
+
+    return nil
+}
+
+func (w *WebSocketService) handleEventMessage(msg string) {
+    // Check for first message(event:subscribed)
+    event := &SubscribeMsg{}
+    err := json.Unmarshal([]byte(msg), &event)
+
+    // Received "subscribed" resposne. Link channels.
+    if err == nil {
+        for _, k := range w.subscribes {
+            if event.Event == "subscribed" && event.Pair == k.Pair && event.Channel == k.Channel {
+                w.chanMap[event.ChanId] = k.Chan
+            }
+        }
+    }
+}
+
+func (w *WebSocketService) handleDataMessage(msg string) {
+
+    // Received payload or data update
+    var dataUpdate []float64
+    err := json.Unmarshal([]byte(msg), &dataUpdate)
+    if err == nil {
+        chanId := dataUpdate[0]
+        // Remove chanId from data update
+        // and send message to internal chan
+        w.chanMap[chanId] <- dataUpdate[1:]
+    }
+
+    // Payload received
+    var fullPayload []interface{}
+    err = json.Unmarshal([]byte(msg), &fullPayload)
+
+    if err != nil {
+        log.Println("Error decoding fullPayload", err)
+    } else {
+        if len(fullPayload) > 3 {
+            itemsSlice := fullPayload[3:]
+            i, _ := json.Marshal(itemsSlice)
+            var item []float64
+            err = json.Unmarshal(i, &item)
+            if err == nil {
+                chanID := fullPayload[0].(float64)
+                w.chanMap[chanID] <- item
+            }
+        } else {
+            itemsSlice := fullPayload[1]
+            i, _ := json.Marshal(itemsSlice)
+            var items [][]float64
+            err = json.Unmarshal(i, &items)
+            if err == nil {
+                chanId := fullPayload[0].(float64)
+                for _, v := range items {
+                    w.chanMap[chanId] <- v
                 }
             }
         }
@@ -201,7 +237,7 @@ func (c *TermData) HasError() bool {
 }
 
 func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
-    ws, err := websocket.Dial(w.client.WebSocketURL, "", "http://localhost/")
+    ws, _, err := websocket.DefaultDialer.Dial(w.client.WebSocketURL, nil)
     if err != nil {
         ch <- TermData{
             Error: err.Error(),
@@ -218,7 +254,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
     })
 
     // Send auth message
-    _, err = ws.Write(connectMsg)
+    err = ws.WriteMessage(websocket.TextMessage, connectMsg)
     if err != nil {
         ch <- TermData{
             Error: err.Error(),
@@ -229,13 +265,15 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 
     var msg string
     for {
-        if err = websocket.Message.Receive(ws, &msg); err != nil {
+        _, p, err := w.ws.ReadMessage()
+        if err != nil {
             ch <- TermData{
                 Error: err.Error(),
             }
             ws.Close()
             return
         } else {
+            msg = string(p)
             event := &privateResponse{}
             err = json.Unmarshal([]byte(msg), &event)
             if err != nil {
