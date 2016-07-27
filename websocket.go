@@ -251,7 +251,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
         d.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
     }
 
-    ws, _, err := d.Dial(w.client.WebSocketURL, nil)
+    ws, _, err = d.Dial(w.client.WebSocketURL, nil)
     if err != nil {
         ch <- TermData{
             Error: err.Error(),
