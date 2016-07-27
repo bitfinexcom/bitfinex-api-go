@@ -237,7 +237,21 @@ func (c *TermData) HasError() bool {
 }
 
 func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
-    ws, _, err := websocket.DefaultDialer.Dial(w.client.WebSocketURL, nil)
+
+    var d = websocket.Dialer{
+        Subprotocols:    []string{"p1", "p2"},
+        ReadBufferSize:  1024,
+        WriteBufferSize: 1024,
+        Proxy:           http.ProxyFromEnvironment,
+    }
+
+    ws, _, err := d.Dial(w.client.WebSocketURL, nil)
+
+    if w.client.WebSocketTLSSkipVerify {
+        d.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+    }
+
+    ws, _, err := d.Dial(w.client.WebSocketURL, nil)
     if err != nil {
         ch <- TermData{
             Error: err.Error(),
@@ -265,7 +279,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 
     var msg string
     for {
-        _, p, err := w.ws.ReadMessage()
+        _, p, err := ws.ReadMessage()
         if err != nil {
             ch <- TermData{
                 Error: err.Error(),
