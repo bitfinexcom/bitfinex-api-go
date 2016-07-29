@@ -102,7 +102,7 @@ func (w *WebSocketService) ClearSubscriptions() {
     w.subscribes = make([]subscribeToChannel, 0)
 }
 
-func (w *WebSocketService) sendSubscribeMessages() {
+func (w *WebSocketService) sendSubscribeMessages() error {
     for _, s := range w.subscribes {
         msg, _ := json.Marshal(SubscribeMsg{
             Event:   "subscribe",
@@ -114,16 +114,19 @@ func (w *WebSocketService) sendSubscribeMessages() {
         err := w.ws.WriteMessage(websocket.TextMessage, msg)
         if err != nil {
             // Can't send message to web socket.
-            log.Fatal(err)
+            return err
         }
     }
+    return nil
 }
 
 // Watch allows to subsribe to channels and watch for new updates.
 // This method supports next channels: book, trade, ticker.
 func (w *WebSocketService) Subscribe() error {
     // Subscribe to each channel
-    w.sendSubscribeMessages()
+    if err := w.sendSubscribeMessages(); err != nil {
+        return err
+    }
 
     var msg string
 
