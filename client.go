@@ -48,7 +48,7 @@ type Client struct {
     Lendbook      *LendbookService
     MarginInfo    *MarginInfoService
     MarginFunding *MarginFundingService
-    OrderBook     *OrderBookServive
+    OrderBook     *OrderBookService
     Orders        *OrderService
     Trades        *TradesService
     Positions     *PositionsService
@@ -73,7 +73,7 @@ func NewClient() *Client {
     c.Lendbook = &LendbookService{client: c}
     c.MarginInfo = &MarginInfoService{client: c}
     c.MarginFunding = &MarginFundingService{client: c}
-    c.OrderBook = &OrderBookServive{client: c}
+    c.OrderBook = &OrderBookService{client: c}
     c.Orders = &OrderService{client: c}
     c.History = &HistoryService{client: c}
     c.Trades = &TradesService{client: c}

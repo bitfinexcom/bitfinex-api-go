@@ -7,7 +7,7 @@ import (
     "time"
 )
 
-type OrderBookServive struct {
+type OrderBookService struct {
     client *Client
 }
 
@@ -35,7 +35,7 @@ func (el *OrderBookEntry) ParseTime() (*time.Time, error) {
 }
 
 // GET /book
-func (s *OrderBookServive) Get(pair string, limitBids, limitAsks int, noGroup bool) (OrderBook, error) {
+func (s *OrderBookService) Get(pair string, limitBids, limitAsks int, noGroup bool) (OrderBook, error) {
     pair = strings.ToUpper(pair)
 
     params := url.Values{}
