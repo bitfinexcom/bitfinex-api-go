@@ -21,6 +21,16 @@ const (
     LTCBTC = "LTCBTC"
     ETHUSD = "ETHUSD"
     ETHBTC = "ETHBTC"
+    ETCUSD = "ETCUSD"
+    ETCBTC = "ETCBTC"
+    BFXUSD = "BFXUSD"
+    BFXBTC = "BFXBTC"
+    ZECUSD = "ZECUSD"
+    ZECBTC = "ZECBTC"
+    XMRUSD = "XMRUSD"
+    XMRBTC = "XMRBTC"
+    RRTUSD = "RRTUSD"
+    RRTBTC = "RRTBTC"
 
     // Channels
     CHAN_BOOK   = "book"

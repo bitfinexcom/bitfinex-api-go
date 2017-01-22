@@ -15,8 +15,10 @@ import (
 )
 
 const (
-    DefaultBaseURL      = "https://api.bitfinex.com/v1/"
-    DefaultWebSocketURL = "wss://api2.bitfinex.com:3000/ws"
+    DefaultBaseURL        = "wss://api.bitfinex.com/v1"
+    DefaultBaseV2URL      = "wss://api.bitfinex.com/v2"
+    DefaultWebSocketURL   = "wss://api.bitfinex.com/ws/"
+    DefaultWebSocketV2URL = "wss://api.bitfinex.com/ws/2"
 )
 
 var nonce int64
