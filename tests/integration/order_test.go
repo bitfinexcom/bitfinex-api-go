@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go"
+	"github.com/bitfinexcom/bitfinex-api-go/v1"
 	"testing"
 )
 

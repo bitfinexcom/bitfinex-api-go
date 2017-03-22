@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go"
+	"github.com/bitfinexcom/bitfinex-api-go/v1"
 )
 
 func main() {
