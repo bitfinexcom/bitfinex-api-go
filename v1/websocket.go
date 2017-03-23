@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/utils"
 
@@ -46,6 +47,8 @@ type WebSocketService struct {
 	client *Client
 	// websocket client
 	ws *websocket.Conn
+	//idle time for the websocket before timeout, zero means no timeout
+	readTimeout time.Duration
 	// special web socket for private messages
 	privateWs *websocket.Conn
 	// map internal channels to websocket's
@@ -132,6 +135,10 @@ func (w *WebSocketService) sendSubscribeMessages() error {
 	return nil
 }
 
+func (w *WebSocketService) SetReadTimeout(t time.Duration) {
+	w.readTimeout = t
+}
+
 // Subscribe allows to subsribe to channels and watch for new updates.
 // This method supports next channels: book, trade, ticker.
 func (w *WebSocketService) Subscribe() error {
@@ -143,6 +150,11 @@ func (w *WebSocketService) Subscribe() error {
 	var msg string
 
 	for {
+		if w.readTimeout == 0 {
+			w.ws.SetReadTimeout(0) //test this 0 or Duration 0
+		} else {
+			w.ws.SetReadTimeout(time.Now().Add(w.readTimeout))
+		}
 		_, p, err := w.ws.ReadMessage()
 		msg = string(p)
 		if err != nil {
