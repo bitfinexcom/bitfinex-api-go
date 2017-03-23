@@ -24,10 +24,10 @@ func main() {
 	trades_chan := make(chan []float64)
 	ticker_chan := make(chan []float64)
 
-	c.WebSocket.AddSubscribe(bitfinex.CHAN_BOOK, bitfinex.BTCUSD, book_btcusd_chan)
-	c.WebSocket.AddSubscribe(bitfinex.CHAN_BOOK, bitfinex.LTCUSD, book_ltcusd_chan)
-	c.WebSocket.AddSubscribe(bitfinex.CHAN_TRADE, bitfinex.BTCUSD, trades_chan)
-	c.WebSocket.AddSubscribe(bitfinex.CHAN_TICKER, bitfinex.BTCUSD, ticker_chan)
+	c.WebSocket.AddSubscribe(bitfinex.ChanBook, bitfinex.BTCUSD, book_btcusd_chan)
+	c.WebSocket.AddSubscribe(bitfinex.ChanBook, bitfinex.LTCUSD, book_ltcusd_chan)
+	c.WebSocket.AddSubscribe(bitfinex.ChanTrade, bitfinex.BTCUSD, trades_chan)
+	c.WebSocket.AddSubscribe(bitfinex.ChanTicker, bitfinex.BTCUSD, ticker_chan)
 
 	go listen(book_btcusd_chan, "BOOK BTCUSD:")
 	go listen(book_ltcusd_chan, "BOOK LTCUSD:")

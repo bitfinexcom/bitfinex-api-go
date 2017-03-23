@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"time"
+
+	"github.com/bitfinexcom/bitfinex-api-go/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -33,9 +34,9 @@ const (
 	RRTBTC = "RRTBTC"
 
 	// Channels
-	CHAN_BOOK   = "book"
-	CHAN_TRADE  = "trades"
-	CHAN_TICKER = "ticker"
+	ChanBook   = "book"
+	ChanTrade  = "trades"
+	ChanTicker = "ticker"
 )
 
 // WebSocketService allow to connect and receive stream data
@@ -52,11 +53,11 @@ type WebSocketService struct {
 	subscribes []subscribeToChannel
 }
 
-type SubscribeMsg struct {
+type subscribeMsg struct {
 	Event   string  `json:"event"`
 	Channel string  `json:"channel"`
 	Pair    string  `json:"pair"`
-	ChanId  float64 `json:"chanId,omitempty"`
+	ChanID  float64 `json:"chanId,omitempty"`
 }
 
 type subscribeToChannel struct {
@@ -65,6 +66,7 @@ type subscribeToChannel struct {
 	Chan    chan []float64
 }
 
+// NewWebSocketService returns a WebSocketService using the given client.
 func NewWebSocketService(c *Client) *WebSocketService {
 	return &WebSocketService{
 		client:     c,
@@ -114,7 +116,7 @@ func (w *WebSocketService) ClearSubscriptions() {
 
 func (w *WebSocketService) sendSubscribeMessages() error {
 	for _, s := range w.subscribes {
-		msg, _ := json.Marshal(SubscribeMsg{
+		msg, _ := json.Marshal(subscribeMsg{
 			Event:   "subscribe",
 			Channel: s.Channel,
 			Pair:    s.Pair,
@@ -130,7 +132,7 @@ func (w *WebSocketService) sendSubscribeMessages() error {
 	return nil
 }
 
-// Watch allows to subsribe to channels and watch for new updates.
+// Subscribe allows to subsribe to channels and watch for new updates.
 // This method supports next channels: book, trade, ticker.
 func (w *WebSocketService) Subscribe() error {
 	// Subscribe to each channel
@@ -159,14 +161,14 @@ func (w *WebSocketService) Subscribe() error {
 
 func (w *WebSocketService) handleEventMessage(msg string) {
 	// Check for first message(event:subscribed)
-	event := &SubscribeMsg{}
+	event := &subscribeMsg{}
 	err := json.Unmarshal([]byte(msg), &event)
 
 	// Received "subscribed" resposne. Link channels.
 	if err == nil {
 		for _, k := range w.subscribes {
 			if event.Event == "subscribed" && event.Pair == k.Pair && event.Channel == k.Channel {
-				w.chanMap[event.ChanId] = k.Chan
+				w.chanMap[event.ChanID] = k.Chan
 			}
 		}
 	}
@@ -178,10 +180,10 @@ func (w *WebSocketService) handleDataMessage(msg string) {
 	var dataUpdate []float64
 	err := json.Unmarshal([]byte(msg), &dataUpdate)
 	if err == nil {
-		chanId := dataUpdate[0]
-		// Remove chanId from data update
+		chanID := dataUpdate[0]
+		// Remove chanID from data update
 		// and send message to internal chan
-		w.chanMap[chanId] <- dataUpdate[1:]
+		w.chanMap[chanID] <- dataUpdate[1:]
 	}
 
 	// Payload received
@@ -206,9 +208,9 @@ func (w *WebSocketService) handleDataMessage(msg string) {
 			var items [][]float64
 			err = json.Unmarshal(i, &items)
 			if err == nil {
-				chanId := fullPayload[0].(float64)
+				chanID := fullPayload[0].(float64)
 				for _, v := range items {
-					w.chanMap[chanId] <- v
+					w.chanMap[chanID] <- v
 				}
 			}
 		}
@@ -221,7 +223,7 @@ func (w *WebSocketService) handleDataMessage(msg string) {
 
 type privateConnect struct {
 	Event       string `json:"event"`
-	ApiKey      string `json:"apiKey"`
+	APIKey      string `json:"apiKey"`
 	AuthSig     string `json:"authSig"`
 	AuthPayload string `json:"authPayload"`
 }
@@ -230,8 +232,8 @@ type privateConnect struct {
 type privateResponse struct {
 	Event  string  `json:"event"`
 	Status string  `json:"status"`
-	ChanId float64 `json:"chanId,omitempty"`
-	UserId float64 `json:"userId"`
+	ChanID float64 `json:"chanId,omitempty"`
+	UserID float64 `json:"userId"`
 }
 
 type TermData struct {
@@ -270,10 +272,16 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 		return
 	}
 
-	payload := "AUTH" + fmt.Sprintf("%v", time.Now().Unix())
+	nonce, err := utils.GetNonce()
+	if err != nil {
+		ch <- TermData{Error: err.Error()}
+		return
+	}
+
+	payload := "AUTH" + nonce
 	connectMsg, _ := json.Marshal(&privateConnect{
 		Event:       "auth",
-		ApiKey:      w.client.ApiKey,
+		APIKey:      w.client.APIKey,
 		AuthSig:     w.client.signPayload(payload),
 		AuthPayload: payload,
 	})
@@ -297,45 +305,45 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 			}
 			ws.Close()
 			return
-		} else {
-			msg = string(p)
-			event := &privateResponse{}
-			err = json.Unmarshal([]byte(msg), &event)
-			if err != nil {
-				// received data update
-				var data []interface{}
-				err = json.Unmarshal([]byte(msg), &data)
-				if err == nil {
-					dataTerm := data[1].(string)
-					dataList := data[2].([]interface{})
+		}
 
-					// check for empty data
-					if len(dataList) > 0 {
-						if reflect.TypeOf(dataList[0]) == reflect.TypeOf([]interface{}{}) {
-							// received list of lists
-							for _, v := range dataList {
-								ch <- TermData{
-									Term: dataTerm,
-									Data: v.([]interface{}),
-								}
-							}
-						} else {
-							// received flat list
+		msg = string(p)
+		event := &privateResponse{}
+		err = json.Unmarshal([]byte(msg), &event)
+		if err != nil {
+			// received data update
+			var data []interface{}
+			err = json.Unmarshal([]byte(msg), &data)
+			if err == nil {
+				dataTerm := data[1].(string)
+				dataList := data[2].([]interface{})
+
+				// check for empty data
+				if len(dataList) > 0 {
+					if reflect.TypeOf(dataList[0]) == reflect.TypeOf([]interface{}{}) {
+						// received list of lists
+						for _, v := range dataList {
 							ch <- TermData{
 								Term: dataTerm,
-								Data: dataList,
+								Data: v.([]interface{}),
 							}
+						}
+					} else {
+						// received flat list
+						ch <- TermData{
+							Term: dataTerm,
+							Data: dataList,
 						}
 					}
 				}
-			} else {
-				// received auth response
-				if event.Event == "auth" && event.Status != "OK" {
-					ch <- TermData{
-						Error: "Error connecting to private web socket channel.",
-					}
-					ws.Close()
+			}
+		} else {
+			// received auth response
+			if event.Event == "auth" && event.Status != "OK" {
+				ch <- TermData{
+					Error: "Error connecting to private web socket channel.",
 				}
+				ws.Close()
 			}
 		}
 	}

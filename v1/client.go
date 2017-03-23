@@ -11,21 +11,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
+
+	"github.com/bitfinexcom/bitfinex-api-go/utils"
 )
 
 const (
-	DefaultBaseURL      = "https://api.bitfinex.com/v1/"
-	DefaultWebSocketURL = "wss://api.bitfinex.com/ws/"
+	// BaseURL is the v1 REST endpoint.
+	BaseURL = "https://api.bitfinex.com/v1/"
+	// WebSocketURL the v1 Websocket endpoint.
+	WebSocketURL = "wss://api.bitfinex.com/ws/"
 )
 
-var nonce int64
-
-type Param struct {
-	Key string
-	Val string
-}
-
+// Client manages all the communication with the Bitfinex API.
 type Client struct {
 	// Base URL for API requests.
 	BaseURL                *url.URL
@@ -33,8 +30,8 @@ type Client struct {
 	WebSocketTLSSkipVerify bool
 
 	// Auth data
-	ApiKey    string
-	ApiSecret string
+	APIKey    string
+	APISecret string
 
 	// Services
 	Pairs         *PairsService
@@ -57,11 +54,11 @@ type Client struct {
 	Wallet        *WalletService
 }
 
-// NewClient creates new Bitfinex.com API http client
+// NewClient creates new Bitfinex.com API client.
 func NewClient() *Client {
-	baseURL, _ := url.Parse(DefaultBaseURL)
+	baseURL, _ := url.Parse(BaseURL)
 
-	c := &Client{BaseURL: baseURL, WebSocketURL: DefaultWebSocketURL}
+	c := &Client{BaseURL: baseURL, WebSocketURL: WebSocketURL}
 	c.Pairs = &PairsService{client: c}
 	c.Stats = &StatsService{client: c}
 	c.Account = &AccountService{client: c}
@@ -85,9 +82,9 @@ func NewClient() *Client {
 	return c
 }
 
-// NewRequest create new API request. Relative url can be provided in refUrl.
-func (c *Client) newRequest(method string, refUrl string, params url.Values) (*http.Request, error) {
-	rel, err := url.Parse(refUrl)
+// NewRequest create new API request. Relative url can be provided in refURL.
+func (c *Client) newRequest(method string, refURL string, params url.Values) (*http.Request, error) {
+	rel, err := url.Parse(refURL)
 	if err != nil {
 		return nil, err
 	}
@@ -105,56 +102,53 @@ func (c *Client) newRequest(method string, refUrl string, params url.Values) (*h
 	return req, nil
 }
 
-// getNonce - getting unique nonce
-func getNonce() int64 {
-	if nonce == 0 {
-		nonce = time.Now().UnixNano()
+// newAuthenticatedRequest creates new http request for authenticated routes.
+func (c *Client) newAuthenticatedRequest(m string, refURL string, data map[string]interface{}) (*http.Request, error) {
+	req, err := c.newRequest(m, refURL, nil)
+	if err != nil {
+		return nil, err
 	}
-	nonce++
-	return nonce
-}
 
-// NewAuthenticatedRequest creates new http request for authenticated routes
-func (c *Client) newAuthenticatedRequest(m string, refUrl string, data map[string]interface{}) (*http.Request, error) {
-	req, err := c.newRequest(m, refUrl, nil)
+	nonce, err := utils.GetNonce()
 	if err != nil {
 		return nil, err
 	}
 
 	payload := map[string]interface{}{
-		"request": "/v1/" + refUrl,
-		"nonce":   fmt.Sprintf("%v", getNonce()),
+		"request": "/v1/" + refURL,
+		"nonce":   nonce,
 	}
 
-	if len(data) > 0 {
-		for k, v := range data {
-			payload[k] = v
-		}
+	for k, v := range data {
+		payload[k] = v
 	}
 
-	payload_json, _ := json.Marshal(payload)
-	payload_enc := base64.StdEncoding.EncodeToString(payload_json)
+	p, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(p)
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-BFX-APIKEY", c.ApiKey)
-	req.Header.Add("X-BFX-PAYLOAD", payload_enc)
-	req.Header.Add("X-BFX-SIGNATURE", c.signPayload(payload_enc))
+	req.Header.Add("X-BFX-APIKEY", c.APIKey)
+	req.Header.Add("X-BFX-PAYLOAD", encoded)
+	req.Header.Add("X-BFX-SIGNATURE", c.signPayload(encoded))
 
 	return req, nil
 }
 
 func (c *Client) signPayload(payload string) string {
-	sig := hmac.New(sha512.New384, []byte(c.ApiSecret))
+	sig := hmac.New(sha512.New384, []byte(c.APISecret))
 	sig.Write([]byte(payload))
 	return hex.EncodeToString(sig.Sum(nil))
 }
 
-// Auth sets api key and secret for usage is requests that
-// requires authentication
+// Auth sets api key and secret for usage is requests that requires authentication.
 func (c *Client) Auth(key string, secret string) *Client {
-	c.ApiKey = key
-	c.ApiSecret = secret
+	c.APIKey = key
+	c.APISecret = secret
 
 	return c
 }
@@ -182,7 +176,6 @@ func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
 
 	if v != nil {
 		err = json.Unmarshal(response.Body, v)
-
 		if err != nil {
 			return response, err
 		}
@@ -214,8 +207,8 @@ func (r *Response) String() string {
 	return string(r.Body)
 }
 
-// In case if API will wrong response code
-// ErrorResponse will be returned to caller
+// ErrorResponse is the custom error type that is returned if the API returns an
+// error.
 type ErrorResponse struct {
 	Response *Response
 	Message  string `json:"message"`
