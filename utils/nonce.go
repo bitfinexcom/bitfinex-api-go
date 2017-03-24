@@ -4,11 +4,13 @@ import (
 	"crypto/rand"
 	"math"
 	"math/big"
+	"time"
 )
 
-// GetNonce - getting unique nonce
+// GetNonce produces a random integer >= time.Now().UnixNano().
 func GetNonce() (string, error) {
-	bi, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	t := big.NewInt(time.Now().UnixNano())
+	bi, err := rand.Int(rand.Reader, t.Add(t, big.NewInt(math.MaxInt64)))
 	if err != nil {
 		return "", err
 	}
