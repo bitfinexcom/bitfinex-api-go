@@ -289,7 +289,6 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 		return
 	}
 
-	var msg string
 	for {
 		_, p, err := ws.ReadMessage()
 		if err != nil {
@@ -300,13 +299,12 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 			return
 		}
 
-		msg = string(p)
 		event := &privateResponse{}
-		err = json.Unmarshal([]byte(msg), &event)
+		err = json.Unmarshal(p, &event)
 		if err != nil {
 			// received data update
 			var data []interface{}
-			err = json.Unmarshal([]byte(msg), &data)
+			err = json.Unmarshal(p, &data)
 			if err == nil {
 				if len(data) == 2 { // Heartbeat
 					// XXX: Consider adding a switch to enable/disable passing these along.
