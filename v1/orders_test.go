@@ -40,10 +40,10 @@ func TestOrdersAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	expectedId := 448411365
-	if orders[0].Id != expectedId {
-		t.Error("Expected", expectedId)
-		t.Error("Actual ", orders[0].Id)
+	expectedID := int64(448411365)
+	if orders[0].ID != expectedID {
+		t.Error("Expected", expectedID)
+		t.Error("Actual ", orders[0].ID)
 	}
 
 }
@@ -97,12 +97,12 @@ func TestCreateMulti(t *testing.T) {
 		Symbol: "BTCUSD",
 		Amount: 10.0,
 		Price:  450.0,
-		Type:   ORDER_TYPE_LIMIT,
+		Type:   OrderTypeLimit,
 	}, {
 		Symbol: "BTCUSD",
 		Amount: 10.0,
 		Price:  450.0,
-		Type:   ORDER_TYPE_LIMIT,
+		Type:   OrderTypeLimit,
 	}}
 	response, err := NewClient().Orders.CreateMulti(reqOrders)
 
@@ -137,5 +137,4 @@ func TestCancelMulti(t *testing.T) {
 		t.Error("Expected", "Orders cancelled")
 		t.Error("Actual ", response)
 	}
-
 }

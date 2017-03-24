@@ -1,30 +1,32 @@
 package bitfinex
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 )
 
+// Order types that the API can return.
 const (
-	ORDER_TYPE_MARKET                 = "market"
-	ORDER_TYPE_LIMIT                  = "limit"
-	ORDER_TYPE_STOP                   = "stop"
-	ORDER_TYPE_TRAILING_STOP          = "trailing-stop"
-	ORDER_TYPE_FILL_OR_KILL           = "fill-or-kill"
-	ORDER_TYPE_EXCHANGE_MARKET        = "exchange market"
-	ORDER_TYPE_EXCHANGE_LIMIT         = "exchange limit"
-	ORDER_TYPE_EXCHANGE_STOP          = "exchange stop"
-	ORDER_TYPE_EXCHANGE_TRAILING_STOP = "exchange trailing-stop"
-	ORDER_TYPE_EXCHANGE_FILL_OR_KILL  = "exchange fill-or-kill"
+	OrderTypeMarket               = "market"
+	OrderTypeLimit                = "limit"
+	OrderTypeStop                 = "stop"
+	OrderTypeTrailingStop         = "trailing-stop"
+	OrderTypeFillOrKill           = "fill-or-kill"
+	OrderTypeExchangeMarket       = "exchange market"
+	OrderTypeExchangeLimit        = "exchange limit"
+	OrderTypeExchangeStop         = "exchange stop"
+	OrderTypeExchangeTrailingStop = "exchange trailing-stop"
+	OrderTypeExchangeFillOrKill   = "exchange fill-or-kill"
 )
 
+// OrderService manages the Order endpoint.
 type OrderService struct {
 	client *Client
 }
 
+// Order represents one order on the bitfinex platform.
 type Order struct {
-	Id                int
+	ID                int64
 	Symbol            string
 	Exchange          string
 	Price             string
@@ -41,7 +43,7 @@ type Order struct {
 	ExecutedAmount    string `json:"executed_amount"`
 }
 
-// get all active orders
+// All returns all orders for the authenticated account.
 func (s *OrderService) All() ([]Order, error) {
 	req, err := s.client.newAuthenticatedRequest("GET", "orders", nil)
 	if err != nil {
@@ -57,7 +59,7 @@ func (s *OrderService) All() ([]Order, error) {
 	return v, nil
 }
 
-// Cancel all active orders
+// CancelAll active orders for the authenticated account.
 func (s *OrderService) CancelAll() error {
 	req, err := s.client.newAuthenticatedRequest("POST", "order/cancel/all", nil)
 	if err != nil {
@@ -72,7 +74,7 @@ func (s *OrderService) CancelAll() error {
 	return nil
 }
 
-// Create a new order
+// Create a new order.
 func (s *OrderService) Create(symbol string, amount float64, price float64, orderType string) (*Order, error) {
 	var side string
 	if amount < 0 {
@@ -84,8 +86,8 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
 
 	payload := map[string]interface{}{
 		"symbol":   symbol,
-		"amount":   fmt.Sprintf("%f", amount),
-		"price":    fmt.Sprintf("%f", price),
+		"amount":   strconv.FormatFloat(amount, 'f', -1, 32),
+		"price":    strconv.FormatFloat(price, 'f', -1, 32),
 		"side":     side,
 		"type":     orderType,
 		"exchange": "bitfinex",
@@ -105,10 +107,10 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
 	return order, nil
 }
 
-// Cancel the order with id `orderId`
-func (s *OrderService) Cancel(orderId int) error {
+// Cancel the order with id `orderID`.
+func (s *OrderService) Cancel(orderID int64) error {
 	payload := map[string]interface{}{
-		"order_id": orderId,
+		"order_id": orderID,
 	}
 
 	req, err := s.client.newAuthenticatedRequest("POST", "order/cancel", payload)
@@ -124,6 +126,7 @@ func (s *OrderService) Cancel(orderId int) error {
 	return nil
 }
 
+// SubmitOrder is an order to be created on the bitfinex platform.
 type SubmitOrder struct {
 	Symbol string
 	Amount float64
@@ -131,14 +134,14 @@ type SubmitOrder struct {
 	Type   string
 }
 
+// MultipleOrderResponse bundles orders returned by the CreateMulti method.
 type MultipleOrderResponse struct {
 	Orders []Order `json:"order_ids"`
 	Status string
 }
 
-// Create Multiple Orders
+// CreateMulti allows batch creation of orders.
 func (s *OrderService) CreateMulti(orders []SubmitOrder) (MultipleOrderResponse, error) {
-
 	ordersMap := make([]interface{}, 0)
 	for _, order := range orders {
 		var side string
@@ -157,6 +160,7 @@ func (s *OrderService) CreateMulti(orders []SubmitOrder) (MultipleOrderResponse,
 			"type":     order.Type,
 		})
 	}
+
 	payload := map[string]interface{}{
 		"orders": ordersMap,
 	}
@@ -173,7 +177,7 @@ func (s *OrderService) CreateMulti(orders []SubmitOrder) (MultipleOrderResponse,
 
 }
 
-// Cancel multiple orders
+// CancelMulti allows batch cancellation of orders.
 func (s *OrderService) CancelMulti(orderIDS []int64) (string, error) {
 	payload := map[string]interface{}{
 		"order_ids": orderIDS,
@@ -192,8 +196,7 @@ func (s *OrderService) CancelMulti(orderIDS []int64) (string, error) {
 }
 
 // Replace an Order
-func (s *OrderService) Replace(orderId int64, useRemaining bool, newOrder SubmitOrder) (Order, error) {
-
+func (s *OrderService) Replace(orderID int64, useRemaining bool, newOrder SubmitOrder) (Order, error) {
 	var side string
 	if newOrder.Amount < 0 {
 		newOrder.Amount = math.Abs(newOrder.Amount)
@@ -203,7 +206,7 @@ func (s *OrderService) Replace(orderId int64, useRemaining bool, newOrder Submit
 	}
 
 	payload := map[string]interface{}{
-		"order_id":      strconv.FormatInt(orderId, 10),
+		"order_id":      strconv.FormatInt(orderID, 10),
 		"symbol":        newOrder.Symbol,
 		"amount":        strconv.FormatFloat(newOrder.Amount, 'f', -1, 32),
 		"price":         strconv.FormatFloat(newOrder.Price, 'f', -1, 32),
@@ -227,11 +230,11 @@ func (s *OrderService) Replace(orderId int64, useRemaining bool, newOrder Submit
 	return *order, nil
 }
 
-// Retrieve the status of an order
-func (s *OrderService) Status(orderId int64) (Order, error) {
+// Status retrieves the given order from the API.
+func (s *OrderService) Status(orderID int64) (Order, error) {
 
 	payload := map[string]interface{}{
-		"order_id": orderId,
+		"order_id": orderID,
 	}
 
 	req, err := s.client.newAuthenticatedRequest("POST", "order/status", payload)
@@ -247,5 +250,4 @@ func (s *OrderService) Status(orderId int64) (Order, error) {
 	}
 
 	return *order, nil
-
 }
