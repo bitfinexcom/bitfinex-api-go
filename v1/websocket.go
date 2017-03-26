@@ -144,9 +144,7 @@ func (w *WebSocketService) Subscribe(readTimeout time.Duration) error {
 	var msg string
 
 	for {
-		if readTimeout == 0 {
-			w.ws.SetReadDeadline(time.Time{}) // zero Time = no deadline
-		} else {
+		if readTimeout != 0 {
 			w.ws.SetReadDeadline(time.Now().Add(readTimeout))
 		}
 		_, p, err := w.ws.ReadMessage()
