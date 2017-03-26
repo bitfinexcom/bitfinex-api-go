@@ -1,17 +1,21 @@
 package utils
 
 import (
-	"crypto/rand"
-	"math"
-	"math/big"
+	"fmt"
+	"strconv"
+	"time"
 )
 
 // GetNonce - getting unique nonce
-func GetNonce() (string, error) {
-	bi, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
-	if err != nil {
-		return "", err
-	}
 
-	return bi.String(), nil
+var nonce int64
+
+func GetNonce() (string, error) {
+	if nonce == 0 {
+		nonce = time.Now().Unix() * 1000
+	} else {
+		nonce++
+	}
+	fmt.Println("NONCE", nonce)
+	return strconv.FormatInt(nonce, 10), nil
 }
