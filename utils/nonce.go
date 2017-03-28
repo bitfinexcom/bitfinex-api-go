@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 )
@@ -16,6 +15,5 @@ func GetNonce() (string, error) {
 	} else {
 		nonce++
 	}
-	fmt.Println("NONCE", nonce)
 	return strconv.FormatInt(nonce, 10), nil
 }
