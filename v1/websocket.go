@@ -272,12 +272,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 		return
 	}
 
-	nonce, err := utils.GetNonce()
-	if err != nil {
-		ch <- TermData{Error: err.Error()}
-		return
-	}
-
+	nonce := utils.GetNonce()
 	payload := "AUTH" + nonce
 	connectMsg, _ := json.Marshal(&privateConnect{
 		Event:       "auth",
