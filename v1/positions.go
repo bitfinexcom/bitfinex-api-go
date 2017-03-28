@@ -33,7 +33,7 @@ func (p *Position) ParseTime() (*time.Time, error) {
 
 // All - gets all positions
 func (b *PositionsService) All() ([]Position, error) {
-	req, err := b.client.newAuthenticatedRequest("GET", "positions", nil)
+	req, err := b.client.newAuthenticatedRequest("POST", "positions", nil)
 	if err != nil {
 		return nil, err
 	}

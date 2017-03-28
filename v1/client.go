@@ -109,7 +109,7 @@ func (c *Client) newAuthenticatedRequest(m string, refURL string, data map[strin
 		return nil, err
 	}
 
-	nonce, err := utils.GetNonce()
+	nonce := utils.GetNonce()
 	payload := map[string]interface{}{
 		"request": "/v1/" + refURL,
 		"nonce":   nonce,
