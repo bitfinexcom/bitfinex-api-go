@@ -48,7 +48,7 @@ func (b *PositionsService) All() ([]Position, error) {
 }
 
 // Claim a position
-func (b *PositionsService) Claim(positionId, amount string) (Position, error) {
+func (b *PositionsService) Claim(positionId int, amount string) (Position, error) {
 
 	request := map[string]interface{}{
 		"position_id": positionId,
