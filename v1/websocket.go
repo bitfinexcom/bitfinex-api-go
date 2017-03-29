@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/utils"
 
@@ -134,7 +135,7 @@ func (w *WebSocketService) sendSubscribeMessages() error {
 
 // Subscribe allows to subsribe to channels and watch for new updates.
 // This method supports next channels: book, trade, ticker.
-func (w *WebSocketService) Subscribe() error {
+func (w *WebSocketService) Subscribe(readTimeout time.Duration) error {
 	// Subscribe to each channel
 	if err := w.sendSubscribeMessages(); err != nil {
 		return err
@@ -143,6 +144,9 @@ func (w *WebSocketService) Subscribe() error {
 	var msg string
 
 	for {
+		if readTimeout != 0 {
+			w.ws.SetReadDeadline(time.Now().Add(readTimeout))
+		}
 		_, p, err := w.ws.ReadMessage()
 		msg = string(p)
 		if err != nil {
