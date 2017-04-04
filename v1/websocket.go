@@ -308,6 +308,12 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 			var data []interface{}
 			err = json.Unmarshal([]byte(msg), &data)
 			if err == nil {
+				if len(data) == 2 { // Heartbeat
+					// XXX: Consider adding a switch to enable/disable passing these along.
+					ch <- TermData{Term: data[1].(string)}
+					return
+				}
+
 				dataTerm := data[1].(string)
 				dataList := data[2].([]interface{})
 
