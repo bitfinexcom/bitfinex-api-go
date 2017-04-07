@@ -1,13 +1,12 @@
 package bitfinex
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"reflect"
-	"strings"
 
 	"github.com/bitfinexcom/bitfinex-api-go/utils"
 
@@ -122,10 +121,8 @@ func (w *WebSocketService) sendSubscribeMessages() error {
 			Pair:    s.Pair,
 		})
 
-		fmt.Println("Subscribe to channel ", s.Channel, s.Pair)
 		err := w.ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
-			// Can't send message to web socket.
 			return err
 		}
 	}
@@ -140,29 +137,26 @@ func (w *WebSocketService) Subscribe() error {
 		return err
 	}
 
-	var msg string
-
 	for {
 		_, p, err := w.ws.ReadMessage()
-		msg = string(p)
 		if err != nil {
 			return err
 		}
 
-		if strings.Contains(msg, "event") {
-			w.handleEventMessage(msg)
+		if bytes.Contains(p, []byte("event")) {
+			w.handleEventMessage(p)
 		} else {
-			w.handleDataMessage(msg)
+			w.handleDataMessage(p)
 		}
 	}
 
 	return nil
 }
 
-func (w *WebSocketService) handleEventMessage(msg string) {
+func (w *WebSocketService) handleEventMessage(msg []byte) {
 	// Check for first message(event:subscribed)
 	event := &subscribeMsg{}
-	err := json.Unmarshal([]byte(msg), &event)
+	err := json.Unmarshal(msg, event)
 
 	// Received "subscribed" resposne. Link channels.
 	if err == nil {
@@ -174,11 +168,10 @@ func (w *WebSocketService) handleEventMessage(msg string) {
 	}
 }
 
-func (w *WebSocketService) handleDataMessage(msg string) {
-
+func (w *WebSocketService) handleDataMessage(msg []byte) {
 	// Received payload or data update
 	var dataUpdate []float64
-	err := json.Unmarshal([]byte(msg), &dataUpdate)
+	err := json.Unmarshal(msg, &dataUpdate)
 	if err == nil {
 		chanID := dataUpdate[0]
 		// Remove chanID from data update
@@ -188,7 +181,7 @@ func (w *WebSocketService) handleDataMessage(msg string) {
 
 	// Payload received
 	var fullPayload []interface{}
-	err = json.Unmarshal([]byte(msg), &fullPayload)
+	err = json.Unmarshal(msg, &fullPayload)
 
 	if err != nil {
 		log.Println("Error decoding fullPayload", err)
@@ -291,7 +284,6 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 		return
 	}
 
-	var msg string
 	for {
 		_, p, err := ws.ReadMessage()
 		if err != nil {
@@ -302,14 +294,19 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 			return
 		}
 
-		msg = string(p)
 		event := &privateResponse{}
-		err = json.Unmarshal([]byte(msg), &event)
+		err = json.Unmarshal(p, &event)
 		if err != nil {
 			// received data update
 			var data []interface{}
-			err = json.Unmarshal([]byte(msg), &data)
+			err = json.Unmarshal(p, &data)
 			if err == nil {
+				if len(data) == 2 { // Heartbeat
+					// XXX: Consider adding a switch to enable/disable passing these along.
+					ch <- TermData{Term: data[1].(string)}
+					return
+				}
+
 				dataTerm := data[1].(string)
 				dataList := data[2].([]interface{})
 
