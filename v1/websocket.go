@@ -53,16 +53,20 @@ type WebSocketService struct {
 }
 
 type subscribeMsg struct {
-	Event   string  `json:"event"`
-	Channel string  `json:"channel"`
-	Pair    string  `json:"pair"`
-	ChanID  float64 `json:"chanId,omitempty"`
+	Event     string  `json:"event"`
+	Channel   string  `json:"channel"`
+	Pair      string  `json:"pair"`
+	Precision string  `json:"prec,omitempty"`
+	Frequency string  `json:"freq,omitempty"`
+	ChanID    float64 `json:"chanId,omitempty"`
 }
 
 type subscribeToChannel struct {
-	Channel string
-	Pair    string
-	Chan    chan []float64
+	Channel   string
+	Pair      string
+	Precision string
+	Frequency string
+	Chan      chan []float64
 }
 
 // NewWebSocketService returns a WebSocketService using the given client.
@@ -100,12 +104,30 @@ func (w *WebSocketService) Close() {
 	w.ws.Close()
 }
 
+// Enqueue a subscribtion request to the client. The subscribtion will take
+// effet when Subscribe is called
 func (w *WebSocketService) AddSubscribe(channel string, pair string, c chan []float64) {
 	s := subscribeToChannel{
 		Channel: channel,
 		Pair:    pair,
 		Chan:    c,
 	}
+
+	w.subscribes = append(w.subscribes, s)
+}
+
+// OrderBook subscription can take additional parameteres for precision and
+// frequency. You can use this method instead of AddSubscribe when you need
+// to provide such parameters
+func (w *WebSocketService) AddSubscribeOrderBook(pair string, c chan []float64, precision string, frequency string) {
+	s := subscribeToChannel{
+		Channel:   ChanBook,
+		Pair:      pair,
+		Chan:      c,
+		Precision: precision,
+		Frequency: frequency,
+	}
+
 	w.subscribes = append(w.subscribes, s)
 }
 
@@ -115,10 +137,13 @@ func (w *WebSocketService) ClearSubscriptions() {
 
 func (w *WebSocketService) sendSubscribeMessages() error {
 	for _, s := range w.subscribes {
+
 		msg, _ := json.Marshal(subscribeMsg{
-			Event:   "subscribe",
-			Channel: s.Channel,
-			Pair:    s.Pair,
+			Event:     "subscribe",
+			Channel:   s.Channel,
+			Pair:      s.Pair,
+			Precision: s.Precision,
+			Frequency: s.Frequency,
 		})
 
 		err := w.ws.WriteMessage(websocket.TextMessage, msg)
@@ -177,6 +202,7 @@ func (w *WebSocketService) handleDataMessage(msg []byte) {
 		// Remove chanID from data update
 		// and send message to internal chan
 		w.chanMap[chanID] <- dataUpdate[1:]
+		return
 	}
 
 	// Payload received
