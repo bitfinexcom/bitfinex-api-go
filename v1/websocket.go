@@ -31,6 +31,8 @@ const (
 	XMRBTC = "XMRBTC"
 	RRTUSD = "RRTUSD"
 	RRTBTC = "RRTBTC"
+	XRPUSD = "XRPUSD"
+	XRPBTC = "XRPBTC"
 
 	// Channels
 	ChanBook   = "book"
