@@ -8,7 +8,7 @@ import (
 )
 
 func TestWalletTransfer(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
           "status":"success",
           "message":"1.0 USD transfered from Exchange to Deposit"
@@ -33,7 +33,7 @@ func TestWalletTransfer(t *testing.T) {
 }
 
 func TestWithdrawCrypto(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
           "status":"success",
           "message":"Your withdrawal request has been successfully submitted.",
@@ -64,7 +64,7 @@ func TestWithdrawCrypto(t *testing.T) {
 }
 
 func TestWithdrawWire(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
           "status":"success",
           "message":"Your withdrawal request has been successfully submitted.",

@@ -8,7 +8,7 @@ import (
 )
 
 func TestOrdersAll(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `
         [{
            "id":448411365,
@@ -49,7 +49,7 @@ func TestOrdersAll(t *testing.T) {
 }
 
 func TestCreateMulti(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `{
             "order_ids":[{
             "id":448383727,
@@ -117,7 +117,7 @@ func TestCreateMulti(t *testing.T) {
 }
 
 func TestCancelMulti(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `{"result":"Orders cancelled"}`
 		resp := http.Response{
 			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),

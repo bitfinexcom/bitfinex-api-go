@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccountInfo(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
            "maker_fees":"0.1",
            "taker_fees":"0.2",
@@ -47,7 +47,7 @@ func TestAccountInfo(t *testing.T) {
 }
 
 func TestAccountKeyPermission(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `{
             "account":{
                 "read":true,
