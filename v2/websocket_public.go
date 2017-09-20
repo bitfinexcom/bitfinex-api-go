@@ -14,7 +14,7 @@ type unsubscribeMsg struct {
 
 // Unsubscribe from the websocket channel with the given channel id and close
 // the associated go channel.
-func (b *bfxWebsocket) Unsubscribe(ctx context.Context, id int64) error {
+func (b *bfxWebsocket) UnsubscribeByChanID(ctx context.Context, id int64) error {
 	b.mu.Lock()
 	if _, ok := b.pubChanIDs[id]; ok {
 		delete(b.pubChanIDs, id)
@@ -24,15 +24,14 @@ func (b *bfxWebsocket) Unsubscribe(ctx context.Context, id int64) error {
 	return b.sendUnsubscribeMessage(ctx, id)
 }
 
-// UnsubscribeBySymbol takes a symbol, or in the case of a public candle the Key,
-// and unsubscribes from the channel.
-func (b *bfxWebsocket) UnsubscribeBySymbol(ctx context.Context, symbol string) error {
+// Unsubscribe takes an PublicSubscriptionRequest and tries to unsubscribe from the
+// channel described by that request.
+func (b *bfxWebsocket) Unsubscribe(ctx context.Context, p PublicSubscriptionRequest) error {
 	for k, v := range b.pubChanIDs {
-		if v == symbol {
-			return b.Unsubscribe(ctx, k)
+		if v == p {
+			return b.UnsubscribeByChanID(ctx, k)
 		}
 	}
-
 	return fmt.Errorf("could not find channel for symbol")
 }
 
@@ -60,13 +59,21 @@ type PublicSubscriptionRequest struct {
 func (b *bfxWebsocket) Subscribe(ctx context.Context, msg *PublicSubscriptionRequest) error {
 	if b.ws == nil {
 		return ErrWSNotConnected
+	} else if msg == nil {
+		return fmt.Errorf("no subscription request provided")
+	}
+
+	for _, v := range b.pubChanIDs {
+		if v == *msg {
+			return fmt.Errorf("already subscribed to the channel requested")
+		}
 	}
 
 	msg.Event = "subscribe"
 	msg.SubID = utils.GetNonce()
 
 	b.mu.Lock()
-	b.pubSubIDs[msg.SubID] = struct{}{}
+	b.pubSubIDs[msg.SubID] = *msg
 	b.mu.Unlock()
 
 	return b.Send(ctx, msg)

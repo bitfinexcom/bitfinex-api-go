@@ -17,11 +17,11 @@ func main() {
 	}
 	c.Websocket.SetReadTimeout(time.Second * 2)
 
-	c.Websocket.AttachEventHandler(func(_ context.Context, ev interface{}) {
+	c.Websocket.AttachEventHandler(func(ev interface{}) {
 		log.Printf("EVENT: %#v", ev)
 	})
 
-	c.Websocket.AttachPublicHandler(func(_ context.Context, ev interface{}) {
+	c.Websocket.AttachPublicHandler(func(ev interface{}) {
 		log.Printf("PUBLIC MSG: %#v", ev)
 	})
 

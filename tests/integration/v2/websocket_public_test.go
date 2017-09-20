@@ -60,7 +60,7 @@ func TestPublicTicker(t *testing.T) {
 	}
 	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.UnsubscribeBySymbol(ctx, msg.Symbol)
+	err = c.Websocket.Unsubscribe(ctx, *msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func TestPublicTrades(t *testing.T) {
 	}
 	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.UnsubscribeBySymbol(ctx, msg.Symbol)
+	err = c.Websocket.Unsubscribe(ctx, *msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +154,7 @@ func TestPublicBooks(t *testing.T) {
 	}
 	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.UnsubscribeBySymbol(ctx, msg.Symbol)
+	err = c.Websocket.Unsubscribe(ctx, *msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -201,7 +201,7 @@ func TestPublicCandles(t *testing.T) {
 	}
 	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.UnsubscribeBySymbol(ctx, msg.Key)
+	err = c.Websocket.Unsubscribe(ctx, *msg)
 	if err != nil {
 		t.Fatal(err)
 	}
