@@ -30,6 +30,8 @@ type Client struct {
 	// Base URL for API requests.
 	BaseURL *url.URL
 
+	HTTPClient *http.Client
+
 	// Auth data
 	APIKey    string
 	APISecret string
@@ -39,9 +41,13 @@ type Client struct {
 }
 
 func NewClient() *Client {
+	return NewClientWithHTTP(http.DefaultClient)
+}
+
+func NewClientWithHTTP(h *http.Client) *Client {
 	baseURL, _ := url.Parse(BaseURL)
 
-	c := &Client{BaseURL: baseURL}
+	c := &Client{BaseURL: baseURL, HTTPClient: h}
 
 	c.Websocket = newBfxWebsocket(c, WebSocketURL)
 
@@ -115,8 +121,8 @@ func (c *Client) Credentials(key string, secret string) *Client {
 	return c
 }
 
-var httpDo = func(req *http.Request) (*http.Response, error) {
-	return http.DefaultClient.Do(req)
+var httpDo = func(c *http.Client, req *http.Request) (*http.Response, error) {
+	return c.Do(req)
 }
 
 // Response is wrapper for standard http.Response and provides
@@ -181,8 +187,7 @@ func (r *ErrorResponse) Error() string {
 
 // Do executes API request created by NewRequest method or custom *http.Request.
 func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
-	resp, err := httpDo(req)
-
+	resp, err := httpDo(c.HTTPClient, req)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +202,6 @@ func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
 
 	if v != nil {
 		err = json.Unmarshal(response.Body, v)
-
 		if err != nil {
 			return response, err
 		}

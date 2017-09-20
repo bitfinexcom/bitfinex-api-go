@@ -81,8 +81,8 @@ type bfxWebsocket struct {
 	// The bitfinex API sends us untyped arrays as data, so we have to keep track
 	// of which one belongs where.
 	mu          sync.Mutex
-	pubSubIDs   map[string]struct{}
-	pubChanIDs  map[int64]string // ChannelID -> Symbol map
+	pubSubIDs   map[string]PublicSubscriptionRequest
+	pubChanIDs  map[int64]PublicSubscriptionRequest // ChannelID -> SubscriptionRequest map
 	privSubIDs  map[string]struct{}
 	privChanIDs map[int64]struct{}
 
@@ -100,8 +100,8 @@ func newBfxWebsocket(c *Client, wsURL string) *bfxWebsocket {
 	b := &bfxWebsocket{
 		client:       c,
 		privSubIDs:   map[string]struct{}{},
-		pubSubIDs:    map[string]struct{}{},
-		pubChanIDs:   map[int64]string{},
+		pubSubIDs:    map[string]PublicSubscriptionRequest{},
+		pubChanIDs:   map[int64]PublicSubscriptionRequest{},
 		privChanIDs:  map[int64]struct{}{},
 		webSocketURL: wsURL,
 		mc:           newMsgChan(),
@@ -135,8 +135,8 @@ func (b *bfxWebsocket) Connect() error {
 	b.ws = ws
 
 	b.privSubIDs = map[string]struct{}{}
-	b.pubSubIDs = map[string]struct{}{}
-	b.pubChanIDs = map[int64]string{}
+	b.pubSubIDs = map[string]PublicSubscriptionRequest{}
+	b.pubChanIDs = map[int64]PublicSubscriptionRequest{}
 	b.privChanIDs = map[int64]struct{}{}
 	b.mc = newMsgChan()
 	b.stop = make(chan struct{})
