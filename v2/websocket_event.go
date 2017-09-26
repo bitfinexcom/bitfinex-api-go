@@ -101,12 +101,8 @@ func (b *bfxWebsocket) onEvent(msg []byte) (interface{}, error) {
 		}
 
 		b.mu.Lock()
-		if _, ok := b.pubSubIDs[s.SubID]; ok {
-			if s.Symbol == "" {
-				b.pubChanIDs[s.ChanID] = s.Key
-			} else {
-				b.pubChanIDs[s.ChanID] = s.Symbol
-			}
+		if req, ok := b.pubSubIDs[s.SubID]; ok {
+			b.pubChanIDs[s.ChanID] = req
 			delete(b.pubSubIDs, s.SubID)
 		}
 		b.mu.Unlock()

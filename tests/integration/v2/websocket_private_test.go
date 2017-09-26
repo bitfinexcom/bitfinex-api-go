@@ -40,7 +40,7 @@ func TestWebsocketOrder(t *testing.T) {
 	c.Websocket.AttachPrivateHandler(func(ev interface{}) {
 		switch e := ev.(type) {
 		case bitfinex.Notification:
-			if e.Status == "ERROR" {
+			if e.Status == "ERROR" && e.Type == "on-req" {
 				t.Errorf("failed to create order: %s", e.Text)
 			}
 		case bitfinex.OrderNew:

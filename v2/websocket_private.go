@@ -136,12 +136,6 @@ func (b *bfxWebsocket) convertRaw(term string, raw []interface{}) interface{} {
 			return err
 		}
 		return HistoricalFundingTradeSnapshot(o)
-	case "hos":
-		o, err := historicalOrderSnapshotFromRaw(raw)
-		if err != nil {
-			return err
-		}
-		return o
 	case "n":
 		o, err := notificationFromRaw(raw)
 		if err != nil {
@@ -172,12 +166,6 @@ func (b *bfxWebsocket) convertRaw(term string, raw []interface{}) interface{} {
 			return err
 		}
 		return FundingOfferCancel(o)
-	case "hfos":
-		o, err := fundingOfferSnapshotFromRaw(raw)
-		if err != nil {
-			return err
-		}
-		return HistoricalFundingOfferSnapshot(o)
 	case "fiu":
 		o, err := fundingInfoFromRaw(raw)
 		if err != nil {
@@ -208,12 +196,6 @@ func (b *bfxWebsocket) convertRaw(term string, raw []interface{}) interface{} {
 			return err
 		}
 		return FundingCreditCancel(o)
-	case "hfcs":
-		o, err := fundingCreditSnapshotFromRaw(raw)
-		if err != nil {
-			return err
-		}
-		return HistoricalFundingCreditSnapshot(o)
 	case "fls":
 		o, err := fundingLoanSnapshotFromRaw(raw)
 		if err != nil {
@@ -238,12 +220,6 @@ func (b *bfxWebsocket) convertRaw(term string, raw []interface{}) interface{} {
 			return err
 		}
 		return FundingLoanCancel(o)
-	case "hfls":
-		o, err := fundingLoanSnapshotFromRaw(raw)
-		if err != nil {
-			return err
-		}
-		return HistoricalFundingLoanSnapshot(o)
 	//case "uac":
 	case "hb":
 		return Heartbeat{}
