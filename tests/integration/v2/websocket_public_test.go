@@ -40,9 +40,9 @@ func TestPublicTicker(t *testing.T) {
 		wg.Done()
 	})
 
-	c.Websocket.AttachPublicHandler(func(ev interface{}) {
+	h := func(ev interface{}) {
 		wg.Done()
-	})
+	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
 	msg := &bitfinex.PublicSubscriptionRequest{
@@ -50,7 +50,7 @@ func TestPublicTicker(t *testing.T) {
 		Channel: bitfinex.ChanTicker,
 		Symbol:  bitfinex.TradingPrefix + bitfinex.BTCUSD,
 	}
-	err = c.Websocket.Subscribe(ctx, msg)
+	err = c.Websocket.Subscribe(ctx, msg, h)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,9 +58,8 @@ func TestPublicTicker(t *testing.T) {
 	if err := wait(&wg, c.Websocket.Done(), 2*time.Second); err != nil {
 		t.Errorf("failed to receive message from websocket: %s", err)
 	}
-	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.Unsubscribe(ctx, *msg)
+	err = c.Websocket.Unsubscribe(ctx, msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,9 +86,9 @@ func TestPublicTrades(t *testing.T) {
 		wg.Done()
 	})
 
-	c.Websocket.AttachPublicHandler(func(ev interface{}) {
+	h := func(ev interface{}) {
 		wg.Done()
-	})
+	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
 	msg := &bitfinex.PublicSubscriptionRequest{
@@ -97,7 +96,7 @@ func TestPublicTrades(t *testing.T) {
 		Channel: bitfinex.ChanTrades,
 		Symbol:  bitfinex.TradingPrefix + bitfinex.BTCUSD,
 	}
-	err = c.Websocket.Subscribe(ctx, msg)
+	err = c.Websocket.Subscribe(ctx, msg, h)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,9 +104,8 @@ func TestPublicTrades(t *testing.T) {
 	if err := wait(&wg, c.Websocket.Done(), 2*time.Second); err != nil {
 		t.Errorf("failed to receive message from websocket: %s", err)
 	}
-	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.Unsubscribe(ctx, *msg)
+	err = c.Websocket.Unsubscribe(ctx, msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,9 +132,9 @@ func TestPublicBooks(t *testing.T) {
 		wg.Done()
 	})
 
-	c.Websocket.AttachPublicHandler(func(ev interface{}) {
+	h := func(ev interface{}) {
 		wg.Done()
-	})
+	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
 	msg := &bitfinex.PublicSubscriptionRequest{
@@ -144,7 +142,7 @@ func TestPublicBooks(t *testing.T) {
 		Channel: bitfinex.ChanBook,
 		Symbol:  bitfinex.TradingPrefix + bitfinex.BTCUSD,
 	}
-	err = c.Websocket.Subscribe(ctx, msg)
+	err = c.Websocket.Subscribe(ctx, msg, h)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,9 +150,8 @@ func TestPublicBooks(t *testing.T) {
 	if err := wait(&wg, c.Websocket.Done(), 2*time.Second); err != nil {
 		t.Errorf("failed to receive message from websocket: %s", err)
 	}
-	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.Unsubscribe(ctx, *msg)
+	err = c.Websocket.Unsubscribe(ctx, msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,9 +178,9 @@ func TestPublicCandles(t *testing.T) {
 		wg.Done()
 	})
 
-	c.Websocket.AttachPublicHandler(func(ev interface{}) {
+	h := func(ev interface{}) {
 		wg.Done()
-	})
+	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
 	msg := &bitfinex.PublicSubscriptionRequest{
@@ -191,7 +188,7 @@ func TestPublicCandles(t *testing.T) {
 		Channel: bitfinex.ChanCandles,
 		Key:     "trade:1M:" + bitfinex.TradingPrefix + bitfinex.BTCUSD,
 	}
-	err = c.Websocket.Subscribe(ctx, msg)
+	err = c.Websocket.Subscribe(ctx, msg, h)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,9 +196,8 @@ func TestPublicCandles(t *testing.T) {
 	if err := wait(&wg, c.Websocket.Done(), 2*time.Second); err != nil {
 		t.Errorf("failed to receive message from websocket: %s", err)
 	}
-	c.Websocket.RemovePublicHandler()
 
-	err = c.Websocket.Unsubscribe(ctx, *msg)
+	err = c.Websocket.Unsubscribe(ctx, msg)
 	if err != nil {
 		t.Fatal(err)
 	}

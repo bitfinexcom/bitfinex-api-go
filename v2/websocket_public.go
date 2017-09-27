@@ -21,14 +21,24 @@ func (b *bfxWebsocket) UnsubscribeByChanID(ctx context.Context, id int64) error 
 	}
 	b.mu.Unlock()
 
+	b.handlersMu.Lock()
+	if _, ok := b.publicHandlers[id]; ok {
+		delete(b.publicHandlers, id)
+	}
+	b.handlersMu.Unlock()
+
 	return b.sendUnsubscribeMessage(ctx, id)
 }
 
 // Unsubscribe takes an PublicSubscriptionRequest and tries to unsubscribe from the
 // channel described by that request.
-func (b *bfxWebsocket) Unsubscribe(ctx context.Context, p PublicSubscriptionRequest) error {
+func (b *bfxWebsocket) Unsubscribe(ctx context.Context, p *PublicSubscriptionRequest) error {
+	if p == nil {
+		return fmt.Errorf("PublicSubscriptionRequest cannot be nil")
+	}
+
 	for k, v := range b.pubChanIDs {
-		if v == p {
+		if v == *p {
 			return b.UnsubscribeByChanID(ctx, k)
 		}
 	}
@@ -56,7 +66,7 @@ type PublicSubscriptionRequest struct {
 }
 
 // Subscribe to one of the public websocket channels.
-func (b *bfxWebsocket) Subscribe(ctx context.Context, msg *PublicSubscriptionRequest) error {
+func (b *bfxWebsocket) Subscribe(ctx context.Context, msg *PublicSubscriptionRequest, h handlerT) error {
 	if b.ws == nil {
 		return ErrWSNotConnected
 	} else if msg == nil {
@@ -73,7 +83,7 @@ func (b *bfxWebsocket) Subscribe(ctx context.Context, msg *PublicSubscriptionReq
 	msg.SubID = utils.GetNonce()
 
 	b.mu.Lock()
-	b.pubSubIDs[msg.SubID] = *msg
+	b.pubSubIDs[msg.SubID] = publicSubInfo{req: *msg, h: h}
 	b.mu.Unlock()
 
 	return b.Send(ctx, msg)
