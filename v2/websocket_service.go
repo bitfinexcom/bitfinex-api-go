@@ -81,14 +81,16 @@ type bfxWebsocket struct {
 	// The bitfinex API sends us untyped arrays as data, so we have to keep track
 	// of which one belongs where.
 	mu          sync.Mutex
-	pubSubIDs   map[string]PublicSubscriptionRequest
+	pubSubIDs   map[string]publicSubInfo
 	pubChanIDs  map[int64]PublicSubscriptionRequest // ChannelID -> SubscriptionRequest map
 	privSubIDs  map[string]struct{}
 	privChanIDs map[int64]struct{}
 
 	eventHandler   handlerT
 	privateHandler handlerT
-	publicHandler  handlerT
+
+	handlersMu     sync.Mutex
+	publicHandlers map[int64]handlerT
 
 	mc   *msgChan
 	stop chan struct{}
@@ -96,16 +98,22 @@ type bfxWebsocket struct {
 
 type handlerT func(interface{})
 
+type publicSubInfo struct {
+	req PublicSubscriptionRequest
+	h   handlerT
+}
+
 func newBfxWebsocket(c *Client, wsURL string) *bfxWebsocket {
 	b := &bfxWebsocket{
-		client:       c,
-		privSubIDs:   map[string]struct{}{},
-		pubSubIDs:    map[string]PublicSubscriptionRequest{},
-		pubChanIDs:   map[int64]PublicSubscriptionRequest{},
-		privChanIDs:  map[int64]struct{}{},
-		webSocketURL: wsURL,
-		mc:           newMsgChan(),
-		stop:         make(chan struct{}),
+		client:         c,
+		privSubIDs:     map[string]struct{}{},
+		pubSubIDs:      map[string]publicSubInfo{},
+		pubChanIDs:     map[int64]PublicSubscriptionRequest{},
+		publicHandlers: map[int64]handlerT{},
+		privChanIDs:    map[int64]struct{}{},
+		webSocketURL:   wsURL,
+		mc:             newMsgChan(),
+		stop:           make(chan struct{}),
 	}
 
 	return b
@@ -135,8 +143,9 @@ func (b *bfxWebsocket) Connect() error {
 	b.ws = ws
 
 	b.privSubIDs = map[string]struct{}{}
-	b.pubSubIDs = map[string]PublicSubscriptionRequest{}
+	b.pubSubIDs = map[string]publicSubInfo{}
 	b.pubChanIDs = map[int64]PublicSubscriptionRequest{}
+	b.publicHandlers = map[int64]handlerT{}
 	b.privChanIDs = map[int64]struct{}{}
 	b.mc = newMsgChan()
 	b.stop = make(chan struct{})
@@ -251,8 +260,8 @@ func (b *bfxWebsocket) receiver() {
 				} else if td == nil {
 					continue
 				}
-				if b.publicHandler != nil {
-					go b.publicHandler(td)
+				if h, has := b.publicHandlers[int64(chanID)]; has {
+					go h(td)
 				}
 			} else {
 				// TODO: log unhandled message?
@@ -314,11 +323,6 @@ func (b *bfxWebsocket) AttachPrivateHandler(f handlerT) error {
 	return nil
 }
 
-func (b *bfxWebsocket) AttachPublicHandler(f handlerT) error {
-	b.publicHandler = f
-	return nil
-}
-
 func (b *bfxWebsocket) RemoveEventHandler() error {
 	b.eventHandler = nil
 	return nil
@@ -326,11 +330,6 @@ func (b *bfxWebsocket) RemoveEventHandler() error {
 
 func (b *bfxWebsocket) RemovePrivateHandler() error {
 	b.privateHandler = nil
-	return nil
-}
-
-func (b *bfxWebsocket) RemovePublicHandler() error {
-	b.publicHandler = nil
 	return nil
 }
 

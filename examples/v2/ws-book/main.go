@@ -21,9 +21,9 @@ func main() {
 		log.Printf("EVENT: %#v", ev)
 	})
 
-	c.Websocket.AttachPublicHandler(func(ev interface{}) {
-		log.Printf("PUBLIC MSG: %#v", ev)
-	})
+	h := func(ev interface{}) {
+		log.Printf("PUBLIC MSG BTCUSD: %#v", ev)
+	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
 	msg := &bitfinex.PublicSubscriptionRequest{
@@ -31,7 +31,22 @@ func main() {
 		Channel: bitfinex.ChanTicker,
 		Symbol:  bitfinex.TradingPrefix + bitfinex.BTCUSD,
 	}
-	err = c.Websocket.Subscribe(ctx, msg)
+	err = c.Websocket.Subscribe(ctx, msg, h)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	h2 := func(ev interface{}) {
+		log.Printf("PUBLIC MSG IOTUSD: %#v", ev)
+	}
+
+	ctx, _ = context.WithTimeout(context.Background(), time.Second*1)
+	msg = &bitfinex.PublicSubscriptionRequest{
+		Event:   "subscribe",
+		Channel: bitfinex.ChanTrades,
+		Symbol:  bitfinex.TradingPrefix + bitfinex.IOTUSD,
+	}
+	err = c.Websocket.Subscribe(ctx, msg, h2)
 	if err != nil {
 		log.Fatal(err)
 	}
