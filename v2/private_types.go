@@ -212,35 +212,6 @@ type OrderNew Order
 // OrderCancel gets sent out after an Order was cancelled successfully.
 type OrderCancel Order
 
-// HistoricalOrderSnapshot is a collection of finished orders that would usually
-// be sent on inital connection.
-type HistoricalOrderSnapshot []Order
-
-// HistoricalOrderSnapshotFromRaw takes a raw list of values as returned from the websocket
-// service and tries to convert it into an HistoricalOrderSnapshot.
-func historicalOrderSnapshotFromRaw(raw []interface{}) (os HistoricalOrderSnapshot, err error) {
-	if len(raw) == 0 {
-		return
-	}
-
-	switch raw[0].(type) {
-	case []interface{}:
-		for _, v := range raw {
-			if l, ok := v.([]interface{}); ok {
-				o, err := orderFromRaw(l)
-				if err != nil {
-					return os, err
-				}
-				os = append(os, o)
-			}
-		}
-	default:
-		return os, fmt.Errorf("not an historical order snapshot")
-	}
-
-	return
-}
-
 type PositionStatus string
 
 const (
@@ -676,7 +647,6 @@ func fundingOfferSnapshotFromRaw(raw []interface{}) (fos FundingOfferSnapshot, e
 	return
 }
 
-type HistoricalFundingOfferSnapshot FundingOfferSnapshot
 type HistoricalOffer Offer
 
 type CreditStatus string
@@ -770,8 +740,6 @@ func fundingCreditSnapshotFromRaw(raw []interface{}) (fcs FundingCreditSnapshot,
 	return
 }
 
-type HistoricalFundingCreditSnapshot FundingCreditSnapshot
-
 type LoanStatus string
 
 const (
@@ -861,8 +829,6 @@ func fundingLoanSnapshotFromRaw(raw []interface{}) (fls FundingLoanSnapshot, err
 	return
 }
 
-type HistoricalFundingLoanSnapshot FundingLoanSnapshot
-
 type FundingTrade struct {
 	ID         int64
 	Symbol     string
@@ -937,13 +903,44 @@ func notificationFromRaw(raw []interface{}) (o Notification, err error) {
 	}
 
 	o = Notification{
-		MTS:        i64ValOrZero(raw[0]),
-		Type:       sValOrEmpty(raw[1]),
-		MessageID:  i64ValOrZero(raw[2]),
-		NotifyInfo: raw[4],
-		Code:       i64pValOrNil(raw[5]),
-		Status:     sValOrEmpty(raw[6]),
-		Text:       sValOrEmpty(raw[7]),
+		MTS:       i64ValOrZero(raw[0]),
+		Type:      sValOrEmpty(raw[1]),
+		MessageID: i64ValOrZero(raw[2]),
+		//NotifyInfo: raw[4],
+		Code:   i64pValOrNil(raw[5]),
+		Status: sValOrEmpty(raw[6]),
+		Text:   sValOrEmpty(raw[7]),
+	}
+
+	var nraw []interface{}
+	nraw = raw[4].([]interface{})
+	switch o.Type {
+	case "on-req":
+		on, err := orderFromRaw(nraw)
+		if err != nil {
+			return o, err
+		}
+		o.NotifyInfo = OrderNew(on)
+	case "oc-req":
+		oc, err := orderFromRaw(nraw)
+		if err != nil {
+			return o, err
+		}
+		o.NotifyInfo = OrderCancel(oc)
+	case "fon-req":
+		fon, err := offerFromRaw(nraw)
+		if err != nil {
+			return o, err
+		}
+		o.NotifyInfo = FundingOfferNew(fon)
+	case "foc-req":
+		foc, err := offerFromRaw(nraw)
+		if err != nil {
+			return o, err
+		}
+		o.NotifyInfo = FundingOfferCancel(foc)
+	case "uca":
+		o.NotifyInfo = raw[4]
 	}
 
 	return
