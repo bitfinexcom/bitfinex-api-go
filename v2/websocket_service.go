@@ -159,7 +159,6 @@ func (b *bfxWebsocket) Connect() error {
 func (b *bfxWebsocket) sender() {
 	for {
 		select {
-		default:
 		case <-b.mc.Done():
 			return
 		case msg := <-b.mc.Receive():
