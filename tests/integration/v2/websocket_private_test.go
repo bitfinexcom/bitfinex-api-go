@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/barthr/bitfinex-api-go/v2"
 )
 
 func TestWebsocketOrder(t *testing.T) {

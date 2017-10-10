@@ -13,7 +13,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/bitfinexcom/bitfinex-api-go/utils"
+	"github.com/barthr/bitfinex-api-go/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -62,6 +62,8 @@ const (
 	FundingPrefix = "f"
 	TradingPrefix = "t"
 )
+
+var counter = 0
 
 var ErrWSNotConnected = fmt.Errorf("websocket connection not established")
 
@@ -247,7 +249,7 @@ func (b *bfxWebsocket) receiver() {
 					continue
 				}
 				if b.privateHandler != nil {
-					go b.privateHandler(td)
+					b.privateHandler(td)
 				}
 			} else if _, has := b.pubChanIDs[int64(chanID)]; has {
 				td, err := b.handlePublicDataMessage(raw)

@@ -6,7 +6,7 @@
 ## Installation
 
 ``` bash
-go get github.com/bitfinexcom/bitfinex-api-go
+go get github.com/barthr/bitfinex-api-go
 ```
 
 ## Usage
@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v1"
+	"github.com/barthr/bitfinex-api-go/v1"
 )
 
 func main() {
@@ -53,7 +53,7 @@ if err != nil {
 }
 ```
 
-See [examples](https://github.com/bitfinexcom/bitfinex-api-go/tree/master/examples) and [doc.go](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/doc.go) for more examples.
+See [examples](https://github.com/barthr/bitfinex-api-go/tree/master/examples) and [doc.go](https://github.com/barthr/bitfinex-api-go/blob/master/doc.go) for more examples.
 
 ## Testing
 
@@ -68,7 +68,7 @@ go test -v ./tests/integration
 
 ## Contributing
 
-1. Fork it (https://github.com/bitfinexcom/bitfinex-api-go/fork)
+1. Fork it (https://github.com/barthr/bitfinex-api-go/fork)
 2. Create your feature branch (`git checkout -b my-new-feature)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

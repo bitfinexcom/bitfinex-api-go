@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/barthr/bitfinex-api-go/v2"
 )
 
 func wait(wg *sync.WaitGroup, bc <-chan struct{}, to time.Duration) error {
