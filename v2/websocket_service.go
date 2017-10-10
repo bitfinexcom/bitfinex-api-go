@@ -13,7 +13,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/bitfinexcom/bitfinex-api-go/utils"
+	"github.com/barthr/bitfinex-api-go/utils"
 
 	"github.com/gorilla/websocket"
 )
@@ -62,6 +62,8 @@ const (
 	FundingPrefix = "f"
 	TradingPrefix = "t"
 )
+
+var counter = 0
 
 var ErrWSNotConnected = fmt.Errorf("websocket connection not established")
 
@@ -159,7 +161,6 @@ func (b *bfxWebsocket) Connect() error {
 func (b *bfxWebsocket) sender() {
 	for {
 		select {
-		default:
 		case <-b.mc.Done():
 			return
 		case msg := <-b.mc.Receive():
@@ -206,10 +207,8 @@ func (b *bfxWebsocket) Send(ctx context.Context, msg interface{}) error {
 	case b.mc.C <- bs:
 		return nil
 	case <-b.Done():
-		return fmt.Errorf("websocket closed: ", b.mc.Err())
+		return fmt.Errorf("websocket closed: %v", b.mc.Err())
 	}
-
-	return nil
 }
 
 func (b *bfxWebsocket) receiver() {
@@ -250,7 +249,7 @@ func (b *bfxWebsocket) receiver() {
 					continue
 				}
 				if b.privateHandler != nil {
-					go b.privateHandler(td)
+					b.privateHandler(td)
 				}
 			} else if _, has := b.pubChanIDs[int64(chanID)]; has {
 				td, err := b.handlePublicDataMessage(raw)
@@ -261,7 +260,7 @@ func (b *bfxWebsocket) receiver() {
 					continue
 				}
 				if h, has := b.publicHandlers[int64(chanID)]; has {
-					go h(td)
+					h(td)
 				}
 			} else {
 				// TODO: log unhandled message?
@@ -272,7 +271,7 @@ func (b *bfxWebsocket) receiver() {
 				log.Printf("[WARN]: %s\n", err)
 			}
 			if b.eventHandler != nil {
-				go b.eventHandler(ev)
+				b.eventHandler(ev)
 			}
 		} else {
 			log.Printf("[WARN]: unexpected message: %s\n", msg)

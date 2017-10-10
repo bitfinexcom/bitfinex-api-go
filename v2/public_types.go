@@ -1,7 +1,5 @@
 package bitfinex
 
-import ()
-
 type Ticker struct {
 	Symbol          string
 	Bid             float64
@@ -17,6 +15,9 @@ type Ticker struct {
 	High            float64
 	Low             float64
 }
+
+//easyjson:json
+type BookUpdate [][]float64
 
 type TickerUpdate Ticker
 type TickerSnapshot []Ticker
