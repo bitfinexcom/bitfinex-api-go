@@ -9,7 +9,7 @@ import (
 var nonce uint64
 
 func init() {
-	nonce = uint64(time.Now().UnixNano())
+	nonce = uint64(time.Now().Unix()) * 1000
 }
 
 // GetNonce is a naive nonce producer that takes the current Unix nano epoch

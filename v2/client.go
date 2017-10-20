@@ -2,9 +2,9 @@
 package bitfinex
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -18,7 +18,7 @@ import (
 
 const (
 	// BaseURL is the v2 REST endpoint.
-	BaseURL = "https://api.bitfinex.com/v2"
+	BaseURL = "https://api.bitfinex.com/v2/"
 
 	// WebSocketURL is the v2 Websocket endpoint.
 	WebSocketURL = "wss://api.bitfinex.com/ws/2"
@@ -38,6 +38,10 @@ type Client struct {
 
 	// Services
 	Websocket *bfxWebsocket
+	Orders    *OrderService
+	Platform  *PlatformService
+	Positions *PositionService
+	Trades    *TradeService
 }
 
 func NewClient() *Client {
@@ -50,12 +54,16 @@ func NewClientWithHTTP(h *http.Client) *Client {
 	c := &Client{BaseURL: baseURL, HTTPClient: h}
 
 	c.Websocket = newBfxWebsocket(c, WebSocketURL)
+	c.Orders = &OrderService{client: c}
+	c.Platform = &PlatformService{client: c}
+	c.Positions = &PositionService{client: c}
+	c.Trades = &TradeService{client: c}
 
 	return c
 }
 
 // NewRequest create new API request. Relative url can be provided in refURL.
-func (c *Client) newRequest(method string, refURL string, params url.Values) (*http.Request, error) {
+func (c *Client) newRequest(method string, refURL string, params url.Values, body io.Reader) (*http.Request, error) {
 	rel, err := url.Parse(refURL)
 	if err != nil {
 		return nil, err
@@ -65,7 +73,7 @@ func (c *Client) newRequest(method string, refURL string, params url.Values) (*h
 	}
 
 	u := c.BaseURL.ResolveReference(rel)
-	req, err := http.NewRequest(method, u.String(), nil)
+	req, err := http.NewRequest(method, u.String(), body)
 
 	if err != nil {
 		return nil, err
@@ -76,39 +84,39 @@ func (c *Client) newRequest(method string, refURL string, params url.Values) (*h
 
 // NewAuthenticatedRequest creates new http request for authenticated routes
 func (c *Client) newAuthenticatedRequest(m string, refURL string, data map[string]interface{}) (*http.Request, error) {
-	req, err := c.newRequest(m, refURL, nil)
+	refURL = "auth/r/" + refURL
+
+	if data == nil {
+		data = map[string]interface{}{}
+	}
+
+	b, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	payload := map[string]interface{}{
-		"request": "/v2/" + refURL,
-		"nonce":   utils.GetNonce(),
-	}
-
-	for k, v := range data {
-		payload[k] = v
-	}
-
-	payloadJSON, err := json.Marshal(payload)
+	rd := bytes.NewReader(b)
+	req, err := c.newRequest(m, refURL, nil, rd)
 	if err != nil {
 		return nil, err
 	}
 
-	payloadEnc := base64.StdEncoding.EncodeToString(payloadJSON)
+	nonce := utils.GetNonce()
+	message := "/api/v2/" + refURL + nonce + string(b)
+	sig := c.sign(message)
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-BFX-APIKEY", c.APIKey)
-	req.Header.Add("X-BFX-PAYLOAD", payloadEnc)
-	req.Header.Add("X-BFX-SIGNATURE", c.signPayload(payloadEnc))
+	req.Header.Add("bfx-nonce", nonce)
+	req.Header.Add("bfx-signature", sig)
+	req.Header.Add("bfx-apikey", c.APIKey)
 
 	return req, nil
 }
 
-func (c *Client) signPayload(payload string) string {
+func (c *Client) sign(msg string) string {
 	sig := hmac.New(sha512.New384, []byte(c.APISecret))
-	sig.Write([]byte(payload))
+	sig.Write([]byte(msg))
 	return hex.EncodeToString(sig.Sum(nil))
 }
 
@@ -158,13 +166,39 @@ func checkResponse(r *Response) error {
 		return nil
 	}
 
+	var raw []interface{}
 	// Try to decode error message
 	errorResponse := &ErrorResponse{Response: r}
-	err := json.Unmarshal(r.Body, errorResponse)
+	err := json.Unmarshal(r.Body, &raw)
 	if err != nil {
 		errorResponse.Message = "Error decoding response error message. " +
 			"Please see response body for more information."
+		return errorResponse
 	}
+
+	if len(raw) < 3 {
+		errorResponse.Message = fmt.Sprintf("Expected response to have three elements but got %#v", raw)
+		return errorResponse
+	}
+
+	if str, ok := raw[0].(string); !ok || str != "error" {
+		errorResponse.Message = fmt.Sprintf("Expected first element to be \"error\" but got %#v", raw)
+		return errorResponse
+	}
+
+	code, ok := raw[1].(float64)
+	if !ok {
+		errorResponse.Message = fmt.Sprintf("Expected second element to be error code but got %#v", raw)
+		return errorResponse
+	}
+	errorResponse.Code = int(code)
+
+	msg, ok := raw[2].(string)
+	if !ok {
+		errorResponse.Message = fmt.Sprintf("Expected third element to be error message but got %#v", raw)
+		return errorResponse
+	}
+	errorResponse.Message = msg
 
 	return errorResponse
 }
@@ -174,14 +208,16 @@ func checkResponse(r *Response) error {
 type ErrorResponse struct {
 	Response *Response
 	Message  string `json:"message"`
+	Code     int    `json:"code"`
 }
 
 func (r *ErrorResponse) Error() string {
-	return fmt.Sprintf("%v %v: %d %v",
+	return fmt.Sprintf("%v %v: %d %v (%d)",
 		r.Response.Response.Request.Method,
 		r.Response.Response.Request.URL,
 		r.Response.Response.StatusCode,
 		r.Message,
+		r.Code,
 	)
 }
 
@@ -194,7 +230,6 @@ func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
 	defer resp.Body.Close()
 
 	response := newResponse(resp)
-
 	err = checkResponse(response)
 	if err != nil {
 		return response, err
