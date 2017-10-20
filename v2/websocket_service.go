@@ -299,7 +299,7 @@ func (b *bfxWebsocket) Authenticate(ctx context.Context, filter ...string) error
 	s := &subscriptionRequest{
 		Event:       "auth",
 		APIKey:      b.client.APIKey,
-		AuthSig:     b.client.signPayload(payload),
+		AuthSig:     b.client.sign(payload),
 		AuthPayload: payload,
 		AuthNonce:   nonce,
 		Filter:      filter,

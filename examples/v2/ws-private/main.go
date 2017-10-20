@@ -26,11 +26,11 @@ func main() {
 		log.Fatalf("connecting authenticated websocket: %s", err)
 	}
 
-	c.Websocket.AttachEventHandler(func(_ context.Context, ev interface{}) {
+	c.Websocket.AttachEventHandler(func(ev interface{}) {
 		log.Printf("EVENT: %#v", ev)
 	})
 
-	c.Websocket.AttachPrivateHandler(func(_ context.Context, msg interface{}) {
+	c.Websocket.AttachPrivateHandler(func(msg interface{}) {
 		log.Printf("PRIV MSG: %#v", msg)
 	})
 
