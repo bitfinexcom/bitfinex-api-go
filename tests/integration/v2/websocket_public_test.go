@@ -17,6 +17,8 @@ func wait(wg *sync.WaitGroup, bc <-chan struct{}, to time.Duration) error {
 		wg.Wait()
 	}()
 	select {
+	case <-bc:
+		return fmt.Errorf("websocket closed while waiting") // timed out
 	case <-c:
 		return nil // completed normally
 	case <-time.After(to):
@@ -44,7 +46,7 @@ func TestPublicTicker(t *testing.T) {
 		wg.Done()
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
 	msg := &bitfinex.PublicSubscriptionRequest{
 		Event:   "subscribe",
 		Channel: bitfinex.ChanTicker,
@@ -56,7 +58,7 @@ func TestPublicTicker(t *testing.T) {
 	}
 
 	if err := wait(&wg, c.Websocket.Done(), 2*time.Second); err != nil {
-		t.Errorf("failed to receive message from websocket: %s", err)
+		t.Fatalf("failed to receive message from websocket: %s", err)
 	}
 
 	err = c.Websocket.Unsubscribe(ctx, msg)
@@ -90,7 +92,7 @@ func TestPublicTrades(t *testing.T) {
 		wg.Done()
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
 	msg := &bitfinex.PublicSubscriptionRequest{
 		Event:   "subscribe",
 		Channel: bitfinex.ChanTrades,
@@ -136,7 +138,7 @@ func TestPublicBooks(t *testing.T) {
 		wg.Done()
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
 	msg := &bitfinex.PublicSubscriptionRequest{
 		Event:   "subscribe",
 		Channel: bitfinex.ChanBook,
@@ -148,7 +150,7 @@ func TestPublicBooks(t *testing.T) {
 	}
 
 	if err := wait(&wg, c.Websocket.Done(), 2*time.Second); err != nil {
-		t.Errorf("failed to receive message from websocket: %s", err)
+		t.Fatalf("failed to receive message from websocket: %s", err)
 	}
 
 	err = c.Websocket.Unsubscribe(ctx, msg)
@@ -182,7 +184,7 @@ func TestPublicCandles(t *testing.T) {
 		wg.Done()
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
 	msg := &bitfinex.PublicSubscriptionRequest{
 		Event:   "subscribe",
 		Channel: bitfinex.ChanCandles,
