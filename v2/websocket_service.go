@@ -18,37 +18,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Available pairs
-const (
-	BTCUSD = "BTCUSD"
-	LTCUSD = "LTCUSD"
-	LTCBTC = "LTCBTC"
-	ETHUSD = "ETHUSD"
-	ETHBTC = "ETHBTC"
-	ETCUSD = "ETCUSD"
-	ETCBTC = "ETCBTC"
-	BFXUSD = "BFXUSD"
-	BFXBTC = "BFXBTC"
-	ZECUSD = "ZECUSD"
-	ZECBTC = "ZECBTC"
-	XMRUSD = "XMRUSD"
-	XMRBTC = "XMRBTC"
-	RRTUSD = "RRTUSD"
-	RRTBTC = "RRTBTC"
-	XRPUSD = "XRPUSD"
-	XRPBTC = "XRPBTC"
-	EOSETH = "EOSETH"
-	EOSUSD = "EOSUSD"
-	EOSBTC = "EOSBTC"
-	IOTUSD = "IOTUSD"
-	IOTBTC = "IOTBTC"
-	IOTETH = "IOTETH"
-	BCCBTC = "BCCBTC"
-	BCUBTC = "BCUBTC"
-	BCCUSD = "BCCUSD"
-	BCUUSD = "BCUUSD"
-)
-
 // Available channels
 const (
 	ChanBook    = "book"
@@ -63,7 +32,10 @@ const (
 	TradingPrefix = "t"
 )
 
-var ErrWSNotConnected = fmt.Errorf("websocket connection not established")
+var (
+	ErrWSNotConnected     = fmt.Errorf("websocket connection not established")
+	ErrWSAlreadyConnected = fmt.Errorf("websocket connection already established")
+)
 
 // bfxWebsocket is a wrapper around a simple websocket connection, that let's us
 // manage callbacks and share a single websocket in a thread safe manner.
@@ -72,28 +44,33 @@ type bfxWebsocket struct {
 	// Bitfinex client
 	client *Client
 
-	wsMu          sync.Mutex
-	ws            *websocket.Conn
-	timeout       int64
-	webSocketURL  string
+	wsMu         sync.Mutex
+	ws           *websocket.Conn
+	timeout      int64
+	webSocketURL string
+
+	// TLSSkipVerify toggles if certificate verification should be skipped or not.
 	TLSSkipVerify bool
 
 	// The bitfinex API sends us untyped arrays as data, so we have to keep track
 	// of which one belongs where.
-	mu          sync.Mutex
+	subMu       sync.Mutex
 	pubSubIDs   map[string]publicSubInfo
 	pubChanIDs  map[int64]PublicSubscriptionRequest // ChannelID -> SubscriptionRequest map
 	privSubIDs  map[string]struct{}
 	privChanIDs map[int64]struct{}
 
-	eventHandler   handlerT
-	privateHandler handlerT
+	eventHandler handlerT
+
+	privateHandler  handlerT
+	isAuthenticated bool
 
 	handlersMu     sync.Mutex
 	publicHandlers map[int64]handlerT
 
-	mc   *msgChan
-	stop chan struct{}
+	done  chan struct{}
+	errMu sync.Mutex
+	err   error
 }
 
 type handlerT func(interface{})
@@ -105,27 +82,26 @@ type publicSubInfo struct {
 
 func newBfxWebsocket(c *Client, wsURL string) *bfxWebsocket {
 	b := &bfxWebsocket{
-		client:         c,
-		privSubIDs:     map[string]struct{}{},
-		pubSubIDs:      map[string]publicSubInfo{},
-		pubChanIDs:     map[int64]PublicSubscriptionRequest{},
-		publicHandlers: map[int64]handlerT{},
-		privChanIDs:    map[int64]struct{}{},
-		webSocketURL:   wsURL,
-		mc:             newMsgChan(),
-		stop:           make(chan struct{}),
+		client:       c,
+		webSocketURL: wsURL,
 	}
+	b.init()
 
 	return b
 }
 
 func (b *bfxWebsocket) Connect() error {
-	b.wsMu.Lock()
-	defer b.wsMu.Unlock()
 	if b.ws != nil {
 		return nil // We're already connected.
 	}
 
+	b.init()
+	return b.connect()
+}
+
+func (b *bfxWebsocket) connect() error {
+	b.wsMu.Lock()
+	defer b.wsMu.Unlock()
 	var d = websocket.Dialer{
 		Subprotocols:    []string{"p1", "p2"},
 		ReadBufferSize:  1024,
@@ -142,49 +118,85 @@ func (b *bfxWebsocket) Connect() error {
 
 	b.ws = ws
 
-	b.privSubIDs = map[string]struct{}{}
-	b.pubSubIDs = map[string]publicSubInfo{}
-	b.pubChanIDs = map[int64]PublicSubscriptionRequest{}
-	b.publicHandlers = map[int64]handlerT{}
-	b.privChanIDs = map[int64]struct{}{}
-	b.mc = newMsgChan()
-	b.stop = make(chan struct{})
-
-	go b.sender()
 	go b.receiver()
 
 	return nil
 }
 
-func (b *bfxWebsocket) sender() {
+func (b *bfxWebsocket) init() {
+	b.privSubIDs = map[string]struct{}{}
+	b.pubSubIDs = map[string]publicSubInfo{}
+	b.pubChanIDs = map[int64]PublicSubscriptionRequest{}
+	b.publicHandlers = map[int64]handlerT{}
+	b.privChanIDs = map[int64]struct{}{}
+	b.done = make(chan struct{})
+}
+
+func (b *bfxWebsocket) receiver() {
 	for {
-		select {
-		default:
-		case <-b.mc.Done():
+		if b.ws == nil {
 			return
-		case msg := <-b.mc.Receive():
-			err := b.ws.WriteMessage(websocket.TextMessage, msg)
-			if err != nil { // If WriteMessage returns an error, it's permanent.
-				b.mc.Close(err)
-				return
-			}
+		}
+		if atomic.LoadInt64(&b.timeout) != 0 {
+			b.ws.SetReadDeadline(time.Now().Add(time.Duration(b.timeout)))
+		}
+
+		select {
+		case <-b.Done():
+			return
+		default:
+		}
+
+		_, msg, err := b.ws.ReadMessage()
+		if err != nil {
+			b.close(err)
+			return
+		}
+
+		// Errors here should be non critical so we just log them.
+		err = b.handleMessage(msg)
+		if err != nil {
+			log.Printf("[WARN]: %s\n", err)
 		}
 	}
 }
 
 // Done returns a channel that will be closed if the underlying websocket
 // connection gets closed.
-func (b *bfxWebsocket) Done() <-chan struct{} { return b.mc.Done() }
+func (b *bfxWebsocket) Done() <-chan struct{} { return b.done }
 
 // Err returns an error if the done channel was closed due to an error.
-func (b *bfxWebsocket) Err() error { return b.mc.Err() }
+func (b *bfxWebsocket) Err() error {
+	b.errMu.Lock()
+	defer b.errMu.Unlock()
+	return b.err
+}
 
-//
-func (b *bfxWebsocket) Close() {
+func (b *bfxWebsocket) close(e error) {
 	b.wsMu.Lock()
-	defer b.wsMu.Unlock()
-	b.mc.Close(nil)
-	b.ws.Close()
+	if b.ws != nil {
+		if err := b.ws.Close(); err != nil {
+			log.Printf("[INFO]: error closing websocket: %s", err)
+		}
+		b.ws = nil
+	}
+	b.wsMu.Unlock()
+
+	b.errMu.Lock()
+	b.err = e
+	b.errMu.Unlock()
+
+	select { // Do nothing if we're already closed.
+	default:
+	case <-b.done:
+		return
+	}
+
+	close(b.done)
+}
+
+func (b *bfxWebsocket) Close() {
+	b.close(nil)
 }
 
 // Send marshals the given interface and then sends it to the API. This method
@@ -203,81 +215,76 @@ func (b *bfxWebsocket) Send(ctx context.Context, msg interface{}) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case b.mc.C <- bs:
-		return nil
 	case <-b.Done():
-		return fmt.Errorf("websocket closed: ", b.mc.Err())
+		return fmt.Errorf("websocket closed: ", b.Err())
+	default:
+	}
+
+	b.wsMu.Lock()
+	defer b.wsMu.Unlock()
+	err = b.ws.WriteMessage(websocket.TextMessage, bs)
+	if err != nil { // If WriteMessage returns an error, it's permanent.
+		b.close(err)
+		return err
 	}
 
 	return nil
 }
 
-func (b *bfxWebsocket) receiver() {
-	for {
-		if atomic.LoadInt64(&b.timeout) != 0 {
-			b.ws.SetReadDeadline(time.Now().Add(time.Duration(b.timeout)))
-		}
-		_, msg, err := b.ws.ReadMessage()
+func (b *bfxWebsocket) handleMessage(msg []byte) error {
+	t := bytes.TrimLeftFunc(msg, unicode.IsSpace)
+	if bytes.HasPrefix(t, []byte("[")) { // Data messages are just arrays of values.
+		var raw []interface{}
+		err := json.Unmarshal(msg, &raw)
 		if err != nil {
-			b.mc.Close(err)
-			return
+			return err
+		} else if len(raw) < 2 {
+			return nil
 		}
 
-		t := bytes.TrimLeftFunc(msg, unicode.IsSpace)
-		if bytes.HasPrefix(t, []byte("[")) {
-			var raw []interface{}
-			err := json.Unmarshal(msg, &raw)
-			if err != nil {
-				//return err
-				continue
-			} else if len(raw) < 2 {
-				//return nil
-				continue
-			}
+		chanID, ok := raw[0].(float64)
+		if !ok {
+			return fmt.Errorf("expected message to start with a channel id but got %#v instead", raw[0])
+		}
 
-			chanID, ok := raw[0].(float64)
-			if !ok {
-				//return fmt.Errorf("expected message to start with a channel id but got %#v instead", raw[0])
-				continue
-			}
-
-			if _, has := b.privChanIDs[int64(chanID)]; has {
-				td, err := b.handlePrivateDataMessage(raw)
-				if err != nil {
-					log.Printf("[WARN]: %s\n", err)
-					continue
-				} else if td == nil {
-					continue
-				}
-				if b.privateHandler != nil {
-					go b.privateHandler(td)
-				}
-			} else if _, has := b.pubChanIDs[int64(chanID)]; has {
-				td, err := b.handlePublicDataMessage(raw)
-				if err != nil {
-					log.Printf("[WARN]: %s\n", err)
-					continue
-				} else if td == nil {
-					continue
-				}
-				if h, has := b.publicHandlers[int64(chanID)]; has {
-					go h(td)
-				}
-			} else {
-				// TODO: log unhandled message?
-			}
-		} else if bytes.HasPrefix(t, []byte("{")) { // Events are encoded as objects.
-			ev, err := b.onEvent(msg)
+		if _, has := b.privChanIDs[int64(chanID)]; has {
+			td, err := b.handlePrivateDataMessage(raw)
 			if err != nil {
-				log.Printf("[WARN]: %s\n", err)
+				return err
+			} else if td == nil {
+				return nil
 			}
-			if b.eventHandler != nil {
-				go b.eventHandler(ev)
+			if b.privateHandler != nil {
+				go b.privateHandler(td)
+				return nil
+			}
+		} else if _, has := b.pubChanIDs[int64(chanID)]; has {
+			td, err := b.handlePublicDataMessage(raw)
+			if err != nil {
+				return err
+			} else if td == nil {
+				return nil
+			}
+			if h, has := b.publicHandlers[int64(chanID)]; has {
+				go h(td)
+				return nil
 			}
 		} else {
-			log.Printf("[WARN]: unexpected message: %s\n", msg)
+			// TODO: log unhandled message?
 		}
+	} else if bytes.HasPrefix(t, []byte("{")) { // Events are encoded as objects.
+		ev, err := b.onEvent(msg)
+		if err != nil {
+			return err
+		}
+		if b.eventHandler != nil {
+			go b.eventHandler(ev)
+		}
+	} else {
+		return fmt.Errorf("unexpected message: %s", msg)
 	}
+
+	return nil
 }
 
 type subscriptionRequest struct {
@@ -306,11 +313,16 @@ func (b *bfxWebsocket) Authenticate(ctx context.Context, filter ...string) error
 		SubID:       nonce,
 	}
 
-	b.mu.Lock()
+	b.subMu.Lock()
 	b.privSubIDs[nonce] = struct{}{}
-	b.mu.Unlock()
+	b.subMu.Unlock()
 
-	return b.Send(ctx, s)
+	if err := b.Send(ctx, s); err != nil {
+		return err
+	}
+	b.isAuthenticated = true
+
+	return nil
 }
 
 func (b *bfxWebsocket) AttachEventHandler(f handlerT) error {
