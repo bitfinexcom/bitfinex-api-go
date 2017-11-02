@@ -144,12 +144,12 @@ func (b *bfxWebsocket) receiver() {
 		select {
 		case <-b.Done():
 			return
-		default:
 		}
 
 		_, msg, err := b.ws.ReadMessage()
 		if err != nil {
 			b.close(err)
+
 			return
 		}
 
