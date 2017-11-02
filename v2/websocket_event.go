@@ -86,12 +86,12 @@ func (b *bfxWebsocket) onEvent(msg []byte) (interface{}, error) {
 			return nil, err
 		}
 
-		b.mu.Lock()
+		b.subMu.Lock()
 		if _, ok := b.privSubIDs[a.SubID]; ok {
 			b.privChanIDs[a.ChanID] = struct{}{}
 			delete(b.privSubIDs, a.SubID)
 		}
-		b.mu.Unlock()
+		b.subMu.Unlock()
 		return a, nil
 	case "subscribed":
 		s := SubscribeEvent{}
@@ -100,7 +100,7 @@ func (b *bfxWebsocket) onEvent(msg []byte) (interface{}, error) {
 			return nil, err
 		}
 
-		b.mu.Lock()
+		b.subMu.Lock()
 		if info, ok := b.pubSubIDs[s.SubID]; ok {
 			b.pubChanIDs[s.ChanID] = info.req
 			b.handlersMu.Lock()
@@ -108,7 +108,7 @@ func (b *bfxWebsocket) onEvent(msg []byte) (interface{}, error) {
 			b.handlersMu.Unlock()
 			delete(b.pubSubIDs, s.SubID)
 		}
-		b.mu.Unlock()
+		b.subMu.Unlock()
 		return s, nil
 	case "unsubscribed":
 		e = UnsubscribeEvent{}

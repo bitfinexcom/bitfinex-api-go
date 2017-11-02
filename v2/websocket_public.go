@@ -15,11 +15,11 @@ type unsubscribeMsg struct {
 // Unsubscribe from the websocket channel with the given channel id and close
 // the associated go channel.
 func (b *bfxWebsocket) UnsubscribeByChanID(ctx context.Context, id int64) error {
-	b.mu.Lock()
+	b.subMu.Lock()
 	if _, ok := b.pubChanIDs[id]; ok {
 		delete(b.pubChanIDs, id)
 	}
-	b.mu.Unlock()
+	b.subMu.Unlock()
 
 	b.handlersMu.Lock()
 	if _, ok := b.publicHandlers[id]; ok {
@@ -82,9 +82,9 @@ func (b *bfxWebsocket) Subscribe(ctx context.Context, msg *PublicSubscriptionReq
 	msg.Event = "subscribe"
 	msg.SubID = utils.GetNonce()
 
-	b.mu.Lock()
+	b.subMu.Lock()
 	b.pubSubIDs[msg.SubID] = publicSubInfo{req: *msg, h: h}
-	b.mu.Unlock()
+	b.subMu.Unlock()
 
 	return b.Send(ctx, msg)
 }
