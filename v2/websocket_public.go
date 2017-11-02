@@ -73,11 +73,13 @@ func (b *bfxWebsocket) Subscribe(ctx context.Context, msg *PublicSubscriptionReq
 		return fmt.Errorf("no subscription request provided")
 	}
 
+	b.subMu.Lock()
 	for _, v := range b.pubChanIDs {
 		if v == *msg {
 			return fmt.Errorf("already subscribed to the channel requested")
 		}
 	}
+	b.subMu.Unlock()
 
 	msg.Event = "subscribe"
 	msg.SubID = utils.GetNonce()
