@@ -10,7 +10,9 @@ type eventType struct {
 }
 
 type InfoEvent struct {
-	Version int `json:"version"`
+	Version int    `json:"version"`
+	Code    int    `json:"code"`
+	Message string `json:"msg"`
 }
 
 type AuthEvent struct {
