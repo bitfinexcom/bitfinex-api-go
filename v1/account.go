@@ -65,18 +65,18 @@ func (a *AccountService) KeyPermission() (Permissions, error) {
 }
 
 type SummaryVolume struct {
-	Currency string `json:"curr"`
-	Volume   string `json:"vol"`
+	Currency string  `json:"curr"`
+	Volume   float64 `json:"vol,string"`
 }
 type SummaryProfit struct {
-	Currency string `json:"curr"`
-	Volume   string `json:"amount"`
+	Currency string  `json:"curr"`
+	Volume   float64 `json:"amount,string"`
 }
 type Summary struct {
-	TradeVolume   SummaryVolume `json:"trade_vol_30d"`
-	FundingProfit SummaryProfit `json:"funding_profit_30d"`
-	MakerFee      string        `json:"maker_fee"`
-	TakerFee      string        `json:"taker_fee"`
+	TradeVolume   []SummaryVolume `json:"trade_vol_30d"`
+	FundingProfit []SummaryProfit `json:"funding_profit_30d"`
+	MakerFee      float64         `json:"maker_fee"`
+	TakerFee      float64         `json:"taker_fee"`
 }
 
 func (a *AccountService) Summary() (Summary, error) {
