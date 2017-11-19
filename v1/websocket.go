@@ -189,8 +189,7 @@ func (w *WebSocketService) handleDataMessage(msg []byte) {
 		// Remove chanID from data update
 		// and send message to internal chan
 		w.chanMap[chanID] <- dataUpdate[1:]
-		// 20171119 gpmn fixed up here - seems missed a return at here, add it.
-		return
+		return // 20171119 fixed - seems missed a return at here, add it.
 	}
 
 	// Payload received
