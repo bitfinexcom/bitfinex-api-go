@@ -5,7 +5,7 @@ type AccountService struct {
 }
 
 type AccountPairFee struct {
-	Pair      string
+	Pair      string  `json:"pairs"`
 	MakerFees float64 `json:"maker_fees,string"`
 	TakerFees float64 `json:"taker_fees,string"`
 }
