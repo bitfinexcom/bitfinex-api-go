@@ -23,7 +23,7 @@ func main() {
 	client := bitfinex.NewClient().Auth(key, secret)
 
 	// Sell 0.01BTC at $12.000
-	data, err := client.Orders.Create(bitfinex.BTCUSD, -0.01, 12000, bitfinex.ORDER_TYPE_EXCHANGE_LIMIT)
+	data, err := client.Orders.Create(bitfinex.BTCUSD, -0.01, 12000, bitfinex.OrderTypeExchangeLimit)
 
 	if err != nil {
 		fmt.Println("Error:", err)
