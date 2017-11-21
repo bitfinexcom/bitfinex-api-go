@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"sync"
 
 	"github.com/bitfinexcom/bitfinex-api-go/utils"
 
@@ -50,39 +51,49 @@ const (
 	ChanTicker = "ticker"
 )
 
+// BfChanData :
+type BfChanData struct {
+	Channel, Symbol string
+	Datas           []interface{}
+}
+
 // WebSocketService allow to connect and receive stream data
 // from bitfinex.com ws service.
 type WebSocketService struct {
+	lock    sync.Mutex
+	running bool
 	// http client
 	client *Client
 	// websocket client
 	ws *websocket.Conn
 	// special web socket for private messages
 	privateWs *websocket.Conn
-	// map internal channels to websocket's
-	chanMap    map[float64]chan []float64
-	subscribes []subscribeToChannel
+	// map from channel ID to subscribe info
+	chanIDMap   map[int]*subscribeToChannel
+	subscribes  []*subscribeToChannel
+	defaultChan chan BfChanData
 }
 
 type subscribeMsg struct {
-	Event   string  `json:"event"`
-	Channel string  `json:"channel"`
-	Pair    string  `json:"pair"`
-	ChanID  float64 `json:"chanId,omitempty"`
+	Event   string `json:"event"`
+	Channel string `json:"channel"`
+	Pair    string `json:"pair"`
+	ChanID  int    `json:"chanId,omitempty"`
 }
 
 type subscribeToChannel struct {
 	Channel string
 	Pair    string
-	Chan    chan []float64
+	Chan    chan BfChanData
 }
 
 // NewWebSocketService returns a WebSocketService using the given client.
 func NewWebSocketService(c *Client) *WebSocketService {
 	return &WebSocketService{
-		client:     c,
-		chanMap:    make(map[float64]chan []float64),
-		subscribes: make([]subscribeToChannel, 0),
+		client:      c,
+		chanIDMap:   make(map[int]*subscribeToChannel, 0),
+		subscribes:  make([]*subscribeToChannel, 0),
+		defaultChan: make(chan BfChanData, 256),
 	}
 }
 
@@ -112,56 +123,94 @@ func (w *WebSocketService) Close() {
 	w.ws.Close()
 }
 
-func (w *WebSocketService) AddSubscribe(channel string, pair string, c chan []float64) {
-	s := subscribeToChannel{
-		Channel: channel,
-		Pair:    pair,
-		Chan:    c,
+func (w *WebSocketService) GetDefaultChan() chan BfChanData {
+	return w.defaultChan
+}
+
+func (w *WebSocketService) Subscribe(channel string, pair string, cn chan BfChanData) {
+	actChan := cn
+	if actChan == nil {
+		actChan = w.defaultChan
 	}
-	w.subscribes = append(w.subscribes, s)
+
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	for idx := range w.subscribes {
+		if w.subscribes[idx].Channel == channel && w.subscribes[idx].Pair == pair {
+			w.subscribes[idx].Chan = actChan
+			w.sendSubscribeMessages(channel, pair)
+			return
+		}
+	}
+
+	w.subscribes = append(w.subscribes, &subscribeToChannel{Channel: channel, Pair: pair, Chan: actChan})
+	w.sendSubscribeMessages(channel, pair)
+}
+
+// Unsubscribe : unsubscribe symbol's channel data
+func (w *WebSocketService) Unsubscribe(channel, pair string) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	for idx := range w.subscribes {
+		if w.subscribes[idx].Channel == channel && w.subscribes[idx].Pair == pair {
+			w.subscribes = append(w.subscribes[0:idx], w.subscribes[idx+1:]...)
+			break
+		}
+	}
+	for chanID, subptr := range w.chanIDMap {
+		if subptr.Channel == channel && subptr.Pair == pair {
+			delete(w.chanIDMap, chanID)
+			break
+		}
+	}
 }
 
 func (w *WebSocketService) ClearSubscriptions() {
-	w.subscribes = make([]subscribeToChannel, 0)
+	w.lock.Lock()
+	w.subscribes = make([]*subscribeToChannel, 0)
+	w.chanIDMap = make(map[int]*subscribeToChannel, 0)
+	w.lock.Unlock()
 }
 
-func (w *WebSocketService) sendSubscribeMessages() error {
-	for _, s := range w.subscribes {
-		msg, _ := json.Marshal(subscribeMsg{
-			Event:   "subscribe",
-			Channel: s.Channel,
-			Pair:    s.Pair,
-		})
+func (w *WebSocketService) sendSubscribeMessages(channel, pair string) error {
+	msg, _ := json.Marshal(subscribeMsg{
+		Event:   "subscribe",
+		Channel: channel,
+		Pair:    pair,
+	})
 
-		err := w.ws.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			return err
-		}
+	err := w.ws.WriteMessage(websocket.TextMessage, msg)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-// Subscribe allows to subsribe to channels and watch for new updates.
-// This method supports next channels: book, trade, ticker.
-func (w *WebSocketService) Subscribe() error {
-	// Subscribe to each channel
-	if err := w.sendSubscribeMessages(); err != nil {
-		return err
-	}
+func (w *WebSocketService) Stop() {
+	w.running = false
+	w.ws.Close()
+}
 
-	for {
-		_, p, err := w.ws.ReadMessage()
-		if err != nil {
-			return err
+func (w *WebSocketService) Run() error {
+	w.running = true
+	go func() {
+		defer func() {
+			w.ws.Close()
+			w.running = false
+		}()
+		for w.running {
+			_, p, err := w.ws.ReadMessage()
+			if err != nil {
+				return
+			}
+
+			if bytes.Contains(p, []byte("event")) {
+				w.handleEventMessage(p)
+			} else {
+				w.handleDataMessage(p)
+			}
 		}
-
-		if bytes.Contains(p, []byte("event")) {
-			w.handleEventMessage(p)
-		} else {
-			w.handleDataMessage(p)
-		}
-	}
-
+	}()
 	return nil
 }
 
@@ -171,56 +220,46 @@ func (w *WebSocketService) handleEventMessage(msg []byte) {
 	err := json.Unmarshal(msg, event)
 
 	// Received "subscribed" resposne. Link channels.
-	if err == nil {
-		for _, k := range w.subscribes {
-			if event.Event == "subscribed" && event.Pair == k.Pair && event.Channel == k.Channel {
-				w.chanMap[event.ChanID] = k.Chan
-			}
+	if err != nil {
+		log.Printf("unmarshal failed, error %v", err)
+		return
+	}
+	if event.Event != "subscribed" {
+		return
+	}
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	for _, k := range w.subscribes {
+		if event.Pair == k.Pair && event.Channel == k.Channel {
+			w.chanIDMap[event.ChanID] = k
+			return // should no duplicated, so return without more loop
 		}
 	}
 }
 
 func (w *WebSocketService) handleDataMessage(msg []byte) {
 	// Received payload or data update
-	var dataUpdate []float64
-	err := json.Unmarshal(msg, &dataUpdate)
-	if err == nil {
-		chanID := dataUpdate[0]
-		// Remove chanID from data update
-		// and send message to internal chan
-		w.chanMap[chanID] <- dataUpdate[1:]
-		return // 20171119 fixed - seems missed a return at here, add it.
+	var datas []interface{}
+	err := json.Unmarshal(msg, &datas)
+	if nil != err {
+		log.Printf("Unmarshal failed, error : %v, msg : %s", err, string(msg))
+		return
 	}
 
-	// Payload received
-	var fullPayload []interface{}
-	err = json.Unmarshal(msg, &fullPayload)
-
-	if err != nil {
-		log.Println("Error decoding fullPayload", err)
-	} else {
-		if len(fullPayload) > 3 {
-			itemsSlice := fullPayload[3:]
-			i, _ := json.Marshal(itemsSlice)
-			var item []float64
-			err = json.Unmarshal(i, &item)
-			if err == nil {
-				chanID := fullPayload[0].(float64)
-				w.chanMap[chanID] <- item
-			}
-		} else {
-			itemsSlice := fullPayload[1]
-			i, _ := json.Marshal(itemsSlice)
-			var items [][]float64
-			err = json.Unmarshal(i, &items)
-			if err == nil {
-				chanID := fullPayload[0].(float64)
-				for _, v := range items {
-					w.chanMap[chanID] <- v
-				}
-			}
-		}
+	cnval, ok := datas[0].(float64)
+	if !ok {
+		log.Printf("datas[0]:%v is not a valid number", datas[0])
+		return
 	}
+	chanID := int(cnval)
+	subptr, ok := w.chanIDMap[chanID]
+	if !ok {
+		log.Printf("chanID '%d' not subscribe yet\n", chanID)
+		return
+	}
+	// len(BfChanData.datas) == 1 means "snapshot" slice or "heartbeat", else means "update" slice,
+	// receiver can idenfity them easily.
+	subptr.Chan <- BfChanData{subptr.Channel, subptr.Pair, datas[1:]}
 }
 
 /////////////////////////////
