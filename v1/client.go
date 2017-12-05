@@ -141,6 +141,11 @@ func (c *Client) signPayload(payload string) string {
 	return hex.EncodeToString(sig.Sum(nil))
 }
 
+// SignPayload :
+func (c *Client) SignPayload(payload string) string {
+	return c.signPayload(payload)
+}
+
 // Auth sets api key and secret for usage is requests that requires authentication.
 func (c *Client) Auth(key string, secret string) *Client {
 	c.APIKey = key

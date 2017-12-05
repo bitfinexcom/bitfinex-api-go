@@ -33,6 +33,5 @@ func (s *MarginInfoService) All() ([]MarginInfo, error) {
 
 	var v []MarginInfo
 	_, err = s.client.do(req, &v)
-
 	return v, err
 }

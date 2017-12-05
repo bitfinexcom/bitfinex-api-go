@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/bitfinexcom/bitfinex-api-go/utils"
@@ -60,8 +61,8 @@ type BfChanData struct {
 // WebSocketService allow to connect and receive stream data
 // from bitfinex.com ws service.
 type WebSocketService struct {
-	lock    sync.Mutex
-	running bool
+	lock     sync.Mutex
+	runtimes int
 	// http client
 	client *Client
 	// websocket client
@@ -93,7 +94,7 @@ func NewWebSocketService(c *Client) *WebSocketService {
 		client:      c,
 		chanIDMap:   make(map[int]*subscribeToChannel, 0),
 		subscribes:  make([]*subscribeToChannel, 0),
-		defaultChan: make(chan BfChanData, 256),
+		defaultChan: make(chan BfChanData, 512),
 	}
 }
 
@@ -127,24 +128,24 @@ func (w *WebSocketService) GetDefaultChan() chan BfChanData {
 	return w.defaultChan
 }
 
-func (w *WebSocketService) Subscribe(channel string, pair string, cn chan BfChanData) {
+func (w *WebSocketService) Subscribe(channel string, pair string, cn chan BfChanData) error {
 	actChan := cn
 	if actChan == nil {
 		actChan = w.defaultChan
 	}
 
+	pair = strings.ToUpper(pair)
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	for idx := range w.subscribes {
 		if w.subscribes[idx].Channel == channel && w.subscribes[idx].Pair == pair {
 			w.subscribes[idx].Chan = actChan
-			w.sendSubscribeMessages(channel, pair)
-			return
+			return w.sendSubscribeMessages(channel, pair)
 		}
 	}
 
 	w.subscribes = append(w.subscribes, &subscribeToChannel{Channel: channel, Pair: pair, Chan: actChan})
-	w.sendSubscribeMessages(channel, pair)
+	return w.sendSubscribeMessages(channel, pair)
 }
 
 // Unsubscribe : unsubscribe symbol's channel data
@@ -187,30 +188,32 @@ func (w *WebSocketService) sendSubscribeMessages(channel, pair string) error {
 }
 
 func (w *WebSocketService) Stop() {
-	w.running = false
-	w.ws.Close()
+	w.runtimes++
+	if w.ws != nil {
+		w.ws.Close()
+	}
 }
 
 func (w *WebSocketService) Run() error {
-	w.running = true
-	go func() {
-		defer func() {
-			w.ws.Close()
-			w.running = false
-		}()
-		for w.running {
-			_, p, err := w.ws.ReadMessage()
-			if err != nil {
-				return
-			}
-
-			if bytes.Contains(p, []byte("event")) {
-				w.handleEventMessage(p)
-			} else {
-				w.handleDataMessage(p)
-			}
-		}
+	lastws := w.ws
+	defer func() {
+		lastws.Close()
 	}()
+	w.runtimes++
+	tmpTimes := w.runtimes
+	for tmpTimes == w.runtimes {
+		_, p, err := w.ws.ReadMessage()
+		if err != nil {
+			log.Printf("ReadMessage failed : %v", err)
+			return err
+		}
+		if bytes.Contains(p, []byte("event")) {
+			w.handleEventMessage(p)
+		} else {
+			w.handleDataMessage(p)
+		}
+	}
+	log.Printf("WebSocketService.Run exit @ times %d/%d", tmpTimes, w.runtimes)
 	return nil
 }
 
@@ -230,7 +233,7 @@ func (w *WebSocketService) handleEventMessage(msg []byte) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	for _, k := range w.subscribes {
-		if event.Pair == k.Pair && event.Channel == k.Channel {
+		if strings.ToUpper(event.Pair) == strings.ToUpper(k.Pair) && event.Channel == k.Channel {
 			w.chanIDMap[event.ChanID] = k
 			return // should no duplicated, so return without more loop
 		}
@@ -254,7 +257,7 @@ func (w *WebSocketService) handleDataMessage(msg []byte) {
 	chanID := int(cnval)
 	subptr, ok := w.chanIDMap[chanID]
 	if !ok {
-		log.Printf("chanID '%d' not subscribe yet\n", chanID)
+		log.Printf("chanID '%d' not subscribe yet, %s\n", chanID, string(msg))
 		return
 	}
 	// len(BfChanData.datas) == 1 means "snapshot" slice or "heartbeat", else means "update" slice,
