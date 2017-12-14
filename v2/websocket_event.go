@@ -73,10 +73,11 @@ func (b *bfxWebsocket) onEvent(msg []byte) (interface{}, error) {
 		return nil, err
 	}
 
-	var e interface{}
 	switch event.Event {
 	case "info":
-		e = InfoEvent{}
+		i := InfoEvent{}
+		err := json.Unmarshal(msg, &i)
+		return i, err
 	case "auth":
 		// TODO: should the lib itself keep track of the authentication
 		// 			 status?
@@ -111,15 +112,18 @@ func (b *bfxWebsocket) onEvent(msg []byte) (interface{}, error) {
 		b.subMu.Unlock()
 		return s, nil
 	case "unsubscribed":
-		e = UnsubscribeEvent{}
+		u := UnsubscribeEvent{}
+		err := json.Unmarshal(msg, &u)
+		return u, err
 	case "error":
-		e = ErrorEvent{}
+		e := ErrorEvent{}
+		err := json.Unmarshal(msg, &e)
+		return e, err
 	case "conf":
-		e = ConfEvent{}
+		c := ConfEvent{}
+		err := json.Unmarshal(msg, &c)
+		return c, err
 	default:
 		return nil, fmt.Errorf("unknown event: %s", msg) // TODO: or just log?
 	}
-
-	err = json.Unmarshal(msg, &e)
-	return e, err
 }
