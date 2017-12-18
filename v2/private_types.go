@@ -286,7 +286,7 @@ type Trade struct {
 	Pair        string
 	MTSCreate   int64
 	OrderID     int64
-	ExecAmout   float64
+	ExecAmount   float64
 	ExecPrice   float64
 	OrderType   string
 	OrderPrice  float64
@@ -305,7 +305,7 @@ func tradeFromRaw(raw []interface{}) (o Trade, err error) {
 		Pair:        sValOrEmpty(raw[1]),
 		MTSCreate:   i64ValOrZero(raw[2]),
 		OrderID:     i64ValOrZero(raw[3]),
-		ExecAmout:   f64ValOrZero(raw[4]),
+		ExecAmount:   f64ValOrZero(raw[4]),
 		ExecPrice:   f64ValOrZero(raw[5]),
 		OrderType:   sValOrEmpty(raw[6]),
 		OrderPrice:  f64ValOrZero(raw[7]),
@@ -349,7 +349,7 @@ type TradeExecution struct {
 	Pair       string
 	MTSCreate  int64
 	OrderID    int64
-	ExecAmout  float64
+	ExecAmount  float64
 	ExecPrice  float64
 	OrderType  string
 	OrderPrice float64
@@ -366,7 +366,7 @@ func tradeExecutionFromRaw(raw []interface{}) (o TradeExecution, err error) {
 		Pair:       sValOrEmpty(raw[1]),
 		MTSCreate:  i64ValOrZero(raw[2]),
 		OrderID:    i64ValOrZero(raw[3]),
-		ExecAmout:  f64ValOrZero(raw[4]),
+		ExecAmount:  f64ValOrZero(raw[4]),
 		ExecPrice:  f64ValOrZero(raw[5]),
 		OrderType:  sValOrEmpty(raw[6]),
 		OrderPrice: f64ValOrZero(raw[7]),
@@ -578,7 +578,7 @@ type Offer struct {
 	Symbol     string
 	MTSCreated int64
 	MTSUpdated int64
-	Amout      float64
+	Amount      float64
 	AmountOrig float64
 	Type       string
 	Flags      interface{}
@@ -602,7 +602,7 @@ func offerFromRaw(raw []interface{}) (o Offer, err error) {
 		Symbol:     sValOrEmpty(raw[1]),
 		MTSCreated: i64ValOrZero(raw[2]),
 		MTSUpdated: i64ValOrZero(raw[3]),
-		Amout:      f64ValOrZero(raw[4]),
+		Amount:      f64ValOrZero(raw[4]),
 		AmountOrig: f64ValOrZero(raw[5]),
 		Type:       sValOrEmpty(raw[6]),
 		Flags:      raw[9],
@@ -664,7 +664,7 @@ type Credit struct {
 	Side          string
 	MTSCreated    int64
 	MTSUpdated    int64
-	Amout         float64
+	Amount         float64
 	Flags         interface{}
 	Status        CreditStatus
 	Rate          float64
@@ -691,7 +691,7 @@ func creditFromRaw(raw []interface{}) (o Credit, err error) {
 		Side:          sValOrEmpty(raw[2]),
 		MTSCreated:    i64ValOrZero(raw[3]),
 		MTSUpdated:    i64ValOrZero(raw[4]),
-		Amout:         f64ValOrZero(raw[5]),
+		Amount:         f64ValOrZero(raw[5]),
 		Flags:         raw[6],
 		Status:        CreditStatus(sValOrEmpty(raw[7])),
 		Rate:          f64ValOrZero(raw[11]),
@@ -755,7 +755,7 @@ type Loan struct {
 	Side          string
 	MTSCreated    int64
 	MTSUpdated    int64
-	Amout         float64
+	Amount         float64
 	Flags         interface{}
 	Status        LoanStatus
 	Rate          float64
@@ -781,7 +781,7 @@ func loanFromRaw(raw []interface{}) (o Loan, err error) {
 		Side:          sValOrEmpty(raw[2]),
 		MTSCreated:    i64ValOrZero(raw[3]),
 		MTSUpdated:    i64ValOrZero(raw[4]),
-		Amout:         f64ValOrZero(raw[5]),
+		Amount:         f64ValOrZero(raw[5]),
 		Flags:         raw[6],
 		Status:        LoanStatus(sValOrEmpty(raw[7])),
 		Rate:          f64ValOrZero(raw[11]),
