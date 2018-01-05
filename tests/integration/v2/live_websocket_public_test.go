@@ -42,6 +42,7 @@ func TestPublicTicker(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		tickers := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -52,10 +53,20 @@ func TestPublicTicker(t *testing.T) {
 				switch msg.(type) {
 				case error:
 					errch <- msg.(error)
+				case *websocket.UnsubscribeEvent:
+					wg.Done()
+				case *websocket.SubscribeEvent:
+					wg.Done()
+				case *websocket.InfoEvent:
+					wg.Done()
+				case *bitfinex.Ticker:
+					if tickers <= 0 {
+						wg.Done()
+					}
+					tickers++
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
-				wg.Done()
 			}
 		}
 	}()
@@ -97,6 +108,7 @@ func TestPublicTrades(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		trades := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -107,10 +119,35 @@ func TestPublicTrades(t *testing.T) {
 				switch msg.(type) {
 				case error:
 					errch <- msg.(error)
+				case *websocket.UnsubscribeEvent:
+					wg.Done()
+				case *websocket.SubscribeEvent:
+					wg.Done()
+				case *websocket.InfoEvent:
+					wg.Done()
+				case *bitfinex.Trade:
+					if trades <= 0 {
+						wg.Done()
+					}
+					trades++
+				case *bitfinex.TradeUpdate:
+					if trades <= 0 {
+						wg.Done()
+					}
+					trades++
+				case *bitfinex.TradeExecution:
+					if trades <= 0 {
+						wg.Done()
+					}
+					trades++
+				case *bitfinex.TradeSnapshot:
+					if trades <= 0 {
+						wg.Done()
+					}
+					trades++
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
-				wg.Done()
 			}
 		}
 	}()
@@ -151,6 +188,7 @@ func TestPublicBooks(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		books := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -161,10 +199,20 @@ func TestPublicBooks(t *testing.T) {
 				switch msg.(type) {
 				case error:
 					errch <- msg.(error)
+				case *websocket.UnsubscribeEvent:
+					wg.Done()
+				case *websocket.SubscribeEvent:
+					wg.Done()
+				case *websocket.InfoEvent:
+					wg.Done()
+				case *bitfinex.BookUpdate:
+					if books <= 0 {
+						wg.Done()
+					}
+					books++
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
-				wg.Done()
 			}
 		}
 	}()
@@ -205,6 +253,7 @@ func TestPublicCandles(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		candles := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -215,10 +264,20 @@ func TestPublicCandles(t *testing.T) {
 				switch msg.(type) {
 				case error:
 					errch <- msg.(error)
+				case *websocket.UnsubscribeEvent:
+					wg.Done()
+				case *websocket.SubscribeEvent:
+					wg.Done()
+				case *websocket.InfoEvent:
+					wg.Done()
+				case *bitfinex.Candle:
+					if candles <= 0 {
+						wg.Done()
+					}
+					candles++
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
-				wg.Done()
 			}
 		}
 	}()

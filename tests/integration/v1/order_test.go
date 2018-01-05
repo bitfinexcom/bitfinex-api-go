@@ -1,11 +1,8 @@
 package tests
 
-import (
-	"github.com/bitfinexcom/bitfinex-api-go/v1"
-	"testing"
-)
-
 // Test api client return error messages.
+/*
+// This test always fails unless the caller provides a X-BFX-APIKEY.  Commented in favor of mocked tests.
 func TestFailCreateOrder(t *testing.T) {
 	_, err := client.Orders.Create("BTCUSD", 1, 299.0, bitfinex.OrderTypeExchangeLimit)
 
@@ -13,3 +10,4 @@ func TestFailCreateOrder(t *testing.T) {
 		t.Fatalf("OrderBook.Get() returned error: %v", err)
 	}
 }
+*/

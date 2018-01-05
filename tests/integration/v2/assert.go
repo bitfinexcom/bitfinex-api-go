@@ -2,7 +2,6 @@ package tests
 
 import (
 	"bytes"
-	"log"
 	"reflect"
 	"testing"
 )
@@ -59,10 +58,6 @@ func assertSlice(t *testing.T, expected, actual interface{}) {
 
 // does not work on slices
 func assert(t *testing.T, expected interface{}, actual interface{}) {
-
-	if _, ok := expected.([]interface{}); !ok {
-		log.Printf("%#v is a slice", expected)
-	}
 
 	prexp := reflect.ValueOf(expected)
 	pract := reflect.ValueOf(actual)
