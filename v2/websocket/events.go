@@ -1,4 +1,4 @@
-package bitfinex
+package websocket
 
 import (
 	"encoding/json"
@@ -11,6 +11,10 @@ type eventType struct {
 
 type InfoEvent struct {
 	Version int `json:"version"`
+}
+
+type RawEvent struct {
+	Data interface{}
 }
 
 type AuthEvent struct {
@@ -66,60 +70,79 @@ type ConfEvent struct {
 }
 
 // onEvent handles all the event messages and connects SubID and ChannelID.
-func (b *bfxWebsocket) onEvent(msg []byte) (interface{}, error) {
+func (c *Client) handleEvent(msg []byte) error {
 	event := &eventType{}
 	err := json.Unmarshal(msg, event)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	var e interface{}
+	//var e interface{}
 	switch event.Event {
 	case "info":
-		e = InfoEvent{}
+		i := InfoEvent{}
+		err = json.Unmarshal(msg, &i)
+		if err != nil {
+			return err
+		}
+		c.handleOpen()
+		c.listener <- &i
 	case "auth":
-		// TODO: should the lib itself keep track of the authentication
-		// 			 status?
 		a := AuthEvent{}
 		err = json.Unmarshal(msg, &a)
 		if err != nil {
-			return nil, err
+			return err
 		}
-
-		b.subMu.Lock()
-		if _, ok := b.privSubIDs[a.SubID]; ok {
-			b.privChanIDs[a.ChanID] = struct{}{}
-			delete(b.privSubIDs, a.SubID)
+		err = c.subscriptions.activate(a.SubID, a.ChanID)
+		if err != nil {
+			return err
 		}
-		b.subMu.Unlock()
-		return a, nil
+		if a.Status != "" && a.Status == "OK" {
+			c.Authentication = SuccessfulAuthentication
+		} else {
+			c.Authentication = RejectedAuthentication
+		}
+		c.listener <- &a
+		return nil
 	case "subscribed":
 		s := SubscribeEvent{}
 		err = json.Unmarshal(msg, &s)
 		if err != nil {
-			return nil, err
+			return err
 		}
-
-		b.subMu.Lock()
-		if info, ok := b.pubSubIDs[s.SubID]; ok {
-			b.pubChanIDs[s.ChanID] = info.req
-			b.handlersMu.Lock()
-			b.publicHandlers[s.ChanID] = info.h
-			b.handlersMu.Unlock()
-			delete(b.pubSubIDs, s.SubID)
+		err = c.subscriptions.activate(s.SubID, s.ChanID)
+		if err != nil {
+			return err
 		}
-		b.subMu.Unlock()
-		return s, nil
+		c.listener <- &s
+		return nil
 	case "unsubscribed":
-		e = UnsubscribeEvent{}
+		s := UnsubscribeEvent{}
+		err = json.Unmarshal(msg, &s)
+		if err != nil {
+			return err
+		}
+		c.subscriptions.removeByChanID(s.ChanID)
+		c.listener <- &s
 	case "error":
-		e = ErrorEvent{}
+		er := ErrorEvent{}
+		err = json.Unmarshal(msg, &er)
+		if err != nil {
+			return err
+		}
+		c.listener <- &er
 	case "conf":
-		e = ConfEvent{}
+		ec := ConfEvent{}
+		err = json.Unmarshal(msg, &ec)
+		if err != nil {
+			return err
+		}
+		c.listener <- &ec
 	default:
-		return nil, fmt.Errorf("unknown event: %s", msg) // TODO: or just log?
+		return fmt.Errorf("unknown event: %s", msg) // TODO: or just log?
 	}
 
-	err = json.Unmarshal(msg, &e)
-	return e, err
+	//err = json.Unmarshal(msg, &e)
+	//TODO raw message isn't ever published
+
+	return err
 }
