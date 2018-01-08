@@ -114,7 +114,7 @@ func TestClaimPosition(t *testing.T) {
 		return &resp, nil
 	}
 
-	position, err := NewClient().Positions.Claim("943715", "0.5")
+	position, err := NewClient().Positions.Claim(943715, "0.5")
 
 	if err != nil {
 		t.Error(err)

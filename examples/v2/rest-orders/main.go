@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 )
 
 // Set BFX_APIKEY and BFX_SECRET as :
@@ -17,7 +18,7 @@ import (
 func main() {
 	key := os.Getenv("BFX_API_KEY")
 	secret := os.Getenv("BFX_API_SECRET")
-	c := bitfinex.NewClient().Credentials(key, secret)
+	c := rest.NewClient().Credentials(key, secret)
 
 	available, err := c.Platform.Status()
 	if err != nil {
