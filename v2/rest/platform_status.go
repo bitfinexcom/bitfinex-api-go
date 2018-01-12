@@ -18,5 +18,6 @@ func (p *PlatformService) Status() (bool, error) {
 		s[i] = v.(int)
 	}
 */
-	return len(raw) > 0 && raw[0].(int) == 1, nil
+// As said in https://golang.org/pkg/encoding/json/, Json Unmarshal stores float64 for numbers
+	return len(raw) > 0 && raw[0].(float64) == 1, nil
 }

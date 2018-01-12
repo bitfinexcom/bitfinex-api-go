@@ -1148,3 +1148,27 @@ func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interfac
 
 	return
 }
+
+type CandleSnapshot []Candle
+
+func NewCandleSnapshotFromRaw(symbol string, resolution CandleResolution,raw []interface{}) (ts CandleSnapshot, err error) {
+	if len(raw) == 0 {
+		return
+	}
+	switch raw[0].(type) {
+	case []interface{}:
+		for _, v := range raw {
+			if l, ok := v.([]interface{}); ok {
+				t, err := NewCandleFromRaw(symbol,resolution, l)
+				if err != nil {
+					return ts, err
+				}
+				ts = append(ts, t)
+			}
+		}
+	default:
+		return ts, fmt.Errorf("not a candle snapshot: %#v", raw)
+	}
+
+	return
+}
