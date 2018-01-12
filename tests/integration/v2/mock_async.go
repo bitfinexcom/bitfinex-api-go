@@ -84,6 +84,6 @@ func newTestAsync() *TestAsync {
 	}
 }
 
-func (t *TestAsync) SetReadTimeout(t time.Duration) {
+func (t *TestAsync) SetReadTimeout(d time.Duration) {
 	//no-op
 }
