@@ -1172,3 +1172,47 @@ func NewCandleSnapshotFromRaw(symbol string, resolution CandleResolution,raw []i
 
 	return
 }
+
+func NewTickersFromRaw(raw []interface{}) (t Ticker, err error) {
+	if len(raw) < 11 {
+		return t, fmt.Errorf("data slice too short for tickers, expected %d got %d: %#v", 11, len(raw), raw)
+	}
+
+	t = Ticker{
+		Symbol:          sValOrEmpty(raw[0]),
+		Bid:             f64ValOrZero(raw[1]),
+		BidSize:         f64ValOrZero(raw[2]),
+		Ask:             f64ValOrZero(raw[3]),
+		AskSize:         f64ValOrZero(raw[4]),
+		DailyChange:     f64ValOrZero(raw[5]),
+		DailyChangePerc: f64ValOrZero(raw[6]),
+		LastPrice:       f64ValOrZero(raw[7]),
+		Volume:          f64ValOrZero(raw[8]),
+		High:            f64ValOrZero(raw[9]),
+		Low:             f64ValOrZero(raw[10]),
+	}
+
+	return
+}
+
+func NewTickerSnapshotFromRaw(raw []interface{}) (ts TickerSnapshot, err error) {
+	if len(raw) == 0 {
+		return
+	}
+	switch raw[0].(type) {
+	case []interface{}:
+		for _, v := range raw {
+			if l, ok := v.([]interface{}); ok {
+				t, err := NewTickersFromRaw( l)
+				if err != nil {
+					return ts, err
+				}
+				ts = append(ts, t)
+			}
+		}
+	default:
+		return ts, fmt.Errorf("not a ticker snapshot: %#v", raw)
+	}
+
+	return
+}

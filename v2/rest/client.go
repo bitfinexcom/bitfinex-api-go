@@ -26,6 +26,7 @@ type Client struct {
 	Trades    TradeService
 	Platform  PlatformService
 	Candles   CandleService
+	Tickers   TickerService
 
 	Synchronous
 }
@@ -57,6 +58,7 @@ func NewClientWithSynchronous(sync Synchronous) *Client {
 	c.Candles = CandleService{Synchronous: c}
 	c.Positions = PositionService{Synchronous: c}
 	c.Trades = TradeService{Synchronous: c}
+	c.Tickers = TickerService{Synchronous: c}
 	return c
 }
 
