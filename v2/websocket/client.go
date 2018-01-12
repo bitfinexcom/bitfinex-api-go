@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"sync/atomic"
 	"time"
 	"unicode"
 
@@ -62,6 +61,8 @@ type Asynchronous interface {
 	Listen() <-chan []byte
 	Close()
 	Done() <-chan error
+
+	setReadTimeout(t time.Duration)
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
@@ -72,6 +73,7 @@ type Client struct {
 	Authentication AuthState
 	asynchronous   Asynchronous
 	nonce          utils.NonceGenerator
+	isConnected    bool
 
 	// subscription manager
 	subscriptions *subscriptions
@@ -105,6 +107,11 @@ func NewClientWithURL(url string) *Client {
 	return NewClientWithAsync(newWs(url))
 }
 
+// NewClientWithURL creates a new default client with a given API endpoint.
+func NewClientWithURLNonce(url string, nonce utils.NonceGenerator) *Client {
+	return NewClientWithAsyncNonce(newWs(url), nonce)
+}
+
 // NewClientWithAsync creates a new default client with a given asynchronous transport interface.
 func NewClientWithAsync(async Asynchronous) *Client {
 	return NewClientWithAsyncNonce(async, utils.NewEpochNonceGenerator())
@@ -120,6 +127,7 @@ func NewClientWithAsyncNonce(async Asynchronous, nonce utils.NonceGenerator) *Cl
 		listener:       make(chan interface{}),
 		subscriptions:  newSubscriptions(),
 		nonce:          nonce,
+		isConnected:    false,
 	}
 	c.registerPublicFactories()
 	// wait for shutdown signals from child & caller
@@ -185,18 +193,26 @@ func NewClient() *Client {
 func (c *Client) Connect() error {
 	err := c.asynchronous.Connect()
 	if err == nil {
+		c.isConnected = true
 		go c.listenUpstream()
 	}
 	return err
+}
+
+// IsConnected returns true if the underlying asynchronous transport is connected to an endpoint.
+func (c *Client) IsConnected() bool {
+	return c.isConnected
 }
 
 func (c *Client) listenDisconnect() {
 	// block until finished
 	select {
 	case err := <-c.asynchronous.Done(): // child shutdown
+		c.isConnected = false
 		c.close(err)
 		return
 	case <-c.shutdown: // normal shutdown
+		c.isConnected = false
 		return
 	}
 }
@@ -313,5 +329,5 @@ func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 
 // SetReadTimeout sets the read timeout for the underlying websocket connections.
 func (c *Client) SetReadTimeout(t time.Duration) {
-	atomic.StoreInt64(&c.timeout, t.Nanoseconds())
+	c.asynchronous.setReadTimeout(t)
 }
