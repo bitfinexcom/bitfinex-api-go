@@ -35,9 +35,6 @@ func main() {
 	}
 
 	for obj := range c.Listen() {
-		if obj == nil {
-			break
-		}
 		switch obj.(type) {
 		case error:
 			log.Printf("channel closed: %s", obj)

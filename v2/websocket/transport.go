@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -57,7 +58,6 @@ func (w *ws) Connect() error {
 	if err != nil {
 		return err
 	}
-
 	w.ws = ws
 	go w.listenWs()
 	return nil
@@ -115,12 +115,16 @@ func (w *ws) listenWs() {
 		default:
 		}
 
+		// detect read timeout errors vs. close frame disconnect errors?
 		_, msg, err := w.ws.ReadMessage()
 		if err != nil {
-			w.cleanup(err)
-			return
+			if _, ok := err.(*websocket.CloseError); ok {
+				w.cleanup(err)
+				return
+			}
+			log.Printf("transport read error: %s", err.Error())
+			debug.PrintStack()
 		}
-		log.Print(string(msg))
 		w.downstream <- msg
 	}
 }
@@ -130,6 +134,7 @@ func (w *ws) Listen() <-chan []byte {
 }
 
 func (w *ws) cleanup(err error) {
+	log.Printf("transport closing: %s", err.Error())
 	close(w.downstream) // shut down caller's listen channel
 	close(w.shutdown)   // signal to kill goroutines
 	if err != nil && !w.userShutdown {
@@ -149,4 +154,8 @@ func (w *ws) Close() {
 		w.ws = nil
 	}
 	w.wsLock.Unlock()
+}
+
+func (w *ws) setReadTimeout(t time.Duration) {
+	atomic.StoreInt64(&w.timeout, t.Nanoseconds())
 }

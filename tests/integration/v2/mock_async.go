@@ -83,3 +83,7 @@ func newTestAsync() *TestAsync {
 		Sent:      make([]interface{}, 0),
 	}
 }
+
+func (t *TestAsync) SetReadTimeout(d time.Duration) {
+	//no-op
+}

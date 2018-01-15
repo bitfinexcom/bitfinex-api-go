@@ -27,9 +27,6 @@ func main() {
 	}
 	go func() {
 		for msg := range c.Listen() {
-			if msg == nil {
-				break
-			}
 			log.Printf("MSG RECV: %#v", msg)
 		}
 	}()
