@@ -228,8 +228,6 @@ func TestPublicBooks(t *testing.T) {
 		t.Fatalf("failed to receive first message from websocket: %s", err)
 	}
 
-	time.Sleep(time.Second * 5)
-
 	err = c.Unsubscribe(ctx, id)
 	if err != nil {
 		t.Fatal(err)
