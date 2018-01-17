@@ -114,14 +114,10 @@ func (w *ws) listenWs() {
 		default:
 		}
 
-		// detect read timeout errors vs. close frame disconnect errors?
 		_, msg, err := w.ws.ReadMessage()
 		if err != nil {
-			if _, ok := err.(*websocket.CloseError); ok {
-				w.cleanup(err)
-				return
-			}
-			log.Printf("transport read error: %s", err.Error())
+			w.cleanup(err)
+			return
 		}
 		w.downstream <- msg
 	}
