@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -123,7 +122,6 @@ func (w *ws) listenWs() {
 				return
 			}
 			log.Printf("transport read error: %s", err.Error())
-			debug.PrintStack()
 		}
 		w.downstream <- msg
 	}
@@ -156,6 +154,6 @@ func (w *ws) Close() {
 	w.wsLock.Unlock()
 }
 
-func (w *ws) setReadTimeout(t time.Duration) {
+func (w *ws) SetReadTimeout(t time.Duration) {
 	atomic.StoreInt64(&w.timeout, t.Nanoseconds())
 }

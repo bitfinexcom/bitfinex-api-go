@@ -21,7 +21,7 @@ type listener struct {
 	positionSnapshot     chan *bitfinex.PositionSnapshot
 	notifications        chan *bitfinex.Notification
 	positions            chan *bitfinex.PositionUpdate
-	tradeUpdates         chan *bitfinex.TradeUpdate
+	tradeUpdates         chan *bitfinex.TradeExecutionUpdate
 	tradeExecutions      chan *bitfinex.TradeExecution
 	cancels              chan *bitfinex.OrderCancel
 	marginBase           chan *bitfinex.MarginInfoBase
@@ -45,7 +45,7 @@ func newListener() *listener {
 		errors:               make(chan error, 10),
 		notifications:        make(chan *bitfinex.Notification, 10),
 		positions:            make(chan *bitfinex.PositionUpdate, 10),
-		tradeUpdates:         make(chan *bitfinex.TradeUpdate, 10),
+		tradeUpdates:         make(chan *bitfinex.TradeExecutionUpdate, 10),
 		tradeExecutions:      make(chan *bitfinex.TradeExecution, 10),
 		cancels:              make(chan *bitfinex.OrderCancel, 10),
 		marginBase:           make(chan *bitfinex.MarginInfoBase, 10),
@@ -223,7 +223,7 @@ func (l *listener) nextPositionUpdate() (*bitfinex.PositionUpdate, error) {
 	}
 }
 
-func (l *listener) nextTradeUpdate() (*bitfinex.TradeUpdate, error) {
+func (l *listener) nextTradeUpdate() (*bitfinex.TradeExecutionUpdate, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -337,8 +337,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.balanceUpdates <- msg.(*bitfinex.BalanceUpdate)
 				case *bitfinex.Notification:
 					l.notifications <- msg.(*bitfinex.Notification)
-				case *bitfinex.TradeUpdate:
-					l.tradeUpdates <- msg.(*bitfinex.TradeUpdate)
+				case *bitfinex.TradeExecutionUpdate:
+					l.tradeUpdates <- msg.(*bitfinex.TradeExecutionUpdate)
 				case *bitfinex.TradeExecution:
 					l.tradeExecutions <- msg.(*bitfinex.TradeExecution)
 				case *bitfinex.PositionUpdate:

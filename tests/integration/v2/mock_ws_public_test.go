@@ -41,6 +41,7 @@ func TestTicker(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// subscribe ack
 	async.Publish(`{"event":"subscribed","channel":"ticker","chanId":5,"symbol":"tBTCUSD","subId":"1514401173001","pair":"BTCUSD"}`)
 	sub, err := listener.nextSubscriptionEvent()

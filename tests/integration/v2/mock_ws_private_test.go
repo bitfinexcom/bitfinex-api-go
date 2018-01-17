@@ -3,7 +3,7 @@ package tests
 import (
 	"context"
 	"testing"
-	"time"
+	//"time"
 
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -22,7 +22,7 @@ func TestAuthentication(t *testing.T) {
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.SetReadTimeout(time.Second * 2)
+	//ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 
@@ -65,7 +65,7 @@ func TestWalletBalanceUpdates(t *testing.T) {
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.SetReadTimeout(time.Second * 2)
+	//ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 
@@ -136,7 +136,7 @@ func TestNewOrder(t *testing.T) {
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.SetReadTimeout(time.Second * 2)
+	//ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 
@@ -200,7 +200,7 @@ func TestFills(t *testing.T) {
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.SetReadTimeout(time.Second * 2)
+	//ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 
@@ -297,9 +297,9 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.TradeUpdate{ID: 1, Pair: "tBTCUSD", MTS: 1514909325593, ExecAmount: 0.21679716, ExecPrice: 915.9, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -0.39712904, FeeCurrency: "USD"}, tu)
+	assert(t, &bitfinex.TradeExecutionUpdate{ID: 1, Pair: "tBTCUSD", MTS: 1514909325593, ExecAmount: 0.21679716, ExecPrice: 915.9, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -0.39712904, FeeCurrency: "USD"}, tu)
 	tu, _ = listener.nextTradeUpdate()
-	assert(t, &bitfinex.TradeUpdate{ID: 2, Pair: "tBTCUSD", MTS: 1514909325597, ExecAmount: 0.78320284, ExecPrice: 916.2, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -1.43514088, FeeCurrency: "USD"}, tu)
+	assert(t, &bitfinex.TradeExecutionUpdate{ID: 2, Pair: "tBTCUSD", MTS: 1514909325597, ExecAmount: 0.78320284, ExecPrice: 916.2, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -1.43514088, FeeCurrency: "USD"}, tu)
 
 	// fills--wallet updates from fee deduction
 	async.Publish(`[0,"wu",["margin","USD",9999.60287096,0,null]]`)
@@ -361,7 +361,7 @@ func TestCancel(t *testing.T) {
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.SetReadTimeout(time.Second * 2)
+	//ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 

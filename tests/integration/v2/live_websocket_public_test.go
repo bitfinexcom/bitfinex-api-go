@@ -130,7 +130,7 @@ func TestPublicTrades(t *testing.T) {
 						wg.Done()
 					}
 					trades++
-				case *bitfinex.TradeUpdate:
+				case *bitfinex.TradeExecutionUpdate:
 					if trades <= 0 {
 						wg.Done()
 					}
@@ -219,7 +219,7 @@ func TestPublicBooks(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*2)
 	defer cxl()
-	id, err := c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
+	id, err := c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, websocket.Precision0, websocket.FrequencyRealtime)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,6 +227,8 @@ func TestPublicBooks(t *testing.T) {
 	if err := wait(&wg, errch, 2*time.Second); err != nil {
 		t.Fatalf("failed to receive first message from websocket: %s", err)
 	}
+
+	time.Sleep(time.Second * 5)
 
 	err = c.Unsubscribe(ctx, id)
 	if err != nil {

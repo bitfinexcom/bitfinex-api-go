@@ -44,12 +44,14 @@ func (c *Client) SubscribeTrades(ctx context.Context, symbol string) (string, er
 }
 
 // SubscribeBook sends a subscription request for market data.
-func (c *Client) SubscribeBook(ctx context.Context, symbol string) (string, error) {
+func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision BookPrecision, frequency BookFrequency) (string, error) {
 	req := &SubscriptionRequest{
-		SubID:   c.nonce.GetNonce(),
-		Event:   EventSubscribe,
-		Channel: ChanBook,
-		Symbol:  symbol,
+		SubID:     c.nonce.GetNonce(),
+		Event:     EventSubscribe,
+		Channel:   ChanBook,
+		Symbol:    symbol,
+		Precision: string(precision),
+		Frequency: string(frequency),
 	}
 	c.subscriptions.add(req)
 	err := c.asynchronous.Send(ctx, req)
