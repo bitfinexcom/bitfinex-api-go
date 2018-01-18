@@ -358,18 +358,20 @@ func NewPositionSnapshotFromRaw(raw []interface{}) (ps PositionSnapshot, err err
 
 // Trade represents a trade on the public data feed.
 type Trade struct {
+	Pair   string
 	ID     int64
 	MTS    int64
 	Amount float64
 	Price  float64
 }
 
-func NewTradeFromRaw(raw []interface{}) (o Trade, err error) {
+func NewTradeFromRaw(pair string, raw []interface{}) (o Trade, err error) {
 	if len(raw) < 4 {
 		return o, fmt.Errorf("data slice too short for trade: %#v", raw)
 	}
 
 	o = Trade{
+		Pair:   pair,
 		ID:     i64ValOrZero(raw[0]),
 		MTS:    i64ValOrZero(raw[1]),
 		Amount: f64ValOrZero(raw[2]),
@@ -379,7 +381,9 @@ func NewTradeFromRaw(raw []interface{}) (o Trade, err error) {
 	return
 }
 
-type TradeUpdate struct {
+// TradeExecutionUpdate represents a full update to a trade on the private data feed.  Following a TradeExecution,
+// TradeExecutionUpdates include additional details, e.g. the trade's execution ID (TradeID).
+type TradeExecutionUpdate struct {
 	ID          int64
 	Pair        string
 	MTS         int64
@@ -394,13 +398,13 @@ type TradeUpdate struct {
 }
 
 // public trade update just looks like a trade
-func NewTradeUpdateFromRaw(raw []interface{}) (o TradeUpdate, err error) {
+func NewTradeExecutionUpdateFromRaw(raw []interface{}) (o TradeExecutionUpdate, err error) {
 	if len(raw) == 4 {
-		o = TradeUpdate{ID: i64ValOrZero(raw[0]), MTS: i64ValOrZero(raw[1]), ExecAmount: f64ValOrZero(raw[2]), ExecPrice: f64ValOrZero(raw[3])}
+		o = TradeExecutionUpdate{ID: i64ValOrZero(raw[0]), MTS: i64ValOrZero(raw[1]), ExecAmount: f64ValOrZero(raw[2]), ExecPrice: f64ValOrZero(raw[3])}
 		return
 	}
 	if len(raw) == 11 {
-		o = TradeUpdate{
+		o = TradeExecutionUpdate{
 			ID:          i64ValOrZero(raw[0]),
 			Pair:        sValOrEmpty(raw[1]),
 			MTS:         i64ValOrZero(raw[2]),
@@ -418,7 +422,7 @@ func NewTradeUpdateFromRaw(raw []interface{}) (o TradeUpdate, err error) {
 	return o, fmt.Errorf("data slice too short for trade update: %#v", raw)
 }
 
-type TradeSnapshot []Trade
+type TradeSnapshot []TradeExecutionUpdate
 type HistoricalTradeSnapshot TradeSnapshot
 
 func NewTradeSnapshotFromRaw(raw []interface{}) (ts TradeSnapshot, err error) {
@@ -429,7 +433,7 @@ func NewTradeSnapshotFromRaw(raw []interface{}) (ts TradeSnapshot, err error) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
-				t, err := NewTradeFromRaw(l)
+				t, err := NewTradeExecutionUpdateFromRaw(l)
 				if err != nil {
 					return ts, err
 				}
@@ -443,26 +447,26 @@ func NewTradeSnapshotFromRaw(raw []interface{}) (ts TradeSnapshot, err error) {
 	return
 }
 
-// TradeExecution represents a trade on the public data feed.
+// TradeExecution represents the first message receievd for a trade on the private data feed.
 type TradeExecution struct {
-	ID      int64
-	Pair    string
-	MTS     int64
-	OrderID int64
-	Amount  float64
-	Price   float64
+	ID         int64
+	Pair       string
+	MTS        int64
+	OrderID    int64
+	Amount     float64
+	Price      float64
+	OrderType  string
+	OrderPrice float64
+	Maker      int
 }
 
 func NewTradeExecutionFromRaw(raw []interface{}) (o TradeExecution, err error) {
-	if len(raw) == 4 {
-		o = TradeExecution{ID: i64ValOrZero(raw[0]), MTS: i64ValOrZero(raw[1]), Amount: f64ValOrZero(raw[2]), Price: f64ValOrZero(raw[3])}
-		return
-	}
 	if len(raw) < 6 {
+		log.Printf("[ERROR] not enough members (%d, need at least 6) for trade execution: %#v", raw)
 		return o, fmt.Errorf("data slice too short for trade execution: %#v", raw)
 	}
 
-	log.Printf("%#v", raw)
+	// trade executions sometimes omit order type, price, and maker flag
 	o = TradeExecution{
 		ID:      i64ValOrZero(raw[0]),
 		Pair:    sValOrEmpty(raw[1]),
@@ -470,6 +474,12 @@ func NewTradeExecutionFromRaw(raw []interface{}) (o TradeExecution, err error) {
 		OrderID: i64ValOrZero(raw[3]),
 		Amount:  f64ValOrZero(raw[4]),
 		Price:   f64ValOrZero(raw[5]),
+	}
+
+	if len(raw) >= 9 {
+		o.OrderType = sValOrEmpty(raw[6])
+		o.OrderPrice = f64ValOrZero(raw[7])
+		o.Maker = iValOrZero(raw[8])
 	}
 
 	return

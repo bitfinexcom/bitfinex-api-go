@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -115,15 +114,10 @@ func (w *ws) listenWs() {
 		default:
 		}
 
-		// detect read timeout errors vs. close frame disconnect errors?
 		_, msg, err := w.ws.ReadMessage()
 		if err != nil {
-			if _, ok := err.(*websocket.CloseError); ok {
-				w.cleanup(err)
-				return
-			}
-			log.Printf("transport read error: %s", err.Error())
-			debug.PrintStack()
+			w.cleanup(err)
+			return
 		}
 		w.downstream <- msg
 	}
@@ -156,6 +150,6 @@ func (w *ws) Close() {
 	w.wsLock.Unlock()
 }
 
-func (w *ws) setReadTimeout(t time.Duration) {
+func (w *ws) SetReadTimeout(t time.Duration) {
 	atomic.StoreInt64(&w.timeout, t.Nanoseconds())
 }

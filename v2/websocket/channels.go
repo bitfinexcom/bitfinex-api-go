@@ -29,62 +29,41 @@ func (c *Client) handleChannel(msg []byte) error {
 		return err
 	}
 
-	// public msg: [ChanID, [Data]]
-	// hb (both): [ChanID, "hb"]
-	// private msg: [ChanID, "type", [Data]]
-	switch data := raw[1].(type) {
-	case string:
-		// authenticated data slice, or a heartbeat
-		if raw[1].(string) == "hb" {
-			c.handleHeartbeat()
-		} else {
-			// authenticated data slice
-			// raw[2] is data slice
-			// 'private' data
-			if len(raw) > 2 {
-				if arr, ok := raw[2].([]interface{}); ok {
-					obj, err := c.handlePrivateDataMessage(raw[1].(string), arr)
-					if err != nil {
-						return err
-					}
-					// private data is returned as strongly typed data, publish directly
-					if obj != nil {
-						c.listener <- obj
-					}
-				}
+	if sub.Public {
+		switch data := raw[1].(type) {
+		case string:
+			switch data {
+			case "hb":
+				c.handleHeartbeat()
+			default:
+				data := raw[2].([]interface{})
+				c.handlePublicChannel(chanID, sub.Request.Channel, data)
 			}
+		case []interface{}:
+			c.handlePublicChannel(chanID, sub.Request.Channel, data)
 		}
-	case []interface{}:
-		// unauthenticated data slice
-		// 'data' is data slice
-		// 'public' data
-		// returns interface{} (which is really [][]float64)
-		obj, err := c.processDataSlice(data)
-		if err != nil {
-			return err
-		}
-		// public data is returned as raw interface arrays, use a factory to convert to raw type & publish
-		if factory, ok := c.factories[sub.Request.Channel]; ok {
-			flt := obj.([][]float64)
-			var arr []interface{}
-			if len(flt) == 1 {
-				// deep copy types
-				arr = make([]interface{}, len(flt[0]))
-				for i, ft := range flt[0] {
-					arr[i] = ft
-				}
-			} else if len(flt) > 1 {
-				// deep copy types
-				arr = make([]interface{}, len(flt))
-				for i, fta := range flt {
-					sub := make([]interface{}, len(fta))
-					for j, ft := range fta {
-						sub[j] = ft
-					}
-					arr[i] = sub
-				}
-			} else {
-				return fmt.Errorf("data too small to process: %#v", obj)
+	} else {
+		c.handlePrivateChannel(raw)
+	}
+
+	return nil
+}
+
+func (c *Client) handlePublicChannel(chanID int64, channel string, data []interface{}) error {
+	// unauthenticated data slice
+	// returns interface{} (which is really [][]float64)
+	obj, err := c.processDataSlice(data)
+	if err != nil {
+		return err
+	}
+	// public data is returned as raw interface arrays, use a factory to convert to raw type & publish
+	if factory, ok := c.factories[channel]; ok {
+		flt := obj.([][]float64)
+		if len(flt) == 1 {
+			// single item
+			arr := make([]interface{}, len(flt[0]))
+			for i, ft := range flt[0] {
+				arr[i] = ft
 			}
 			msg, err := factory(chanID, arr)
 			if err != nil {
@@ -92,13 +71,50 @@ func (c *Client) handleChannel(msg []byte) error {
 				return err
 			}
 			c.listener <- msg
+		} else if len(flt) > 1 {
+			// snapshot
+			for _, fta := range flt {
+				sub := make([]interface{}, len(fta))
+				for j, ft := range fta {
+					sub[j] = ft
+				}
+				msg, err := factory(chanID, sub)
+				if err != nil {
+					return err
+				}
+				c.listener <- msg
+			}
 		} else {
-			// factory lookup error
-			log.Printf("could not find public factory for %s channel", sub.Request.Channel)
-			return fmt.Errorf("could not find public factory for %s channel", sub.Request.Channel)
+			return fmt.Errorf("data too small to process: %#v", obj)
+		}
+	} else {
+		// factory lookup error
+		log.Printf("could not find public factory for %s channel", channel)
+		return fmt.Errorf("could not find public factory for %s channel", channel)
+	}
+	return nil
+}
+
+func (c *Client) handlePrivateChannel(raw []interface{}) error {
+	// authenticated data slice, or a heartbeat
+	if raw[1].(string) == "hb" {
+		c.handleHeartbeat()
+	} else {
+		// raw[2] is data slice
+		// authenticated snapshots?
+		if len(raw) > 2 {
+			if arr, ok := raw[2].([]interface{}); ok {
+				obj, err := c.handlePrivateDataMessage(raw[1].(string), arr)
+				if err != nil {
+					return err
+				}
+				// private data is returned as strongly typed data, publish directly
+				if obj != nil {
+					c.listener <- obj
+				}
+			}
 		}
 	}
-
 	return nil
 }
 
@@ -261,7 +277,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		return &o
 	case "tu":
-		tu, err := bitfinex.NewTradeUpdateFromRaw(raw)
+		tu, err := bitfinex.NewTradeExecutionUpdateFromRaw(raw)
 		if err != nil {
 			return err
 		}

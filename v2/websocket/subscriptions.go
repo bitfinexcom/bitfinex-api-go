@@ -36,14 +36,30 @@ type messageFactory func(chanID int64, raw []interface{}) (interface{}, error)
 type subscription struct {
 	ChanID  int64
 	pending bool
+	Public  bool
 
 	Request *SubscriptionRequest
+}
+
+func isPublic(request *SubscriptionRequest) bool {
+	switch request.Channel {
+	case ChanBook:
+		return true
+	case ChanCandles:
+		return true
+	case ChanTicker:
+		return true
+	case ChanTrades:
+		return true
+	}
+	return false
 }
 
 func newSubscription(request *SubscriptionRequest) *subscription {
 	return &subscription{
 		Request: request,
 		pending: true,
+		Public:  isPublic(request),
 	}
 }
 

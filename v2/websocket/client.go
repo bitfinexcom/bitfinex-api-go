@@ -34,6 +34,32 @@ const (
 	ChanCandles = "candles"
 )
 
+// Book precision levels
+const (
+	Precision0 BookPrecision = "P0"
+	Precision1 BookPrecision = "P1"
+	Precision2 BookPrecision = "P2"
+	Precision3 BookPrecision = "P3"
+)
+
+// private type
+type bookPrecision string
+
+// BookPrecision provides a typed book precision level.
+type BookPrecision bookPrecision
+
+const (
+	// FrequencyRealtime book frequency gives updates as they occur in real-time.
+	FrequencyRealtime BookFrequency = "F0"
+	// FrequencyTwoPerSecond delivers two book updates per second.
+	FrequencyTwoPerSecond BookFrequency = "F1"
+)
+
+type bookFrequency string
+
+// BookFrequency provides a typed book frequency.
+type BookFrequency bookFrequency
+
 // Events
 const (
 	EventSubscribe   = "subscribe"
@@ -62,7 +88,7 @@ type Asynchronous interface {
 	Close()
 	Done() <-chan error
 
-	setReadTimeout(t time.Duration)
+	SetReadTimeout(t time.Duration)
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
@@ -151,7 +177,7 @@ func extractSymbolResolutionFromKey(subscription string) (symbol string, resolut
 }
 
 func (c *Client) registerPublicFactories() {
-	c.registerFactory(ChanTicker, func(chanID int64, raw []interface{}) (msg interface{}, err error) {
+	c.registerFactory(ChanTicker, func(chanID int64, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
 		if err == nil {
 			tick, err := bitfinex.NewTickerFromRaw(sub.Request.Symbol, raw)
@@ -159,10 +185,15 @@ func (c *Client) registerPublicFactories() {
 		}
 		return nil, err
 	})
-	c.registerFactory(ChanTrades, func(chanID int64, raw []interface{}) (msg interface{}, err error) {
-		return bitfinex.NewTradeSnapshotFromRaw(raw)
+	c.registerFactory(ChanTrades, func(chanID int64, raw []interface{}) (interface{}, error) {
+		sub, err := c.subscriptions.lookupByChannelID(chanID)
+		if err == nil {
+			trade, err := bitfinex.NewTradeFromRaw(sub.Request.Symbol, raw)
+			return &trade, err
+		}
+		return nil, err
 	})
-	c.registerFactory(ChanBook, func(chanID int64, raw []interface{}) (msg interface{}, err error) {
+	c.registerFactory(ChanBook, func(chanID int64, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
 		if err == nil {
 			update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, raw)
@@ -170,7 +201,7 @@ func (c *Client) registerPublicFactories() {
 		}
 		return nil, err
 	})
-	c.registerFactory(ChanCandles, func(chanID int64, raw []interface{}) (msg interface{}, err error) {
+	c.registerFactory(ChanCandles, func(chanID int64, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
 		if err != nil {
 			return nil, err
@@ -329,5 +360,5 @@ func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 
 // SetReadTimeout sets the read timeout for the underlying websocket connections.
 func (c *Client) SetReadTimeout(t time.Duration) {
-	c.asynchronous.setReadTimeout(t)
+	c.asynchronous.SetReadTimeout(t)
 }
