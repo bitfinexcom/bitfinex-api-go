@@ -17,6 +17,12 @@ type RawEvent struct {
 	Data interface{}
 }
 
+func newPingEvent() *eventType {
+	return &eventType{
+		Event: EventPing,
+	}
+}
+
 type AuthEvent struct {
 	Event   string       `json:"event"`
 	Status  string       `json:"status"`

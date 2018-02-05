@@ -1,5 +1,6 @@
 package tests
 
+/*
 import (
 	"context"
 	"fmt"
@@ -8,7 +9,9 @@ import (
 	"testing"
 	"time"
 )
-
+*/
+/*
+// Socket read timeouts should terminate connections, invalidating this test
 func TestSocketReadTimeout(t *testing.T) {
 	port := 4001
 	wsService := NewTestWsService(port)
@@ -89,3 +92,4 @@ func TestSocketReadTimeout(t *testing.T) {
 		t.Fatal("socket not connected after read timeout")
 	}
 }
+*/

@@ -64,6 +64,7 @@ type BookFrequency bookFrequency
 const (
 	EventSubscribe   = "subscribe"
 	EventUnsubscribe = "unsubscribe"
+	EventPing        = "ping"
 )
 
 // Authentication states
