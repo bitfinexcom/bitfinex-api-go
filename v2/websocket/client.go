@@ -37,8 +37,8 @@ const (
 // Book precision levels
 const (
 	Precision0 BookPrecision = "P0"
-	Precision1 BookPrecision = "P1"
 	Precision2 BookPrecision = "P2"
+	Precision1 BookPrecision = "P1"
 	Precision3 BookPrecision = "P3"
 )
 
@@ -102,6 +102,8 @@ type Client struct {
 	nonce          utils.NonceGenerator
 	isConnected    bool
 
+	parameters *Parameters
+
 	// subscription manager
 	subscriptions *subscriptions
 	factories     map[string]messageFactory
@@ -129,23 +131,38 @@ func (c *Client) registerFactory(channel string, factory messageFactory) {
 	c.factories[channel] = factory
 }
 
-// NewClientWithURL creates a new default client with a given API endpoint.
-func NewClientWithURL(url string) *Client {
-	return NewClientWithAsync(newWs(url))
+// New creates a default client.
+func New() *Client {
+	return NewWithParams(NewDefaultParameters())
 }
 
-// NewClientWithURL creates a new default client with a given API endpoint.
-func NewClientWithURLNonce(url string, nonce utils.NonceGenerator) *Client {
-	return NewClientWithAsyncNonce(newWs(url), nonce)
+// NewWithAsync creates a new default client with a given asynchronous transport interface.
+func NewWithAsync(async Asynchronous) *Client {
+	return NewWithParamsAsync(NewDefaultParameters(), async)
 }
 
-// NewClientWithAsync creates a new default client with a given asynchronous transport interface.
-func NewClientWithAsync(async Asynchronous) *Client {
-	return NewClientWithAsyncNonce(async, utils.NewEpochNonceGenerator())
+// NewWithParams creates a new default client with a given set of parameters.
+func NewWithParams(params *Parameters) *Client {
+	return NewWithParamsAsync(params, newWs(params.URL))
 }
 
-// NewClientWithAsync creates a new client with a given asynchronous transport and nonce generator interfaces.
-func NewClientWithAsyncNonce(async Asynchronous, nonce utils.NonceGenerator) *Client {
+// NewWithAsyncNonce creates a new default client with a given asynchronous transport and nonce generator.
+func NewWithAsyncNonce(async Asynchronous, nonce utils.NonceGenerator) *Client {
+	return NewWithParamsAsyncNonce(NewDefaultParameters(), async, nonce)
+}
+
+// NewWithParamsNonce creates a new default client with a given set of parameters and nonce generator.
+func NewWithParamsNonce(params *Parameters, nonce utils.NonceGenerator) *Client {
+	return NewWithParamsAsyncNonce(params, newWs(params.URL), nonce)
+}
+
+// NewWithParamsAsync creates a new default client with a given set of parameters and asynchronous transport interface.
+func NewWithParamsAsync(params *Parameters, async Asynchronous) *Client {
+	return NewWithParamsAsyncNonce(params, async, utils.NewEpochNonceGenerator())
+}
+
+// NewWithParamsAsyncNonce creates a new client with a given set of parameters, asynchronous transport, and nonce generator interfaces.
+func NewWithParamsAsyncNonce(params *Parameters, async Asynchronous, nonce utils.NonceGenerator) *Client {
 	c := &Client{
 		asynchronous:   async,
 		shutdown:       make(chan bool),
@@ -155,6 +172,7 @@ func NewClientWithAsyncNonce(async Asynchronous, nonce utils.NonceGenerator) *Cl
 		subscriptions:  newSubscriptions(),
 		nonce:          nonce,
 		isConnected:    false,
+		parameters:     params,
 	}
 	c.registerPublicFactories()
 	// wait for shutdown signals from child & caller
@@ -216,11 +234,6 @@ func (c *Client) registerPublicFactories() {
 	})
 }
 
-// NewClient creates a new default client.
-func NewClient() *Client {
-	return NewClientWithURL(productionBaseURL)
-}
-
 // Connect to the Bitfinex API.
 func (c *Client) Connect() error {
 	err := c.asynchronous.Connect()
@@ -255,12 +268,13 @@ func (c *Client) listenUpstream() {
 		case <-c.shutdown:
 			return
 		case msg := <-c.asynchronous.Listen():
-			if msg != nil {
-				// Errors here should be non critical so we just log them.
-				err := c.handleMessage(msg)
-				if err != nil {
-					log.Printf("[WARN]: %s\n", err)
-				}
+			if msg == nil {
+
+			}
+			// Errors here should be non critical so we just log them.
+			err := c.handleMessage(msg)
+			if err != nil {
+				log.Printf("[WARN]: %s\n", err)
 			}
 		}
 	}

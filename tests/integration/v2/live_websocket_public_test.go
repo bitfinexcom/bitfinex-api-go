@@ -29,7 +29,7 @@ func wait(wg *sync.WaitGroup, bc <-chan error, to time.Duration) error {
 }
 
 func TestPublicTicker(t *testing.T) {
-	c := websocket.NewClient()
+	c := websocket.New()
 	wg := sync.WaitGroup{}
 	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. data message
 
@@ -95,7 +95,7 @@ func TestPublicTicker(t *testing.T) {
 }
 
 func TestPublicTrades(t *testing.T) {
-	c := websocket.NewClient()
+	c := websocket.New()
 	wg := sync.WaitGroup{}
 	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. 3 x data message
 
@@ -175,7 +175,7 @@ func TestPublicTrades(t *testing.T) {
 }
 
 func TestPublicBooks(t *testing.T) {
-	c := websocket.NewClient()
+	c := websocket.New()
 	wg := sync.WaitGroup{}
 	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. data message
 
@@ -240,7 +240,7 @@ func TestPublicBooks(t *testing.T) {
 }
 
 func TestPublicCandles(t *testing.T) {
-	c := websocket.NewClient()
+	c := websocket.New()
 	wg := sync.WaitGroup{}
 	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. data message
 

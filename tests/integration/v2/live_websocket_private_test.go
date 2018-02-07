@@ -18,7 +18,7 @@ func TestWebsocketOrder(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1) // 1. Authentication event
 
-	c := websocket.NewClient().Credentials(key, secret)
+	c := websocket.New().Credentials(key, secret)
 
 	errch := make(chan error)
 

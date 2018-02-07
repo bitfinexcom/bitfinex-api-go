@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	c := websocket.NewClient()
+	c := websocket.New()
 
 	err := c.Connect()
 	if err != nil {

@@ -15,7 +15,7 @@ func TestAuthentication(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -58,7 +58,7 @@ func TestWalletBalanceUpdates(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -129,7 +129,7 @@ func TestNewOrder(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -193,7 +193,7 @@ func TestFills(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -354,7 +354,7 @@ func TestCancel(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()

@@ -16,7 +16,7 @@ func TestTicker(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce)
+	ws := websocket.NewWithAsyncNonce(async, nonce)
 
 	// setup listener
 	listener := newListener()
