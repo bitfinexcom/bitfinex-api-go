@@ -27,13 +27,16 @@ type SubscriptionRequest struct {
 }
 
 func (s *SubscriptionRequest) String() string {
-	if s.Key == "" {
+	if s.Key == "" && s.Channel != "" && s.Symbol != "" {
 		return fmt.Sprintf("%s %s", s.Channel, s.Symbol)
 	}
-	if s.Precision != "" && s.Frequency != "" {
+	if s.Channel != "" && s.Symbol != "" && s.Precision != "" && s.Frequency != "" {
 		return fmt.Sprintf("%s %s %s %s", s.Channel, s.Symbol, s.Precision, s.Frequency)
 	}
-	return fmt.Sprintf("%s %s", s.Channel, s.Key)
+	if s.Channel != "" && s.Symbol != "" {
+		return fmt.Sprintf("%s %s", s.Channel, s.Symbol)
+	}
+	return ""
 }
 
 type UnsubscribeRequest struct {
@@ -99,7 +102,7 @@ type subscriptions struct {
 // a slice of the existing subscriptions prior to reset.
 func (s *subscriptions) Reset() []*subscription {
 	s.lock.Lock()
-	subs := make([]*subscription, len(s.subsBySubID))
+	subs := make([]*subscription, 0, len(s.subsBySubID))
 	for _, sub := range s.subsBySubID {
 		subs = append(subs, sub)
 	}

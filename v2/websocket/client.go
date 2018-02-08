@@ -402,10 +402,14 @@ func (c *Client) sendUnsubscribeMessage(ctx context.Context, chanID int64) error
 }
 
 func (c *Client) checkResubscription() {
+	log.Printf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
 	if c.parameters.ResubscribeOnReconnect {
-		log.Print("resubscribing on reconnect")
 		for _, sub := range c.subscriptions.Reset() {
-			log.Printf("resubscribing to %s", sub.Request.String())
+			if sub.Request.Event == "auth" {
+				continue
+			}
+			sub.Request.SubID = c.nonce.GetNonce() // new nonce
+			log.Printf("resubscribing to %s with nonce %s", sub.Request.String(), sub.Request.SubID)
 			c.Subscribe(context.Background(), sub.Request)
 		}
 	}
