@@ -88,12 +88,34 @@ type Asynchronous interface {
 	Listen() <-chan []byte
 	Close()
 	Done() <-chan error
+}
 
-	SetReadTimeout(t time.Duration)
+// AsynchronousFactory provides an interface to re-create asynchronous transports during reconnect events.
+type AsynchronousFactory interface {
+	Create() Asynchronous
+}
+
+// WebsocketAsynchronousFactory creates a websocket-based asynchronous transport.
+type WebsocketAsynchronousFactory struct {
+	parameters *Parameters
+}
+
+// NewWebsocketAsynchronousFactory creates a new websocket factory with a given URL.
+func NewWebsocketAsynchronousFactory(parameters *Parameters) AsynchronousFactory {
+	return &WebsocketAsynchronousFactory{
+		parameters: parameters,
+	}
+}
+
+// Create returns a new websocket transport.
+func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
+	return newWs(w.parameters.url)
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
 type Client struct {
+	asyncFactory AsynchronousFactory // for re-creating transport during reconnects
+
 	timeout        int64 // read timeout
 	apiKey         string
 	apiSecret      string
@@ -101,7 +123,9 @@ type Client struct {
 	asynchronous   Asynchronous
 	nonce          utils.NonceGenerator
 	isConnected    bool
+	terminal       bool
 
+	// connection & operational behavior
 	parameters *Parameters
 
 	// subscription manager
@@ -111,6 +135,7 @@ type Client struct {
 	// close signal sent to user on shutdown
 	shutdown chan bool
 
+	// downstream listener channel to deliver API objects
 	listener chan interface{}
 }
 
@@ -136,47 +161,45 @@ func New() *Client {
 	return NewWithParams(NewDefaultParameters())
 }
 
-// NewWithAsync creates a new default client with a given asynchronous transport interface.
-func NewWithAsync(async Asynchronous) *Client {
-	return NewWithParamsAsync(NewDefaultParameters(), async)
+// NewWithAsyncFactory creates a new default client with a given asynchronous transport factory interface.
+func NewWithAsyncFactory(async AsynchronousFactory) *Client {
+	return NewWithParamsAsyncFactory(NewDefaultParameters(), async)
 }
 
 // NewWithParams creates a new default client with a given set of parameters.
 func NewWithParams(params *Parameters) *Client {
-	return NewWithParamsAsync(params, newWs(params.URL))
+	return NewWithParamsAsyncFactory(params, NewWebsocketAsynchronousFactory(params))
 }
 
-// NewWithAsyncNonce creates a new default client with a given asynchronous transport and nonce generator.
-func NewWithAsyncNonce(async Asynchronous, nonce utils.NonceGenerator) *Client {
-	return NewWithParamsAsyncNonce(NewDefaultParameters(), async, nonce)
+// NewWithAsyncFactoryNonce creates a new default client with a given asynchronous transport factory and nonce generator.
+func NewWithAsyncFactoryNonce(async AsynchronousFactory, nonce utils.NonceGenerator) *Client {
+	return NewWithParamsAsyncFactoryNonce(NewDefaultParameters(), async, nonce)
 }
 
 // NewWithParamsNonce creates a new default client with a given set of parameters and nonce generator.
 func NewWithParamsNonce(params *Parameters, nonce utils.NonceGenerator) *Client {
-	return NewWithParamsAsyncNonce(params, newWs(params.URL), nonce)
+	return NewWithParamsAsyncFactoryNonce(params, NewWebsocketAsynchronousFactory(params), nonce)
 }
 
-// NewWithParamsAsync creates a new default client with a given set of parameters and asynchronous transport interface.
-func NewWithParamsAsync(params *Parameters, async Asynchronous) *Client {
-	return NewWithParamsAsyncNonce(params, async, utils.NewEpochNonceGenerator())
+// NewWithParamsAsyncFactory creates a new default client with a given set of parameters and asynchronous transport factory interface.
+func NewWithParamsAsyncFactory(params *Parameters, async AsynchronousFactory) *Client {
+	return NewWithParamsAsyncFactoryNonce(params, async, utils.NewEpochNonceGenerator())
 }
 
-// NewWithParamsAsyncNonce creates a new client with a given set of parameters, asynchronous transport, and nonce generator interfaces.
-func NewWithParamsAsyncNonce(params *Parameters, async Asynchronous, nonce utils.NonceGenerator) *Client {
+// NewWithParamsAsyncFactoryNonce creates a new client with a given set of parameters, asynchronous transport factory, and nonce generator interfaces.
+func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactory, nonce utils.NonceGenerator) *Client {
 	c := &Client{
-		asynchronous:   async,
-		shutdown:       make(chan bool),
+		asyncFactory:   async,
 		Authentication: NoAuthentication,
 		factories:      make(map[string]messageFactory),
-		listener:       make(chan interface{}),
 		subscriptions:  newSubscriptions(),
 		nonce:          nonce,
 		isConnected:    false,
 		parameters:     params,
+		listener:       make(chan interface{}),
+		terminal:       false,
 	}
 	c.registerPublicFactories()
-	// wait for shutdown signals from child & caller
-	go c.listenDisconnect()
 	return c
 }
 
@@ -234,16 +257,6 @@ func (c *Client) registerPublicFactories() {
 	})
 }
 
-// Connect to the Bitfinex API.
-func (c *Client) Connect() error {
-	err := c.asynchronous.Connect()
-	if err == nil {
-		c.isConnected = true
-		go c.listenUpstream()
-	}
-	return err
-}
-
 // IsConnected returns true if the underlying asynchronous transport is connected to an endpoint.
 func (c *Client) IsConnected() bool {
 	return c.isConnected
@@ -252,9 +265,12 @@ func (c *Client) IsConnected() bool {
 func (c *Client) listenDisconnect() {
 	// block until finished
 	select {
-	case err := <-c.asynchronous.Done(): // child shutdown
+	case e := <-c.asynchronous.Done(): // child shutdown
 		c.isConnected = false
-		c.close(err)
+		if e != nil {
+			log.Printf("client disconnected: %s", e.Error())
+		}
+		c.reconnect(e)
 		return
 	case <-c.shutdown: // normal shutdown
 		c.isConnected = false
@@ -262,25 +278,70 @@ func (c *Client) listenDisconnect() {
 	}
 }
 
+// Connect to the Bitfinex API, this should only be called once.
+func (c *Client) Connect() error {
+	c.reset()
+	return c.connect()
+}
+
+func (c *Client) reset() {
+	c.shutdown = make(chan bool)
+	c.asynchronous = c.asyncFactory.Create()
+	// wait for shutdown signals from child & caller
+	go c.listenDisconnect()
+	// listen to data from async
+	go c.listenUpstream()
+}
+
+func (c *Client) connect() error {
+	err := c.asynchronous.Connect()
+	if err == nil {
+		c.isConnected = true
+	}
+	return err
+}
+
+func (c *Client) reconnect(err error) error {
+	for ; !c.terminal && c.parameters.autoReconnect && c.parameters.reconnectTry < c.parameters.reconnectAttempts; c.parameters.reconnectTry++ {
+		log.Printf("reconnect attempt %d/%d", c.parameters.reconnectTry+1, c.parameters.reconnectAttempts)
+		c.reset()
+		err = c.connect()
+		if err == nil {
+			c.parameters.reconnectTry = 0
+			return nil
+		}
+		log.Printf("reconnect failed: %s", err.Error())
+		time.Sleep(c.parameters.reconnectInterval)
+	}
+	if err != nil {
+		log.Printf("could not reconnect: %s", err.Error())
+	}
+	c.terminal = true
+	c.close(err)
+	return err
+}
+
+// start this goroutine before connecting, but this should die during a connection failure
 func (c *Client) listenUpstream() {
 	for {
 		select {
 		case <-c.shutdown:
-			return
+			return // only exit point
 		case msg := <-c.asynchronous.Listen():
-			if msg == nil {
-
-			}
-			// Errors here should be non critical so we just log them.
-			err := c.handleMessage(msg)
-			if err != nil {
-				log.Printf("[WARN]: %s\n", err)
+			if msg != nil {
+				// Errors here should be non critical so we just log them.
+				err := c.handleMessage(msg)
+				if err != nil {
+					log.Printf("[WARN]: %s\n", err)
+				}
 			}
 		}
 	}
 }
 
 // cleanly dispose of resources & signal we are finished
+// this is a terminal state and is not recoverable.
+// the Client object must be destroyed & re-created
 func (c *Client) close(e error) {
 	// internal goroutine shutdown
 	close(c.shutdown)
@@ -294,7 +355,7 @@ func (c *Client) close(e error) {
 }
 
 // Listen provides an atomic interface for receiving API messages.
-// When a websocket connection is terminated, the listen channel will close.
+// When a websocket connection is terminated, the publisher channel will close.
 func (c *Client) Listen() <-chan interface{} {
 	return c.listener
 }
@@ -302,8 +363,24 @@ func (c *Client) Listen() <-chan interface{} {
 // Close provides an interface for a user initiated shutdown.
 // Close will close the Done() channel.
 func (c *Client) Close() {
-	// close transport
+	c.terminal = true
 	c.asynchronous.Close() // will trigger a close()
+
+	// clean shutdown waits on shutdown channel, which is triggered by cascading resource
+	// cleanups after a closed asynchronous transport
+	timeout := make(chan bool)
+	go func() {
+		time.Sleep(c.parameters.shutdownTimeout)
+		close(timeout)
+	}()
+	select {
+	case <-c.shutdown: // wait for exit
+		return // successful cleanup
+	case <-timeout:
+		log.Print("shutdown timed out")
+		return
+	}
+
 }
 
 func (c *Client) handleMessage(msg []byte) error {
@@ -320,17 +397,35 @@ func (c *Client) handleMessage(msg []byte) error {
 	return err
 }
 
-func (c *Client) sendUnsubscribeMessage(ctx context.Context, id int64) error {
-	return c.asynchronous.Send(ctx, unsubscribeMsg{Event: "unsubscribe", ChanID: id})
+func (c *Client) sendUnsubscribeMessage(ctx context.Context, chanID int64) error {
+	return c.asynchronous.Send(ctx, unsubscribeMsg{Event: "unsubscribe", ChanID: chanID})
 }
 
-func (c *Client) unsubscribeByChanID(ctx context.Context, id int64) error {
-	return c.sendUnsubscribeMessage(ctx, id)
+func (c *Client) checkResubscription() {
+	if c.parameters.ResubscribeOnReconnect {
+		log.Print("resubscribing on reconnect")
+		for _, sub := range c.subscriptions.Reset() {
+			log.Printf("resubscribing to %s", sub.Request.String())
+			c.Subscribe(context.Background(), sub.Request)
+		}
+	}
 }
 
+// called when an info event is received
 func (c *Client) handleOpen() {
 	if c.hasCredentials() {
 		c.authenticate(context.Background())
+	} else {
+		c.checkResubscription()
+	}
+}
+
+// called when an auth event is received
+func (c *Client) handleAuthAck() {
+	if c.Authentication == SuccessfulAuthentication {
+		c.checkResubscription()
+	} else {
+		log.Print("authentication failed")
 	}
 }
 
@@ -344,7 +439,8 @@ func (c *Client) Unsubscribe(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	return c.unsubscribeByChanID(ctx, sub.ChanID)
+	// sub is removed from manager on ack from API
+	return c.sendUnsubscribeMessage(ctx, sub.ChanID)
 }
 
 // Authenticate creates the payload for the authentication request and sends it
@@ -371,9 +467,4 @@ func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 	c.Authentication = PendingAuthentication
 
 	return nil
-}
-
-// SetReadTimeout sets the read timeout for the underlying websocket connections.
-func (c *Client) SetReadTimeout(t time.Duration) {
-	c.asynchronous.SetReadTimeout(t)
 }

@@ -26,6 +26,16 @@ type SubscriptionRequest struct {
 	Pair      string `json:"pair,omitempty"`
 }
 
+func (s *SubscriptionRequest) String() string {
+	if s.Key == "" {
+		return fmt.Sprintf("%s %s", s.Channel, s.Symbol)
+	}
+	if s.Precision != "" && s.Frequency != "" {
+		return fmt.Sprintf("%s %s %s %s", s.Channel, s.Symbol, s.Precision, s.Frequency)
+	}
+	return fmt.Sprintf("%s %s", s.Channel, s.Key)
+}
+
 type UnsubscribeRequest struct {
 	Event  string `json:"event"`
 	ChanID int64  `json:"chanId"`
@@ -85,6 +95,20 @@ type subscriptions struct {
 	subsByChanID map[int64]*subscription  // subscription map indexed by channel ID
 }
 
+// Reset clears all subscriptions from the currently managed list, and returns
+// a slice of the existing subscriptions prior to reset.
+func (s *subscriptions) Reset() []*subscription {
+	s.lock.Lock()
+	subs := make([]*subscription, len(s.subsBySubID))
+	for _, sub := range s.subsBySubID {
+		subs = append(subs, sub)
+	}
+	s.subsBySubID = make(map[string]*subscription)
+	s.subsByChanID = make(map[int64]*subscription)
+	s.lock.Unlock()
+	return subs
+}
+
 func (s *subscriptions) add(sub *SubscriptionRequest) *subscription {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -93,7 +117,7 @@ func (s *subscriptions) add(sub *SubscriptionRequest) *subscription {
 	return subscription
 }
 
-func (s *subscriptions) removeByChanID(chanID int64) error {
+func (s *subscriptions) removeByChannelID(chanID int64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	sub, ok := s.subsByChanID[chanID]
@@ -107,7 +131,7 @@ func (s *subscriptions) removeByChanID(chanID int64) error {
 	return nil
 }
 
-func (s *subscriptions) removeBySubID(subID string) error {
+func (s *subscriptions) removeBySubscriptionID(subID string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	sub, ok := s.subsBySubID[subID]

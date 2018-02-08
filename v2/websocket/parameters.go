@@ -4,49 +4,54 @@ import (
 	"time"
 )
 
+// TODO load these out of FIX dictionary for FIX adapter startup
 // Parameters defines adapter behavior.
 type Parameters struct {
 	// TODO implement failover hierarchy
 	/*
-		AutoResubscribe             bool
+		AutoResubscribe bool
 		ResubscribeAttempts         int
 		ResubscribeHeartbeatTimeout time.Duration
 		resubscribeTry              int
 	*/
-	AutoReconnect     bool
-	ReconnectInterval time.Duration
-	ReconnectAttempts int
+	autoReconnect     bool
+	reconnectInterval time.Duration
+	reconnectAttempts int
 	reconnectTry      int
+	shutdownTimeout   time.Duration
 
-	URL string
+	ResubscribeOnReconnect bool
+
+	url string
 }
 
 func NewDefaultParameters() *Parameters {
 	return &Parameters{
-		AutoReconnect:     true,
-		ReconnectInterval: time.Second,
+		autoReconnect:     true,
+		reconnectInterval: time.Second,
 		reconnectTry:      0,
-		ReconnectAttempts: 5,
-		URL:               productionBaseURL,
+		reconnectAttempts: 5,
+		url:               productionBaseURL,
+		shutdownTimeout:   time.Millisecond * 2500,
 	}
 }
 
 func (p *Parameters) SetAutoReconnect(auto bool) *Parameters {
-	p.AutoReconnect = auto
+	p.autoReconnect = auto
 	return p
 }
 
 func (p *Parameters) SetReconnectInterval(t time.Duration) *Parameters {
-	p.ReconnectInterval = t
+	p.reconnectInterval = t
 	return p
 }
 
 func (p *Parameters) SetReconnectAttempts(attempts int) *Parameters {
-	p.ReconnectAttempts = attempts
+	p.reconnectAttempts = attempts
 	return p
 }
 
 func (p *Parameters) SetURL(url string) *Parameters {
-	p.URL = url
+	p.url = url
 	return p
 }

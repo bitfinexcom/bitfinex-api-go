@@ -6,10 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"sync"
-	"sync/atomic"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -28,7 +27,6 @@ type ws struct {
 	wsLock        sync.Mutex
 	BaseURL       string
 	TLSSkipVerify bool
-	timeout       int64
 	downstream    chan []byte
 	userShutdown  bool
 
@@ -53,8 +51,12 @@ func (w *ws) Connect() error {
 	d.TLSClientConfig = &tls.Config{InsecureSkipVerify: w.TLSSkipVerify}
 
 	log.Printf("connecting ws to %s", w.BaseURL)
-	ws, _, err := d.Dial(w.BaseURL, nil)
+	ws, resp, err := d.Dial(w.BaseURL, nil)
 	if err != nil {
+		close(w.downstream) // signal to parent connection failure thru listen channel
+		if err == websocket.ErrBadHandshake {
+			log.Printf("bad handshake: status code %d", resp.StatusCode)
+		}
 		return err
 	}
 	w.ws = ws
@@ -104,9 +106,6 @@ func (w *ws) listenWs() {
 		if w.ws == nil {
 			return
 		}
-		if atomic.LoadInt64(&w.timeout) != 0 {
-			w.ws.SetReadDeadline(time.Now().Add(time.Duration(w.timeout)))
-		}
 
 		select {
 		case <-w.shutdown: // external shutdown request
@@ -116,6 +115,15 @@ func (w *ws) listenWs() {
 
 		_, msg, err := w.ws.ReadMessage()
 		if err != nil {
+			if cl, ok := err.(*websocket.CloseError); ok {
+				log.Printf("close error code: %d", cl.Code)
+			}
+			// a read during normal shutdown results in an OpError: op on closed connection
+			if _, ok := err.(*net.OpError); ok {
+				// general read error on a closed network connection, OK
+				w.cleanup(nil)
+				return
+			}
 			w.cleanup(err)
 			return
 		}
@@ -128,7 +136,6 @@ func (w *ws) Listen() <-chan []byte {
 }
 
 func (w *ws) cleanup(err error) {
-	log.Printf("transport closing: %s", err.Error())
 	close(w.downstream) // shut down caller's listen channel
 	close(w.shutdown)   // signal to kill goroutines
 	if err != nil && !w.userShutdown {
@@ -148,8 +155,4 @@ func (w *ws) Close() {
 		w.ws = nil
 	}
 	w.wsLock.Unlock()
-}
-
-func (w *ws) SetReadTimeout(t time.Duration) {
-	atomic.StoreInt64(&w.timeout, t.Nanoseconds())
 }

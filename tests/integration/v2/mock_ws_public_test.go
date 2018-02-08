@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"testing"
-	"time"
 
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -16,14 +15,13 @@ func TestTicker(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewWithAsyncNonce(async, nonce)
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce)
 
 	// setup listener
 	listener := newListener()
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 

@@ -16,7 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal("Error connecting to web socket : ", err)
 	}
-	c.SetReadTimeout(time.Second * 2)
 
 	// subscribe to BTCUSD ticker
 	ctx, cxl1 := context.WithTimeout(context.Background(), time.Second*1)

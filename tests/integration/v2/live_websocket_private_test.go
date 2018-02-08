@@ -27,7 +27,6 @@ func TestWebsocketOrder(t *testing.T) {
 		t.Fatalf("connecting to websocket service: %s", err)
 	}
 	defer c.Close()
-	c.SetReadTimeout(time.Second * 2)
 
 	go func() {
 		for ev := range c.Listen() {

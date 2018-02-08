@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"testing"
-	//"time"
 
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -15,14 +14,13 @@ func TestAuthentication(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
 	listener.run(ws.Listen())
 
 	// set ws options
-	//ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 
@@ -58,7 +56,7 @@ func TestWalletBalanceUpdates(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -129,7 +127,7 @@ func TestNewOrder(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -193,7 +191,7 @@ func TestFills(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -354,7 +352,7 @@ func TestCancel(t *testing.T) {
 	nonce := &MockNonceGenerator{}
 
 	// create client
-	ws := websocket.NewWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()

@@ -52,6 +52,7 @@ func (c *client) readPump() {
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, []byte("\n"), []byte(" "), -1))
 		c.lock.Lock()
+		log.Printf("[DEBUG] WsClient -> WsService: %s", string(message))
 		c.received = append(c.received, string(message))
 		c.lock.Unlock()
 	}
