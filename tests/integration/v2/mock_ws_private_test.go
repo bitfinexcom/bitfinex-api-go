@@ -11,7 +11,7 @@ import (
 func TestAuthentication(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
 	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
@@ -25,7 +25,6 @@ func TestAuthentication(t *testing.T) {
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	ev, err := listener.nextInfoEvent()
 	if err != nil {
@@ -53,7 +52,7 @@ func TestAuthentication(t *testing.T) {
 func TestWalletBalanceUpdates(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
 	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
@@ -68,7 +67,6 @@ func TestWalletBalanceUpdates(t *testing.T) {
 	defer ws.Close()
 
 	// begin test--authentication assertions in TestAuthentication
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	// eat event
 	_, err := listener.nextInfoEvent()
@@ -124,7 +122,7 @@ func TestWalletBalanceUpdates(t *testing.T) {
 func TestNewOrder(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
 	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
@@ -139,7 +137,6 @@ func TestNewOrder(t *testing.T) {
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	_, err := listener.nextInfoEvent()
 	if err != nil {
@@ -188,7 +185,7 @@ func TestNewOrder(t *testing.T) {
 func TestFills(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
 	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
@@ -203,7 +200,6 @@ func TestFills(t *testing.T) {
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	_, err := listener.nextInfoEvent()
 	if err != nil {
@@ -349,7 +345,7 @@ func TestFills(t *testing.T) {
 func TestCancel(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
 	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
@@ -364,7 +360,6 @@ func TestCancel(t *testing.T) {
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	_, err := listener.nextInfoEvent()
 	if err != nil {

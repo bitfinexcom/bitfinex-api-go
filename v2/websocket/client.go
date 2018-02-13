@@ -109,21 +109,22 @@ func NewWebsocketAsynchronousFactory(parameters *Parameters) AsynchronousFactory
 
 // Create returns a new websocket transport.
 func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
-	return newWs(w.parameters.url)
+	return newWs(w.parameters.URL)
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
 type Client struct {
 	asyncFactory AsynchronousFactory // for re-creating transport during reconnects
 
-	timeout        int64 // read timeout
-	apiKey         string
-	apiSecret      string
-	Authentication AuthState
-	asynchronous   Asynchronous
-	nonce          utils.NonceGenerator
-	isConnected    bool
-	terminal       bool
+	timeout            int64 // read timeout
+	apiKey             string
+	apiSecret          string
+	Authentication     AuthState
+	asynchronous       Asynchronous
+	nonce              utils.NonceGenerator
+	isConnected        bool
+	terminal           bool
+	resetSubscriptions []*subscription
 
 	// connection & operational behavior
 	parameters *Parameters
@@ -192,7 +193,7 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 		asyncFactory:   async,
 		Authentication: NoAuthentication,
 		factories:      make(map[string]messageFactory),
-		subscriptions:  newSubscriptions(),
+		subscriptions:  newSubscriptions(params.HeartbeatTimeout),
 		nonce:          nonce,
 		isConnected:    false,
 		parameters:     params,
@@ -272,6 +273,12 @@ func (c *Client) listenDisconnect() {
 		}
 		c.reconnect(e)
 		return
+	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
+		c.isConnected = false
+		if e != nil {
+			log.Printf("subscription disconnect: %s", e.Error())
+		}
+		c.reconnect(e)
 	case <-c.shutdown: // normal shutdown
 		c.isConnected = false
 		return
@@ -285,6 +292,10 @@ func (c *Client) Connect() error {
 }
 
 func (c *Client) reset() {
+	subs := c.subscriptions.Reset()
+	if subs != nil {
+		c.resetSubscriptions = subs
+	}
 	c.shutdown = make(chan bool)
 	c.asynchronous = c.asyncFactory.Create()
 	// wait for shutdown signals from child & caller
@@ -302,8 +313,17 @@ func (c *Client) connect() error {
 }
 
 func (c *Client) reconnect(err error) error {
-	for ; !c.terminal && c.parameters.autoReconnect && c.parameters.reconnectTry < c.parameters.reconnectAttempts; c.parameters.reconnectTry++ {
-		log.Printf("reconnect attempt %d/%d", c.parameters.reconnectTry+1, c.parameters.reconnectAttempts)
+	if c.terminal {
+		c.exit(err)
+		return err
+	}
+	if !c.parameters.AutoReconnect {
+		err := fmt.Errorf("AutoReconnect setting is disabled, do not reconnect: %s", err.Error())
+		c.exit(err)
+		return err
+	}
+	for ; c.parameters.reconnectTry < c.parameters.ReconnectAttempts; c.parameters.reconnectTry++ {
+		log.Printf("reconnect attempt %d/%d", c.parameters.reconnectTry+1, c.parameters.ReconnectAttempts)
 		c.reset()
 		err = c.connect()
 		if err == nil {
@@ -311,11 +331,15 @@ func (c *Client) reconnect(err error) error {
 			return nil
 		}
 		log.Printf("reconnect failed: %s", err.Error())
-		time.Sleep(c.parameters.reconnectInterval)
+		time.Sleep(c.parameters.ReconnectInterval)
 	}
 	if err != nil {
 		log.Printf("could not reconnect: %s", err.Error())
 	}
+	return c.exit(err)
+}
+
+func (c *Client) exit(err error) error {
 	c.terminal = true
 	c.close(err)
 	return err
@@ -370,7 +394,7 @@ func (c *Client) Close() {
 	// cleanups after a closed asynchronous transport
 	timeout := make(chan bool)
 	go func() {
-		time.Sleep(c.parameters.shutdownTimeout)
+		time.Sleep(c.parameters.ShutdownTimeout)
 		close(timeout)
 	}()
 	select {
@@ -402,9 +426,8 @@ func (c *Client) sendUnsubscribeMessage(ctx context.Context, chanID int64) error
 }
 
 func (c *Client) checkResubscription() {
-	log.Printf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
-	if c.parameters.ResubscribeOnReconnect {
-		for _, sub := range c.subscriptions.Reset() {
+	if c.parameters.ResubscribeOnReconnect && c.resetSubscriptions != nil {
+		for _, sub := range c.resetSubscriptions {
 			if sub.Request.Event == "auth" {
 				continue
 			}
@@ -425,8 +448,12 @@ func (c *Client) handleOpen() {
 }
 
 // called when an auth event is received
-func (c *Client) handleAuthAck() {
+func (c *Client) handleAuthAck(auth *AuthEvent) {
 	if c.Authentication == SuccessfulAuthentication {
+		err := c.subscriptions.activate(auth.SubID, auth.ChanID)
+		if err != nil {
+			log.Printf("could not activate auth subscription: %s", err.Error())
+		}
 		c.checkResubscription()
 	} else {
 		log.Print("authentication failed")

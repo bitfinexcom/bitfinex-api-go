@@ -107,7 +107,7 @@ func (c *Client) handleEvent(msg []byte) error {
 		} else {
 			c.Authentication = RejectedAuthentication
 		}
-		c.handleAuthAck()
+		c.handleAuthAck(&a)
 		c.listener <- &a
 		return nil
 	case "subscribed":

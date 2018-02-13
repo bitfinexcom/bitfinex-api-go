@@ -13,45 +13,28 @@ type Parameters struct {
 		ResubscribeHeartbeatTimeout time.Duration
 		resubscribeTry              int
 	*/
-	autoReconnect     bool
-	reconnectInterval time.Duration
-	reconnectAttempts int
+	AutoReconnect     bool
+	ReconnectInterval time.Duration
+	ReconnectAttempts int
 	reconnectTry      int
-	shutdownTimeout   time.Duration
+	ShutdownTimeout   time.Duration
 
 	ResubscribeOnReconnect bool
 
-	url string
+	HeartbeatTimeout time.Duration
+
+	URL string
 }
 
 func NewDefaultParameters() *Parameters {
 	return &Parameters{
-		autoReconnect:          true,
-		reconnectInterval:      time.Second,
+		AutoReconnect:          true,
+		ReconnectInterval:      time.Second,
 		reconnectTry:           0,
-		reconnectAttempts:      5,
-		url:                    productionBaseURL,
-		shutdownTimeout:        time.Millisecond * 2500,
+		ReconnectAttempts:      5,
+		URL:                    productionBaseURL,
+		ShutdownTimeout:        time.Millisecond * 2500,
 		ResubscribeOnReconnect: true,
+		HeartbeatTimeout:       time.Millisecond * 3750, // HB ~ 2.5s, timeout = 3/2*HB
 	}
-}
-
-func (p *Parameters) SetAutoReconnect(auto bool) *Parameters {
-	p.autoReconnect = auto
-	return p
-}
-
-func (p *Parameters) SetReconnectInterval(t time.Duration) *Parameters {
-	p.reconnectInterval = t
-	return p
-}
-
-func (p *Parameters) SetReconnectAttempts(attempts int) *Parameters {
-	p.reconnectAttempts = attempts
-	return p
-}
-
-func (p *Parameters) SetURL(url string) *Parameters {
-	p.url = url
-	return p
 }
