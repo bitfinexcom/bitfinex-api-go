@@ -2,8 +2,6 @@ package websocket
 
 import (
 	"fmt"
-	"log"
-	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -71,12 +69,10 @@ func (s *subscription) activate() {
 }
 
 func (s *subscription) timeout() {
-	log.Print("sub timeout, send to parent disconnect (hb channel disconnect)")
 	s.parentDisconnect <- fmt.Errorf("heartbeat timed out on channel %d", s.ChanID)
 }
 
 func (s *subscription) heartbeat() {
-	debug.PrintStack()
 	if s.hb != nil {
 		s.hb.Stop()
 	}
@@ -177,8 +173,6 @@ func (s *subscriptions) Reset() []*subscription {
 		}
 		sort.Sort(SubscriptionSet(subs))
 	}
-	// TODO wait for hb message to publish prior to closing this
-	log.Print("close hb channel disconnect, hb parent disconnect")
 	close(s.hbChannelDisconnect)
 	close(s.hbParentDisconnect)
 	s.subsBySubID = make(map[string]*subscription)
