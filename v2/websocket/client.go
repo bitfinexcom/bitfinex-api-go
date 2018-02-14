@@ -264,7 +264,6 @@ func (c *Client) IsConnected() bool {
 }
 
 func (c *Client) listenDisconnect() {
-	// block until finished
 	select {
 	case e := <-c.asynchronous.Done(): // child shutdown
 		c.isConnected = false
@@ -272,16 +271,15 @@ func (c *Client) listenDisconnect() {
 			log.Printf("client disconnected: %s", e.Error())
 		}
 		c.reconnect(e)
-		return
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 		c.isConnected = false
 		if e != nil {
 			log.Printf("subscription disconnect: %s", e.Error())
+			c.asynchronous.Close()
+			c.reconnect(e)
 		}
-		c.reconnect(e)
 	case <-c.shutdown: // normal shutdown
 		c.isConnected = false
-		return
 	}
 }
 

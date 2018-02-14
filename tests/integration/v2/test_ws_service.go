@@ -39,15 +39,13 @@ func (c *client) readPump() {
 		c.parent.unregister <- c
 		c.Conn.Close()
 	}()
-	c.Conn.SetReadLimit(512)
-	c.Conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(10 * time.Second)); return nil })
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
+			log.Printf("test ws service drop client: %s", err.Error())
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, []byte("\n"), []byte(" "), -1))
@@ -67,6 +65,8 @@ type TestWsService struct {
 	unregister   chan *client
 	broadcast    chan []byte
 	totalClients int
+
+	publishOnConnect string
 }
 
 func (s *TestWsService) WaitForClientCount(count int) error {
@@ -83,6 +83,10 @@ func (s *TestWsService) WaitForClientCount(count int) error {
 
 func (s *TestWsService) TotalClientCount() int {
 	return s.totalClients
+}
+
+func (s *TestWsService) PublishOnConnect(msg string) {
+	s.publishOnConnect = msg
 }
 
 func NewTestWsService(port int) *TestWsService {
@@ -157,6 +161,9 @@ func (s *TestWsService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *TestWsService) Stop() {
 	s.listener.Close() // stop listening to http
+	for c := range s.clients {
+		c.Close()
+	}
 }
 
 func (s *TestWsService) Start() error {
@@ -181,6 +188,9 @@ func (s *TestWsService) serveWs(w http.ResponseWriter, r *http.Request) {
 	go client.writePump()
 	go client.readPump()
 	s.clients[client] = true
+	if s.publishOnConnect != "" {
+		s.Broadcast(s.publishOnConnect)
+	}
 }
 
 func (s *TestWsService) loop() {

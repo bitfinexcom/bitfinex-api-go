@@ -124,7 +124,6 @@ func (c *Client) handlePrivateChannel(raw []interface{}) error {
 }
 
 func (c *Client) handleHeartbeat(chanID int64) {
-	log.Printf("Heartbeat for channel %d", chanID)
 	c.subscriptions.heartbeat(chanID)
 }
 
