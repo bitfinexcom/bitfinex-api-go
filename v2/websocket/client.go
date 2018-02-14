@@ -264,7 +264,6 @@ func (c *Client) IsConnected() bool {
 }
 
 func (c *Client) listenDisconnect() {
-	// block until finished
 	select {
 	case e := <-c.asynchronous.Done(): // child shutdown
 		c.isConnected = false
@@ -272,16 +271,16 @@ func (c *Client) listenDisconnect() {
 			log.Printf("client disconnected: %s", e.Error())
 		}
 		c.reconnect(e)
-		return
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 		c.isConnected = false
 		if e != nil {
 			log.Printf("subscription disconnect: %s", e.Error())
 		}
+		log.Print("CLIENT listen disconnect channel closed (heartbeat timeout)")
+		c.asynchronous.Close()
 		c.reconnect(e)
 	case <-c.shutdown: // normal shutdown
 		c.isConnected = false
-		return
 	}
 }
 
@@ -314,10 +313,12 @@ func (c *Client) connect() error {
 
 func (c *Client) reconnect(err error) error {
 	if c.terminal {
+		log.Print("exiting--terminal state")
 		c.exit(err)
 		return err
 	}
 	if !c.parameters.AutoReconnect {
+		log.Print("exiting--no auto reconnect")
 		err := fmt.Errorf("AutoReconnect setting is disabled, do not reconnect: %s", err.Error())
 		c.exit(err)
 		return err
@@ -336,6 +337,7 @@ func (c *Client) reconnect(err error) error {
 	if err != nil {
 		log.Printf("could not reconnect: %s", err.Error())
 	}
+	log.Print("exiting--could not reconnect")
 	return c.exit(err)
 }
 

@@ -545,6 +545,7 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 	// create transport & nonce mocks
 	wsPort := 4001
 	wsService := NewTestWsService(wsPort)
+	wsService.PublishOnConnect(`{"event":"info","version":2}`)
 	err := wsService.Start()
 	if err != nil {
 		t.Fatal(err)
@@ -569,7 +570,7 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 	defer apiClient.Close()
 
 	// begin test
-	wsService.Broadcast(`{"event":"info","version":2}`)
+	// info msg automatically sends
 	msg, err := listener.nextInfoEvent()
 	if err != nil {
 		t.Fatal(err)
@@ -606,12 +607,14 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 	if err = wsService.WaitForClientCount(1); err != nil {
 		t.Fatal(err)
 	}
+	// connection ack
+	// info msg automatically sends
 
 	// expect timeout channel heartbeat
 	time.Sleep(time.Second * 2)
 
 	// check reconnect subscriptions
-	m, err = wsService.WaitForMessage(0, 1)
+	m, err = wsService.WaitForMessage(0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
