@@ -82,7 +82,9 @@ func (s *subscription) heartbeat() {
 }
 
 func (s *subscription) stopHeartbeatTimeout() {
-	s.hb.Stop()
+	if s.hb != nil {
+		s.hb.Stop()
+	}
 }
 
 func isPublic(request *SubscriptionRequest) bool {
