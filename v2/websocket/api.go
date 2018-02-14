@@ -9,6 +9,16 @@ import (
 
 // API for end-users to interact with Bitfinex.
 
+func (c *Client) Ping(ctx context.Context) error {
+	return c.asynchronous.Send(ctx, newPingEvent())
+}
+
+// Send publishes a generic message to the Bitfinex API.
+func (c *Client) Send(ctx context.Context, msg interface{}) error {
+	return c.asynchronous.Send(ctx, msg)
+}
+
+// Subscribe sends a subscription request to the Bitfinex API and tracks the subscription status by ID.
 func (c *Client) Subscribe(ctx context.Context, req *SubscriptionRequest) (string, error) {
 	c.subscriptions.add(req)
 	err := c.asynchronous.Send(ctx, req)

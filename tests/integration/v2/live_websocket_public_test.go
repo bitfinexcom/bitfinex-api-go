@@ -12,6 +12,24 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
+// wait2 will wait for at least "count" messages on channel "ch" within time "t", or return an error
+func wait2(ch <-chan interface{}, count int, bc <-chan error, t time.Duration) error {
+	c := make(chan interface{})
+	go func() {
+		<-ch
+		close(c)
+	}()
+	select {
+	case <-bc:
+		return fmt.Errorf("transport closed while waiting")
+	case <-c:
+		return nil // normal
+	case <-time.After(t):
+		return fmt.Errorf("timed out waiting")
+	}
+	return nil
+}
+
 func wait(wg *sync.WaitGroup, bc <-chan error, to time.Duration) error {
 	c := make(chan struct{})
 	go func() {
@@ -29,20 +47,21 @@ func wait(wg *sync.WaitGroup, bc <-chan error, to time.Duration) error {
 }
 
 func TestPublicTicker(t *testing.T) {
-	c := websocket.NewClient()
-	wg := sync.WaitGroup{}
-	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. data message
+	c := websocket.New()
 
 	err := c.Connect()
 	if err != nil {
 		t.Fatal("Error connecting to web socket : ", err)
 	}
 	defer c.Close()
-	c.SetReadTimeout(time.Second * 2)
+
+	subs := make(chan interface{}, 10)
+	unsubs := make(chan interface{}, 10)
+	infos := make(chan interface{}, 10)
+	tick := make(chan interface{}, 100)
 
 	errch := make(chan error)
 	go func() {
-		tickers := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -50,20 +69,17 @@ func TestPublicTicker(t *testing.T) {
 					return
 				}
 				log.Printf("recv msg: %#v", msg)
-				switch msg.(type) {
+				switch m := msg.(type) {
 				case error:
 					errch <- msg.(error)
 				case *websocket.UnsubscribeEvent:
-					wg.Done()
+					unsubs <- m
 				case *websocket.SubscribeEvent:
-					wg.Done()
+					subs <- m
 				case *websocket.InfoEvent:
-					wg.Done()
+					infos <- m
 				case *bitfinex.Ticker:
-					if tickers <= 0 {
-						wg.Done()
-					}
-					tickers++
+					tick <- m
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
@@ -78,24 +94,22 @@ func TestPublicTicker(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Fatalf("failed to receive first message from websocket: %s", err)
+	if err := wait2(tick, 1, errch, 2*time.Second); err != nil {
+		t.Fatalf("failed to receive ticker message from websocket: %s", err)
 	}
 
-	// here?
 	err = c.Unsubscribe(ctx, id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wg.Add(1)
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Errorf("failed to receive second message from websocket: %s", err)
+	if err := wait2(unsubs, 1, errch, 2*time.Second); err != nil {
+		t.Errorf("failed to receive unsubscribe message from websocket: %s", err)
 	}
 }
 
 func TestPublicTrades(t *testing.T) {
-	c := websocket.NewClient()
+	c := websocket.New()
 	wg := sync.WaitGroup{}
 	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. 3 x data message
 
@@ -104,11 +118,14 @@ func TestPublicTrades(t *testing.T) {
 		t.Fatal("Error connecting to web socket : ", err)
 	}
 	defer c.Close()
-	c.SetReadTimeout(time.Second * 2)
+
+	subs := make(chan interface{}, 10)
+	unsubs := make(chan interface{}, 10)
+	infos := make(chan interface{}, 10)
+	trades := make(chan interface{}, 100)
 
 	errch := make(chan error)
 	go func() {
-		trades := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -116,35 +133,23 @@ func TestPublicTrades(t *testing.T) {
 					return
 				}
 				log.Printf("recv msg: %#v", msg)
-				switch msg.(type) {
+				switch m := msg.(type) {
 				case error:
 					errch <- msg.(error)
 				case *websocket.UnsubscribeEvent:
-					wg.Done()
+					unsubs <- m
 				case *websocket.SubscribeEvent:
-					wg.Done()
+					subs <- m
 				case *websocket.InfoEvent:
-					wg.Done()
+					infos <- m
 				case *bitfinex.Trade:
-					if trades <= 0 {
-						wg.Done()
-					}
-					trades++
+					trades <- m
 				case *bitfinex.TradeExecutionUpdate:
-					if trades <= 0 {
-						wg.Done()
-					}
-					trades++
+					trades <- m
 				case *bitfinex.TradeExecution:
-					if trades <= 0 {
-						wg.Done()
-					}
-					trades++
+					trades <- m
 				case *bitfinex.TradeSnapshot:
-					if trades <= 0 {
-						wg.Done()
-					}
-					trades++
+					trades <- m
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
@@ -159,23 +164,22 @@ func TestPublicTrades(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Errorf("failed to receive first message from websocket: %s", err)
+	if err := wait2(trades, 1, errch, 2*time.Second); err != nil {
+		t.Errorf("failed to receive trade message from websocket: %s", err)
 	}
 
 	err = c.Unsubscribe(ctx, id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wg.Add(1)
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Errorf("failed to receive second message from websocket: %s", err)
+	if err := wait2(unsubs, 1, errch, 2*time.Second); err != nil {
+		t.Errorf("failed to receive unsubscribe message from websocket: %s", err)
 	}
 }
 
 func TestPublicBooks(t *testing.T) {
-	c := websocket.NewClient()
+	c := websocket.New()
 	wg := sync.WaitGroup{}
 	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. data message
 
@@ -184,11 +188,14 @@ func TestPublicBooks(t *testing.T) {
 		t.Fatal("Error connecting to web socket : ", err)
 	}
 	defer c.Close()
-	c.SetReadTimeout(time.Second * 2)
+
+	subs := make(chan interface{}, 10)
+	unsubs := make(chan interface{}, 10)
+	infos := make(chan interface{}, 10)
+	books := make(chan interface{}, 100)
 
 	errch := make(chan error)
 	go func() {
-		books := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -196,20 +203,17 @@ func TestPublicBooks(t *testing.T) {
 					return
 				}
 				log.Printf("recv msg: %#v", msg)
-				switch msg.(type) {
+				switch m := msg.(type) {
 				case error:
 					errch <- msg.(error)
 				case *websocket.UnsubscribeEvent:
-					wg.Done()
+					unsubs <- m
 				case *websocket.SubscribeEvent:
-					wg.Done()
+					subs <- m
 				case *websocket.InfoEvent:
-					wg.Done()
+					infos <- m
 				case *bitfinex.BookUpdate:
-					if books <= 0 {
-						wg.Done()
-					}
-					books++
+					books <- m
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
@@ -224,23 +228,22 @@ func TestPublicBooks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Fatalf("failed to receive first message from websocket: %s", err)
+	if err := wait2(books, 1, errch, 2*time.Second); err != nil {
+		t.Fatalf("failed to receive book update message from websocket: %s", err)
 	}
 
 	err = c.Unsubscribe(ctx, id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wg.Add(1)
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Errorf("failed to receive second message from websocket: %s", err)
+	if err := wait2(unsubs, 1, errch, 2*time.Second); err != nil {
+		t.Errorf("failed to receive unsubscribe message from websocket: %s", err)
 	}
 }
 
 func TestPublicCandles(t *testing.T) {
-	c := websocket.NewClient()
+	c := websocket.New()
 	wg := sync.WaitGroup{}
 	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. data message
 
@@ -249,11 +252,14 @@ func TestPublicCandles(t *testing.T) {
 		t.Fatal("Error connecting to web socket : ", err)
 	}
 	defer c.Close()
-	c.SetReadTimeout(time.Second * 2)
+
+	subs := make(chan interface{}, 10)
+	unsubs := make(chan interface{}, 10)
+	infos := make(chan interface{}, 10)
+	candles := make(chan interface{}, 100)
 
 	errch := make(chan error)
 	go func() {
-		candles := 0
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -261,20 +267,17 @@ func TestPublicCandles(t *testing.T) {
 					return
 				}
 				log.Printf("recv msg: %#v", msg)
-				switch msg.(type) {
+				switch m := msg.(type) {
 				case error:
 					errch <- msg.(error)
 				case *websocket.UnsubscribeEvent:
-					wg.Done()
+					unsubs <- m
 				case *websocket.SubscribeEvent:
-					wg.Done()
+					subs <- m
 				case *websocket.InfoEvent:
-					wg.Done()
+					infos <- m
 				case *bitfinex.Candle:
-					if candles <= 0 {
-						wg.Done()
-					}
-					candles++
+					candles <- m
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
@@ -289,17 +292,16 @@ func TestPublicCandles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Errorf("failed to receive first message from websocket: %s", err)
+	if err := wait2(candles, 1, errch, 2*time.Second); err != nil {
+		t.Errorf("failed to receive a candle message from websocket: %s", err)
 	}
 
 	err = c.Unsubscribe(ctx, id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wg.Add(1)
 
-	if err := wait(&wg, errch, 2*time.Second); err != nil {
-		t.Errorf("failed to receive second message from websocket: %s", err)
+	if err := wait2(unsubs, 1, errch, 2*time.Second); err != nil {
+		t.Errorf("failed to receive an unsubscribe message from websocket: %s", err)
 	}
 }

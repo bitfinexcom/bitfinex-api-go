@@ -317,7 +317,7 @@ func (l *listener) run(ch <-chan interface{}) {
 					return
 				}
 				// remove threading guarantees when mulitplexing into channels
-				log.Printf("listener raw: %#v", msg)
+				log.Printf("[DEBUG] WsService -> WsClient: %#v", msg)
 				switch msg.(type) {
 				case error:
 					l.errors <- msg.(error)

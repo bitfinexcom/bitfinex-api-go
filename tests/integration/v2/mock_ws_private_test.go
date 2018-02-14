@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"testing"
-	//"time"
 
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -12,22 +11,20 @@ import (
 func TestAuthentication(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
 	listener.run(ws.Listen())
 
 	// set ws options
-	//ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	ev, err := listener.nextInfoEvent()
 	if err != nil {
@@ -55,10 +52,10 @@ func TestAuthentication(t *testing.T) {
 func TestWalletBalanceUpdates(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -70,7 +67,6 @@ func TestWalletBalanceUpdates(t *testing.T) {
 	defer ws.Close()
 
 	// begin test--authentication assertions in TestAuthentication
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	// eat event
 	_, err := listener.nextInfoEvent()
@@ -126,10 +122,10 @@ func TestWalletBalanceUpdates(t *testing.T) {
 func TestNewOrder(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -141,7 +137,6 @@ func TestNewOrder(t *testing.T) {
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	_, err := listener.nextInfoEvent()
 	if err != nil {
@@ -190,10 +185,10 @@ func TestNewOrder(t *testing.T) {
 func TestFills(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -205,7 +200,6 @@ func TestFills(t *testing.T) {
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	_, err := listener.nextInfoEvent()
 	if err != nil {
@@ -351,10 +345,10 @@ func TestFills(t *testing.T) {
 func TestCancel(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
 
 	// setup listener
 	listener := newListener()
@@ -366,7 +360,6 @@ func TestCancel(t *testing.T) {
 	defer ws.Close()
 
 	// begin test
-	nonce.Next("nonce1") // auth nonce
 	async.Publish(`{"event":"info","version":2}`)
 	_, err := listener.nextInfoEvent()
 	if err != nil {

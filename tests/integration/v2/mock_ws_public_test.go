@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"testing"
-	"time"
 
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -13,23 +12,21 @@ import (
 func TestTicker(t *testing.T) {
 	// create transport & nonce mocks
 	async := newTestAsync()
-	nonce := &MockNonceGenerator{}
+	nonce := &IncrementingNonceGenerator{}
 
 	// create client
-	ws := websocket.NewClientWithAsyncNonce(async, nonce)
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce)
 
 	// setup listener
 	listener := newListener()
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.SetReadTimeout(time.Second * 2)
 	ws.Connect()
 	defer ws.Close()
 
 	// info welcome msg
 	async.Publish(`{"event":"info","version":2}`)
-	nonce.Next("1514401173001")
 	ev, err := listener.nextInfoEvent()
 	if err != nil {
 		t.Fatal(err)
@@ -43,13 +40,13 @@ func TestTicker(t *testing.T) {
 	}
 
 	// subscribe ack
-	async.Publish(`{"event":"subscribed","channel":"ticker","chanId":5,"symbol":"tBTCUSD","subId":"1514401173001","pair":"BTCUSD"}`)
+	async.Publish(`{"event":"subscribed","channel":"ticker","chanId":5,"symbol":"tBTCUSD","subId":"nonce1","pair":"BTCUSD"}`)
 	sub, err := listener.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert(t, &websocket.SubscribeEvent{
-		SubID:   "1514401173001",
+		SubID:   "nonce1",
 		Channel: "ticker",
 		ChanID:  5,
 		Symbol:  "tBTCUSD",

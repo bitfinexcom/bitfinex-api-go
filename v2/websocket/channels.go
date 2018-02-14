@@ -34,7 +34,7 @@ func (c *Client) handleChannel(msg []byte) error {
 		case string:
 			switch data {
 			case "hb":
-				c.handleHeartbeat()
+				c.handleHeartbeat(chanID)
 			default:
 				data := raw[2].([]interface{})
 				c.handlePublicChannel(chanID, sub.Request.Channel, data)
@@ -98,7 +98,12 @@ func (c *Client) handlePublicChannel(chanID int64, channel string, data []interf
 func (c *Client) handlePrivateChannel(raw []interface{}) error {
 	// authenticated data slice, or a heartbeat
 	if raw[1].(string) == "hb" {
-		c.handleHeartbeat()
+		chanID, ok := raw[0].(float64)
+		if !ok {
+			log.Printf("could not find chanID: %#v", raw)
+			return nil
+		}
+		c.handleHeartbeat(int64(chanID))
 	} else {
 		// raw[2] is data slice
 		// authenticated snapshots?
@@ -118,8 +123,9 @@ func (c *Client) handlePrivateChannel(raw []interface{}) error {
 	return nil
 }
 
-func (c *Client) handleHeartbeat() {
-	// TODO internal heartbeat timeout thread?
+func (c *Client) handleHeartbeat(chanID int64) {
+	log.Printf("Heartbeat for channel %d", chanID)
+	c.subscriptions.heartbeat(chanID)
 }
 
 type unsubscribeMsg struct {

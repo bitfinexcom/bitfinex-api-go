@@ -19,7 +19,7 @@ func main() {
 
 	key := os.Getenv("BFX_API_KEY")
 	secret := os.Getenv("BFX_API_SECRET")
-	c := websocket.NewClient().Credentials(key, secret)
+	c := websocket.New().Credentials(key, secret)
 
 	err := c.Connect()
 	if err != nil {

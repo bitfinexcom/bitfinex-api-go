@@ -7,9 +7,25 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
+// does not work for reconnect tests
+type TestAsyncFactory struct {
+	Async websocket.Asynchronous
+}
+
+func (t *TestAsyncFactory) Create() websocket.Asynchronous {
+	return t.Async
+}
+
+func newTestAsyncFactory(async websocket.Asynchronous) websocket.AsynchronousFactory {
+	return &TestAsyncFactory{Async: async}
+}
+
 type TestAsync struct {
+	done      chan error
 	bridge    chan []byte
 	connected bool
 	Sent      []interface{}
@@ -69,11 +85,11 @@ func (t *TestAsync) Publish(raw string) {
 
 func (t *TestAsync) Close() {
 	close(t.bridge)
+	close(t.done)
 }
 
 func (t *TestAsync) Done() <-chan error {
-	ch := make(chan error)
-	return ch
+	return t.done
 }
 
 func newTestAsync() *TestAsync {
@@ -81,9 +97,6 @@ func newTestAsync() *TestAsync {
 		bridge:    make(chan []byte),
 		connected: false,
 		Sent:      make([]interface{}, 0),
+		done:      make(chan error),
 	}
-}
-
-func (t *TestAsync) SetReadTimeout(d time.Duration) {
-	// no-op
 }

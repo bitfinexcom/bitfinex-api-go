@@ -17,6 +17,12 @@ type RawEvent struct {
 	Data interface{}
 }
 
+func newPingEvent() *eventType {
+	return &eventType{
+		Event: EventPing,
+	}
+}
+
 type AuthEvent struct {
 	Event   string       `json:"event"`
 	Status  string       `json:"status"`
@@ -101,6 +107,7 @@ func (c *Client) handleEvent(msg []byte) error {
 		} else {
 			c.Authentication = RejectedAuthentication
 		}
+		c.handleAuthAck(&a)
 		c.listener <- &a
 		return nil
 	case "subscribed":
@@ -121,7 +128,7 @@ func (c *Client) handleEvent(msg []byte) error {
 		if err != nil {
 			return err
 		}
-		c.subscriptions.removeByChanID(s.ChanID)
+		c.subscriptions.removeByChannelID(s.ChanID)
 		c.listener <- &s
 	case "error":
 		er := ErrorEvent{}

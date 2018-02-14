@@ -107,5 +107,9 @@ func assert(t *testing.T, expected interface{}, actual interface{}) {
 			t.Fail()
 		}
 	}
+	if t.Failed() {
+		t.Logf("FAIL %s", exp.Type().Name())
+		return
+	}
 	t.Logf("OK %s", exp.Type().Name())
 }

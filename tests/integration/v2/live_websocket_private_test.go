@@ -18,7 +18,7 @@ func TestWebsocketOrder(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1) // 1. Authentication event
 
-	c := websocket.NewClient().Credentials(key, secret)
+	c := websocket.New().Credentials(key, secret)
 
 	errch := make(chan error)
 
@@ -27,7 +27,6 @@ func TestWebsocketOrder(t *testing.T) {
 		t.Fatalf("connecting to websocket service: %s", err)
 	}
 	defer c.Close()
-	c.SetReadTimeout(time.Second * 2)
 
 	go func() {
 		for ev := range c.Listen() {
