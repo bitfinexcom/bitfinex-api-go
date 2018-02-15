@@ -395,6 +395,11 @@ func (c *Client) Close() {
 		time.Sleep(c.parameters.ShutdownTimeout)
 		close(timeout)
 	}()
+	// depending on channel heartbeat subscriptions, websocket socket timeouts, and
+	// the shutdown timeout, these 3 signals compete to finish shutdown.
+	// if a ws socket close takes too long, a heartbeat timeout may win the race.
+	// if a ws close takes too long & no channels have subscribed, the shutdown timer may win.
+	// everything is configurable via parameters
 	select {
 	case <-c.shutdown: // wait for exit
 		return // successful cleanup
