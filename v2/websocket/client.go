@@ -321,6 +321,7 @@ func (c *Client) reconnect(err error) error {
 		return err
 	}
 	for ; c.parameters.reconnectTry < c.parameters.ReconnectAttempts; c.parameters.reconnectTry++ {
+		time.Sleep(c.parameters.ReconnectInterval)
 		log.Printf("reconnect attempt %d/%d", c.parameters.reconnectTry+1, c.parameters.ReconnectAttempts)
 		c.reset()
 		err = c.connect()
@@ -329,7 +330,6 @@ func (c *Client) reconnect(err error) error {
 			return nil
 		}
 		log.Printf("reconnect failed: %s", err.Error())
-		time.Sleep(c.parameters.ReconnectInterval)
 	}
 	if err != nil {
 		log.Printf("could not reconnect: %s", err.Error())
@@ -365,15 +365,16 @@ func (c *Client) listenUpstream() {
 // this is a terminal state and is not recoverable.
 // the Client object must be destroyed & re-created
 func (c *Client) close(e error) {
-	// internal goroutine shutdown
-	close(c.shutdown)
-
 	if c.listener != nil {
 		if e != nil {
 			c.listener <- e
 		}
 		close(c.listener)
 	}
+	c.subscriptions.Close()
+
+	// release Close()
+	close(c.shutdown)
 }
 
 // Listen provides an atomic interface for receiving API messages.

@@ -57,8 +57,9 @@ type subscription struct {
 	Request *SubscriptionRequest
 
 	// heartbeat timer
+	hbInit     bool
+	hbLock     sync.Mutex
 	hbInterval time.Duration
-	hb         *time.Timer
 	die        chan bool
 
 	parentDisconnect chan error
@@ -66,24 +67,39 @@ type subscription struct {
 
 func (s *subscription) activate() {
 	s.heartbeat()
+	s.hbInit = true
 }
 
-func (s *subscription) timeout() {
-	s.parentDisconnect <- fmt.Errorf("heartbeat timed out on channel %d", s.ChanID)
+func (s *subscription) waitTimeout() {
+	hbTo := make(chan bool)
+	s.die = make(chan bool)
+	go func() {
+		time.Sleep(s.hbInterval)
+		close(hbTo)
+	}()
+	select {
+	case <-hbTo:
+		s.parentDisconnect <- fmt.Errorf("heartbeat timed out on channel %d", s.ChanID)
+		return
+	case <-s.die:
+		return
+	}
 }
 
 func (s *subscription) heartbeat() {
-	if s.hb != nil {
-		s.hb.Stop()
+	s.hbLock.Lock()
+	defer s.hbLock.Unlock()
+	if s.hbInit {
+		close(s.die)
 	}
-	close(s.die) // terminate previous hb timeout
-	s.die = make(chan bool)
-	s.hb = time.AfterFunc(s.hbInterval, s.timeout)
+	go s.waitTimeout()
 }
 
 func (s *subscription) stopHeartbeatTimeout() {
-	if s.hb != nil {
-		s.hb.Stop()
+	s.hbLock.Lock()
+	defer s.hbLock.Unlock()
+	if s.hbInit {
+		close(s.die)
 	}
 }
 
@@ -109,6 +125,7 @@ func newSubscription(request *SubscriptionRequest, interval time.Duration, paren
 		die:              make(chan bool), // kill pending heartbeats
 		hbInterval:       interval,
 		parentDisconnect: parentDisconnect, // disconnect parent in hb timeout
+		hbInit:           false,
 	}
 }
 
@@ -161,9 +178,12 @@ func (s SubscriptionSet) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-// Reset clears all subscriptions from the currently managed list, and returns
-// a slice of the existing subscriptions prior to reset.  Returns nil if no subscriptions exist.
-func (s *subscriptions) Reset() []*subscription {
+// Close will stop pending heartbeat timeouts.
+func (s *subscriptions) Close() {
+	s.close() // eat return
+}
+
+func (s *subscriptions) close() []*subscription {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	var subs []*subscription
@@ -175,13 +195,22 @@ func (s *subscriptions) Reset() []*subscription {
 		}
 		sort.Sort(SubscriptionSet(subs))
 	}
+	return subs
+}
+
+// Reset clears all subscriptions from the currently managed list, and returns
+// a slice of the existing subscriptions prior to reset.  Returns nil if no subscriptions exist.
+func (s *subscriptions) Reset() []*subscription {
+	subs := s.close()
 	close(s.hbChannelDisconnect)
 	close(s.hbParentDisconnect)
+	s.lock.Lock()
 	s.subsBySubID = make(map[string]*subscription)
 	s.subsByChanID = make(map[int64]*subscription)
 	s.hbChannelDisconnect = make(chan error)
 	s.hbParentDisconnect = make(chan error)
-	go s.listenHeartbeats()
+	s.lock.Unlock()
+	go s.listenHeartbeats() // forward timeouts
 	return subs
 }
 
