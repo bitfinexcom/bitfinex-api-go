@@ -285,7 +285,9 @@ func (c *Client) listenDisconnect() {
 
 // Connect to the Bitfinex API, this should only be called once.
 func (c *Client) Connect() error {
+	log.Print("reset")
 	c.reset()
+	log.Print("connect")
 	return c.connect()
 }
 
