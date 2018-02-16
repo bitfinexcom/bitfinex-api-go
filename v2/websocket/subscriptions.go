@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"sync"
@@ -56,35 +57,49 @@ type subscription struct {
 
 	Request *SubscriptionRequest
 
-	// heartbeat timer
+	// heartbeats
 	hbInterval time.Duration
-	hb         *time.Timer
-	die        chan bool
+	hbDeadline time.Time
+	hbCancel   chan bool
+	hbTimeout  chan time.Time
+	hbReset    chan time.Time
 
+	// to parent
 	parentDisconnect chan error
 }
 
-func (s *subscription) activate() {
-	s.heartbeat()
+func (s *subscription) Activate(t time.Time) {
+	s.hbDeadline = t.Add(s.hbInterval)
+	go s.timeoutHearbeat()
 }
 
-func (s *subscription) timeout() {
-	s.parentDisconnect <- fmt.Errorf("heartbeat timed out on channel %d", s.ChanID)
+func (s *subscription) Heartbeat(t time.Time) {
+	s.hbReset <- t
 }
 
-func (s *subscription) heartbeat() {
-	if s.hb != nil {
-		s.hb.Stop()
+// timeout returns a cancel channel to cancel the heartbeat timeout created by this goroutine
+func (s *subscription) timeoutHearbeat() {
+	for {
+		go func() {
+			time.Sleep(s.hbInterval)
+			s.hbTimeout <- time.Now()
+		}()
+		select {
+		case t := <-s.hbReset: // heartbeat received, deadline moved
+			s.hbDeadline = t.Add(s.hbInterval)
+		case <-s.hbCancel: // underlying connection closed
+			return
+		case t := <-s.hbTimeout: // heartbeat timeout expired
+			if t.After(s.hbDeadline) {
+				s.parentDisconnect <- fmt.Errorf("channel %d timed out heartbeat %s", s.ChanID, s.hbInterval.String())
+				return
+			}
+		}
 	}
-	close(s.die) // terminate previous hb timeout
-	s.die = make(chan bool)
-	s.hb = time.AfterFunc(s.hbInterval, s.timeout)
 }
 
-func (s *subscription) stopHeartbeatTimeout() {
-	if s.hb != nil {
-		s.hb.Stop()
-	}
+func (s *subscription) Close() {
+	close(s.hbCancel)
 }
 
 func isPublic(request *SubscriptionRequest) bool {
@@ -103,12 +118,15 @@ func isPublic(request *SubscriptionRequest) bool {
 
 func newSubscription(request *SubscriptionRequest, interval time.Duration, parentDisconnect chan error) *subscription {
 	return &subscription{
+		ChanID:           -1,
 		Request:          request,
 		pending:          true,
 		Public:           isPublic(request),
-		die:              make(chan bool), // kill pending heartbeats
 		hbInterval:       interval,
-		parentDisconnect: parentDisconnect, // disconnect parent in hb timeout
+		hbCancel:         make(chan bool),
+		hbReset:          make(chan time.Time),
+		hbTimeout:        make(chan time.Time),
+		parentDisconnect: parentDisconnect,
 	}
 }
 
@@ -121,13 +139,14 @@ func (s subscription) Pending() bool {
 }
 
 func newSubscriptions(heartbeatTimeout time.Duration) *subscriptions {
-	return &subscriptions{
+	subs := &subscriptions{
 		subsBySubID:         make(map[string]*subscription),
 		subsByChanID:        make(map[int64]*subscription),
 		hbTimeout:           heartbeatTimeout,
 		hbParentDisconnect:  make(chan error),
 		hbChannelDisconnect: make(chan error),
 	}
+	return subs
 }
 
 type subscriptions struct {
@@ -137,8 +156,8 @@ type subscriptions struct {
 	subsByChanID map[int64]*subscription  // subscription map indexed by channel ID
 
 	hbTimeout           time.Duration
-	hbChannelDisconnect chan error // message sent when a subscription fails a heartbeat check
 	hbParentDisconnect  chan error // parent listens to this channel to receive disconnect events
+	hbChannelDisconnect chan error // parent listens to this channel to recieve heartbeat timeouts
 }
 
 func (s *subscriptions) Empty() bool {
@@ -161,36 +180,48 @@ func (s SubscriptionSet) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-// Reset clears all subscriptions from the currently managed list, and returns
-// a slice of the existing subscriptions prior to reset.  Returns nil if no subscriptions exist.
-func (s *subscriptions) Reset() []*subscription {
+func (s *subscriptions) forwardDisconnects() {
+	if e, ok := <-s.hbChannelDisconnect; ok {
+		s.hbParentDisconnect <- e
+	}
+}
+
+// Close will stop pending heartbeat timeouts. This is a terminal call and should only be called once.
+func (s *subscriptions) Close() {
+	s.close() // eat return
+	close(s.hbParentDisconnect)
+	close(s.hbChannelDisconnect)
+}
+
+func (s *subscriptions) close() []*subscription {
 	s.lock.Lock()
-	defer s.lock.Unlock()
 	var subs []*subscription
+	log.Printf("sub len: %d", len(s.subsBySubID))
 	if len(s.subsBySubID) > 0 {
 		subs = make([]*subscription, 0, len(s.subsBySubID))
 		for _, sub := range s.subsBySubID {
-			sub.stopHeartbeatTimeout()
+			sub.Close()
 			subs = append(subs, sub)
 		}
 		sort.Sort(SubscriptionSet(subs))
 	}
-	close(s.hbChannelDisconnect)
-	close(s.hbParentDisconnect)
-	s.subsBySubID = make(map[string]*subscription)
-	s.subsByChanID = make(map[int64]*subscription)
-	s.hbChannelDisconnect = make(chan error)
-	s.hbParentDisconnect = make(chan error)
-	go s.listenHeartbeats()
+	s.lock.Unlock()
 	return subs
 }
 
-func (s *subscriptions) listenHeartbeats() {
-	if err := <-s.hbChannelDisconnect; err != nil {
-		s.hbParentDisconnect <- err
-	}
+// Reset clears all subscriptions from the currently managed list, and returns
+// a slice of the existing subscriptions prior to reset.  Returns nil if no subscriptions exist.
+func (s *subscriptions) Reset() []*subscription {
+	subs := s.close()
+	s.lock.Lock()
+	s.subsBySubID = make(map[string]*subscription)
+	s.subsByChanID = make(map[int64]*subscription)
+	go s.forwardDisconnects()
+	s.lock.Unlock()
+	return subs
 }
 
+// ListenDisconnect returns an error channel which receives a message when a heartbeat has expired a channel.
 func (s *subscriptions) ListenDisconnect() <-chan error {
 	return s.hbParentDisconnect
 }
@@ -210,6 +241,7 @@ func (s *subscriptions) removeByChannelID(chanID int64) error {
 	if !ok {
 		return fmt.Errorf("could not find channel ID %d", chanID)
 	}
+	sub.Close()
 	delete(s.subsByChanID, chanID)
 	if _, ok = s.subsBySubID[sub.SubID()]; ok {
 		delete(s.subsBySubID, sub.SubID())
@@ -225,6 +257,7 @@ func (s *subscriptions) removeBySubscriptionID(subID string) error {
 		return fmt.Errorf("could not find subscription ID %s to remove", subID)
 	}
 	// exists, remove both indices
+	sub.Close()
 	delete(s.subsBySubID, subID)
 	if _, ok = s.subsByChanID[sub.ChanID]; ok {
 		delete(s.subsByChanID, sub.ChanID)
@@ -239,7 +272,7 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 		sub.pending = false
 		sub.ChanID = chanID
 		s.subsByChanID[chanID] = sub
-		sub.activate()
+		sub.Activate(time.Now())
 		return nil
 	}
 	return fmt.Errorf("could not find subscription ID %s to activate", subID)
@@ -267,7 +300,7 @@ func (s *subscriptions) heartbeat(chanID int64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if sub, ok := s.subsByChanID[chanID]; ok {
-		sub.heartbeat()
+		sub.Heartbeat(time.Now())
 	}
 	return fmt.Errorf("could not find channel ID to update heartbeat %d", chanID)
 }

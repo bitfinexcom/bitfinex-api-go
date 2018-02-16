@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -265,7 +266,7 @@ func (c *Client) IsConnected() bool {
 
 func (c *Client) listenDisconnect() {
 	select {
-	case e := <-c.asynchronous.Done(): // child shutdown
+	case e := <-c.asynchronous.Done(): // transport shutdown
 		c.isConnected = false
 		if e != nil {
 			log.Printf("client disconnected: %s", e.Error())
@@ -274,8 +275,7 @@ func (c *Client) listenDisconnect() {
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 		c.isConnected = false
 		if e != nil {
-			log.Printf("subscription disconnect: %s", e.Error())
-			c.asynchronous.Close()
+			c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
 			c.reconnect(e)
 		}
 	case <-c.shutdown: // normal shutdown
@@ -289,6 +289,7 @@ func (c *Client) Connect() error {
 	return c.connect()
 }
 
+// reset assumes transport has already died or been closed
 func (c *Client) reset() {
 	subs := c.subscriptions.Reset()
 	if subs != nil {
@@ -321,6 +322,7 @@ func (c *Client) reconnect(err error) error {
 		return err
 	}
 	for ; c.parameters.reconnectTry < c.parameters.ReconnectAttempts; c.parameters.reconnectTry++ {
+		time.Sleep(c.parameters.ReconnectInterval)
 		log.Printf("reconnect attempt %d/%d", c.parameters.reconnectTry+1, c.parameters.ReconnectAttempts)
 		c.reset()
 		err = c.connect()
@@ -329,7 +331,6 @@ func (c *Client) reconnect(err error) error {
 			return nil
 		}
 		log.Printf("reconnect failed: %s", err.Error())
-		time.Sleep(c.parameters.ReconnectInterval)
 	}
 	if err != nil {
 		log.Printf("could not reconnect: %s", err.Error())
@@ -361,19 +362,37 @@ func (c *Client) listenUpstream() {
 	}
 }
 
-// cleanly dispose of resources & signal we are finished
-// this is a terminal state and is not recoverable.
-// the Client object must be destroyed & re-created
+// terminal, unrecoverable state. called after async is closed.
 func (c *Client) close(e error) {
-	// internal goroutine shutdown
-	close(c.shutdown)
-
 	if c.listener != nil {
 		if e != nil {
 			c.listener <- e
 		}
 		close(c.listener)
 	}
+	// shutdowns goroutines
+	close(c.shutdown)
+}
+
+func (c *Client) closeAsyncAndWait(t time.Duration) {
+	timeout := make(chan bool)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		select {
+		case <-c.asynchronous.Done(): // will this work?
+			wg.Done()
+		case <-timeout:
+			log.Print("blocking async shutdown timed out")
+			wg.Done()
+		}
+	}()
+	c.asynchronous.Close()
+	go func() {
+		time.Sleep(t)
+		close(timeout)
+	}()
+	wg.Wait()
 }
 
 // Listen provides an atomic interface for receiving API messages.
@@ -386,7 +405,8 @@ func (c *Client) Listen() <-chan interface{} {
 // Close will close the Done() channel.
 func (c *Client) Close() {
 	c.terminal = true
-	c.asynchronous.Close() // will trigger a close()
+	c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
+	c.subscriptions.Close()
 
 	// clean shutdown waits on shutdown channel, which is triggered by cascading resource
 	// cleanups after a closed asynchronous transport
@@ -396,13 +416,12 @@ func (c *Client) Close() {
 		close(timeout)
 	}()
 	select {
-	case <-c.shutdown: // wait for exit
+	case <-c.shutdown:
 		return // successful cleanup
 	case <-timeout:
 		log.Print("shutdown timed out")
 		return
 	}
-
 }
 
 func (c *Client) handleMessage(msg []byte) error {
