@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -265,7 +267,7 @@ func (c *Client) IsConnected() bool {
 
 func (c *Client) listenDisconnect() {
 	select {
-	case e := <-c.asynchronous.Done(): // child shutdown
+	case e := <-c.asynchronous.Done(): // transport shutdown
 		c.isConnected = false
 		if e != nil {
 			log.Printf("client disconnected: %s", e.Error())
@@ -274,8 +276,7 @@ func (c *Client) listenDisconnect() {
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 		c.isConnected = false
 		if e != nil {
-			log.Printf("subscription disconnect: %s", e.Error())
-			c.asynchronous.Close()
+			c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
 			c.reconnect(e)
 		}
 	case <-c.shutdown: // normal shutdown
@@ -285,12 +286,11 @@ func (c *Client) listenDisconnect() {
 
 // Connect to the Bitfinex API, this should only be called once.
 func (c *Client) Connect() error {
-	log.Print("reset")
 	c.reset()
-	log.Print("connect")
 	return c.connect()
 }
 
+// reset assumes transport has already died or been closed
 func (c *Client) reset() {
 	subs := c.subscriptions.Reset()
 	if subs != nil {
@@ -375,8 +375,30 @@ func (c *Client) close(e error) {
 	}
 	c.subscriptions.Close()
 
-	// release Close()
+	// shutdowns goroutines
 	close(c.shutdown)
+}
+
+func (c *Client) closeAsyncAndWait(t time.Duration) {
+	timeout := make(chan bool)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		select {
+		case <-c.asynchronous.Done(): // will this work?
+			wg.Done()
+		case <-timeout:
+			log.Print("blocking async shutdown timed out")
+			debug.PrintStack()
+			wg.Done()
+		}
+	}()
+	c.asynchronous.Close()
+	go func() {
+		time.Sleep(t)
+		close(timeout)
+	}()
+	wg.Wait()
 }
 
 // Listen provides an atomic interface for receiving API messages.
@@ -389,7 +411,7 @@ func (c *Client) Listen() <-chan interface{} {
 // Close will close the Done() channel.
 func (c *Client) Close() {
 	c.terminal = true
-	c.asynchronous.Close() // will trigger a close()
+	c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
 
 	// clean shutdown waits on shutdown channel, which is triggered by cascading resource
 	// cleanups after a closed asynchronous transport
@@ -398,19 +420,13 @@ func (c *Client) Close() {
 		time.Sleep(c.parameters.ShutdownTimeout)
 		close(timeout)
 	}()
-	// depending on channel heartbeat subscriptions, websocket socket timeouts, and
-	// the shutdown timeout, these 3 signals compete to finish shutdown.
-	// if a ws socket close takes too long, a heartbeat timeout may win the race.
-	// if a ws close takes too long & no channels have subscribed, the shutdown timer may win.
-	// everything is configurable via parameters
 	select {
-	case <-c.shutdown: // wait for exit
+	case <-c.shutdown:
 		return // successful cleanup
 	case <-timeout:
 		log.Print("shutdown timed out")
 		return
 	}
-
 }
 
 func (c *Client) handleMessage(msg []byte) error {
