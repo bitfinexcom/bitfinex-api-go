@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -363,9 +362,7 @@ func (c *Client) listenUpstream() {
 	}
 }
 
-// cleanly dispose of resources & signal we are finished
-// this is a terminal state and is not recoverable.
-// the Client object must be destroyed & re-created
+// terminal, unrecoverable state. called after async is closed.
 func (c *Client) close(e error) {
 	if c.listener != nil {
 		if e != nil {
@@ -373,8 +370,6 @@ func (c *Client) close(e error) {
 		}
 		close(c.listener)
 	}
-	c.subscriptions.Close()
-
 	// shutdowns goroutines
 	close(c.shutdown)
 }
@@ -389,7 +384,6 @@ func (c *Client) closeAsyncAndWait(t time.Duration) {
 			wg.Done()
 		case <-timeout:
 			log.Print("blocking async shutdown timed out")
-			debug.PrintStack()
 			wg.Done()
 		}
 	}()
@@ -412,6 +406,7 @@ func (c *Client) Listen() <-chan interface{} {
 func (c *Client) Close() {
 	c.terminal = true
 	c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
+	c.subscriptions.Close()
 
 	// clean shutdown waits on shutdown channel, which is triggered by cascading resource
 	// cleanups after a closed asynchronous transport

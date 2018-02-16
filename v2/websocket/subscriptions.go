@@ -68,7 +68,8 @@ type subscription struct {
 	parentDisconnect chan error
 }
 
-func (s *subscription) Activate() {
+func (s *subscription) Activate(t time.Time) {
+	s.hbDeadline = t.Add(s.hbInterval)
 	go s.timeoutHearbeat()
 }
 
@@ -86,7 +87,6 @@ func (s *subscription) timeoutHearbeat() {
 		select {
 		case t := <-s.hbReset: // heartbeat received, deadline moved
 			s.hbDeadline = t.Add(s.hbInterval)
-			log.Printf("moving hb deadline by %s to %s %d", s.hbInterval, s.hbDeadline, s.ChanID)
 		case <-s.hbCancel: // underlying connection closed
 			return
 		case t := <-s.hbTimeout: // heartbeat timeout expired
@@ -118,6 +118,7 @@ func isPublic(request *SubscriptionRequest) bool {
 
 func newSubscription(request *SubscriptionRequest, interval time.Duration, parentDisconnect chan error) *subscription {
 	return &subscription{
+		ChanID:           -1,
 		Request:          request,
 		pending:          true,
 		Public:           isPublic(request),
@@ -195,6 +196,7 @@ func (s *subscriptions) Close() {
 func (s *subscriptions) close() []*subscription {
 	s.lock.Lock()
 	var subs []*subscription
+	log.Printf("sub len: %d", len(s.subsBySubID))
 	if len(s.subsBySubID) > 0 {
 		subs = make([]*subscription, 0, len(s.subsBySubID))
 		for _, sub := range s.subsBySubID {
@@ -239,6 +241,7 @@ func (s *subscriptions) removeByChannelID(chanID int64) error {
 	if !ok {
 		return fmt.Errorf("could not find channel ID %d", chanID)
 	}
+	sub.Close()
 	delete(s.subsByChanID, chanID)
 	if _, ok = s.subsBySubID[sub.SubID()]; ok {
 		delete(s.subsBySubID, sub.SubID())
@@ -254,6 +257,7 @@ func (s *subscriptions) removeBySubscriptionID(subID string) error {
 		return fmt.Errorf("could not find subscription ID %s to remove", subID)
 	}
 	// exists, remove both indices
+	sub.Close()
 	delete(s.subsBySubID, subID)
 	if _, ok = s.subsByChanID[sub.ChanID]; ok {
 		delete(s.subsByChanID, sub.ChanID)
@@ -268,7 +272,7 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 		sub.pending = false
 		sub.ChanID = chanID
 		s.subsByChanID[chanID] = sub
-		sub.Activate()
+		sub.Activate(time.Now())
 		return nil
 	}
 	return fmt.Errorf("could not find subscription ID %s to activate", subID)

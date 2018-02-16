@@ -3,9 +3,10 @@ package tests
 import (
 	"context"
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 	"testing"
 	"time"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
 func assertDisconnect(maxWait time.Duration, client *websocket.Client) error {
@@ -44,7 +45,6 @@ func TestReconnectSimple(t *testing.T) {
 
 	// set ws options
 	apiClient.Connect()
-	defer apiClient.Close()
 
 	// begin test
 	wsService.Broadcast(`{"event":"info","version":2}`)
@@ -80,7 +80,6 @@ func TestReconnectSimple(t *testing.T) {
 	}
 	// ERROR client not reconnecting
 	wsService.Start()
-	defer wsService.Stop()
 	if err := wsService.WaitForClientCount(1); err != nil {
 		t.Fatal(err)
 	}
@@ -97,6 +96,8 @@ func TestReconnectSimple(t *testing.T) {
 	}
 
 	// done
+	wsService.Stop()
+	apiClient.Close()
 }
 
 func TestReconnectResubscribeNoAuth(t *testing.T) {
@@ -123,7 +124,6 @@ func TestReconnectResubscribeNoAuth(t *testing.T) {
 
 	// set ws options
 	apiClient.Connect()
-	defer apiClient.Close()
 
 	// begin test
 	wsService.Broadcast(`{"event":"info","version":2}`)
@@ -266,6 +266,7 @@ func TestReconnectResubscribeNoAuth(t *testing.T) {
 
 	// done
 	wsService.Stop()
+	apiClient.Close()
 }
 
 func TestReconnectResubscribeWithAuth(t *testing.T) {
@@ -292,7 +293,6 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 
 	// set ws options
 	apiClient.Connect()
-	defer apiClient.Close()
 
 	// begin test
 	wsService.Broadcast(`{"event":"info","version":2}`)
@@ -403,7 +403,6 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err := wsService.WaitForClientCount(1); err != nil {
 		t.Fatal(err)
 	}
-	defer wsService.Stop()
 	wsService.Broadcast(`{"event":"info","version":2}`)
 	infoEv, err = listener.nextInfoEvent()
 	if err != nil {
@@ -480,6 +479,8 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	}
 
 	// done
+	wsService.Stop()
+	apiClient.Close()
 }
 
 func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
@@ -507,7 +508,6 @@ func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
 
 	// set ws options
 	apiClient.Connect()
-	defer apiClient.Close()
 
 	// begin test
 	wsService.Broadcast(`{"event":"info","version":2}`)
@@ -539,6 +539,7 @@ func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
 
 	// done
 	wsService.Stop()
+	apiClient.Close()
 }
 
 func TestHeartbeatTimeoutReconnect(t *testing.T) {
@@ -567,7 +568,6 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 
 	// set ws options
 	apiClient.Connect()
-	defer apiClient.Close()
 
 	// begin test
 	// info msg automatically sends
@@ -635,4 +635,5 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 
 	// done
 	wsService.Stop()
+	apiClient.Close()
 }
