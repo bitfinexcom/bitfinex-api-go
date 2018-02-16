@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"sync"
@@ -196,7 +195,6 @@ func (s *subscriptions) Close() {
 func (s *subscriptions) close() []*subscription {
 	s.lock.Lock()
 	var subs []*subscription
-	log.Printf("sub len: %d", len(s.subsBySubID))
 	if len(s.subsBySubID) > 0 {
 		subs = make([]*subscription, 0, len(s.subsBySubID))
 		for _, sub := range s.subsBySubID {
