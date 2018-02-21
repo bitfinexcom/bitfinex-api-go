@@ -267,12 +267,18 @@ func (c *Client) IsConnected() bool {
 func (c *Client) listenDisconnect() {
 	select {
 	case e := <-c.asynchronous.Done(): // transport shutdown
+		if e != nil {
+			log.Printf("socket disconnect: %s", e.Error())
+		}
 		c.isConnected = false
 		if e != nil {
 			log.Printf("client disconnected: %s", e.Error())
 		}
 		c.reconnect(e)
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
+		if e != nil {
+			log.Printf("heartbeat disconnect: %s", e.Error())
+		}
 		c.isConnected = false
 		if e != nil {
 			c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
@@ -283,8 +289,20 @@ func (c *Client) listenDisconnect() {
 	}
 }
 
+func (c *Client) dumpParams() {
+	log.Print("----Bitfinex Client Parameters----")
+	log.Printf("AutoReconnect=%t", c.parameters.AutoReconnect)
+	log.Printf("ReconnectInterval=%s", c.parameters.ReconnectInterval)
+	log.Printf("ReconnectAttempts=%d", c.parameters.ReconnectAttempts)
+	log.Printf("ShutdownTimeout=%s", c.parameters.ShutdownTimeout)
+	log.Printf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
+	log.Printf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
+	log.Printf("URL=%s", c.parameters.URL)
+}
+
 // Connect to the Bitfinex API, this should only be called once.
 func (c *Client) Connect() error {
+	c.dumpParams()
 	c.reset()
 	return c.connect()
 }

@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"sync"
@@ -207,6 +208,17 @@ func (s *subscriptions) close() []*subscription {
 	return subs
 }
 
+func (s *subscriptions) eatSiblingDisconnects() {
+	for {
+		select {
+		case <-s.hbChannelDisconnect:
+			// eat
+		case <-time.After(s.hbTimeout):
+			return // no longer hungry
+		}
+	}
+}
+
 // Reset clears all subscriptions from the currently managed list, and returns
 // a slice of the existing subscriptions prior to reset.  Returns nil if no subscriptions exist.
 func (s *subscriptions) Reset() []*subscription {
@@ -214,6 +226,11 @@ func (s *subscriptions) Reset() []*subscription {
 	s.lock.Lock()
 	s.subsBySubID = make(map[string]*subscription)
 	s.subsByChanID = make(map[int64]*subscription)
+	// drain any excess disconnect messages from last reset.
+	// sibling channels may also send disconnects after the first,
+	// which may disrupt the reconnect process. this could be improved
+	s.eatSiblingDisconnects()
+
 	go s.forwardDisconnects()
 	s.lock.Unlock()
 	return subs
@@ -267,6 +284,9 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if sub, ok := s.subsBySubID[subID]; ok {
+		if chanID != 0 {
+			log.Printf("activated subscription %s %s for channel %d", sub.Request.Channel, sub.Request.Symbol, chanID)
+		}
 		sub.pending = false
 		sub.ChanID = chanID
 		s.subsByChanID[chanID] = sub
