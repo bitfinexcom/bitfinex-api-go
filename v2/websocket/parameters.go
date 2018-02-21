@@ -28,6 +28,6 @@ func NewDefaultParameters() *Parameters {
 		URL:                    productionBaseURL,
 		ShutdownTimeout:        time.Second * 5,
 		ResubscribeOnReconnect: true,
-		HeartbeatTimeout:       time.Millisecond * 7500, // HB = 5s, timeout = 7.5s
+		HeartbeatTimeout:       time.Second * 10, // HB = 5s
 	}
 }
