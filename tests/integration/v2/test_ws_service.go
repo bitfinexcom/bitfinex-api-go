@@ -71,8 +71,8 @@ type TestWsService struct {
 }
 
 func (s *TestWsService) WaitForClientCount(count int) error {
-	loops := 16
-	delay := time.Millisecond * 250
+	loops := 80
+	delay := time.Millisecond * 50
 	for i := 0; i < loops; i++ {
 		if s.totalClients == count {
 			return nil
@@ -141,8 +141,8 @@ func (s *TestWsService) Received(clientNum int, msgNum int) (string, error) {
 }
 
 func (s *TestWsService) WaitForMessage(clientNum int, msgNum int) (string, error) {
-	loops := 16
-	delay := time.Millisecond * 250
+	loops := 80
+	delay := time.Millisecond * 50
 	var msg string
 	var err error
 	for i := 0; i < loops; i++ {

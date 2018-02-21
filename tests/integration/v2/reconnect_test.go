@@ -56,7 +56,9 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	// set ws options
 	apiClient.Connect()
 
-	time.Sleep(time.Millisecond * 100)
+	if err := wsService.WaitForClientCount(1); err != nil {
+		t.Fatal(err)
+	}
 
 	// begin test
 	wsService.Broadcast(`{"event":"info","version":2}`)
@@ -69,9 +71,6 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	}
 	assert(t, &expInfoEv, infoEv)
 
-	if err := wsService.WaitForClientCount(1); err != nil {
-		t.Fatal(err)
-	}
 	msg, err := wsService.WaitForMessage(0, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -271,7 +270,9 @@ func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
 	// set ws options
 	apiClient.Connect()
 
-	time.Sleep(time.Millisecond * 100)
+	if err := wsService.WaitForClientCount(1); err != nil {
+		t.Fatal(err)
+	}
 
 	// begin test
 	wsService.Broadcast(`{"event":"info","version":2}`)
@@ -289,10 +290,6 @@ func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
 		t.Fatal(err)
 	}
 	wsService.Broadcast(`{"event":"subscribed","channel":"ticker","chanId":5,"symbol":"tBTCUSD","subId":"nonce1","pair":"BTCUSD"}`)
-
-	if err = wsService.WaitForClientCount(1); err != nil {
-		t.Fatal(err)
-	}
 
 	// expect timeout channel heartbeat
 	time.Sleep(time.Second * 2)
@@ -331,7 +328,9 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 	// set ws options
 	apiClient.Connect()
 
-	time.Sleep(time.Millisecond * 100)
+	if err := wsService.WaitForClientCount(1); err != nil {
+		t.Fatal(err)
+	}
 
 	// begin test
 	// info msg automatically sends
@@ -367,12 +366,6 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 		Channel: "ticker",
 	}
 	assert(t, &expTickerSub, tickerSub)
-
-	if err = wsService.WaitForClientCount(1); err != nil {
-		t.Fatal(err)
-	}
-	// connection ack
-	// info msg automatically sends
 
 	// expect timeout channel heartbeat
 	time.Sleep(time.Second * 2)
@@ -426,7 +419,9 @@ func TestHeartbeatNoTimeoutData(t *testing.T) {
 	// set ws options
 	apiClient.Connect()
 
-	time.Sleep(time.Millisecond * 100)
+	if err := wsService.WaitForClientCount(1); err != nil {
+		t.Fatal(err)
+	}
 
 	// begin test
 	// info msg automatically sends
