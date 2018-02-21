@@ -28,6 +28,7 @@ func (c *Client) handleChannel(msg []byte) error {
 		// no subscribed channel for message
 		return err
 	}
+	//log.Printf("heartbeat channel hb %d", chanID)
 	c.subscriptions.heartbeat(chanID)
 
 	if sub.Public {

@@ -267,12 +267,14 @@ func (c *Client) IsConnected() bool {
 func (c *Client) listenDisconnect() {
 	select {
 	case e := <-c.asynchronous.Done(): // transport shutdown
+		log.Printf("socket disconnect: %s", e.Error())
 		c.isConnected = false
 		if e != nil {
 			log.Printf("client disconnected: %s", e.Error())
 		}
 		c.reconnect(e)
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
+		log.Printf("heartbeat disconnect: %s", e.Error())
 		c.isConnected = false
 		if e != nil {
 			c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
