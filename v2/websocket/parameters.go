@@ -6,13 +6,6 @@ import (
 
 // Parameters defines adapter behavior.
 type Parameters struct {
-	// TODO implement failover hierarchy
-	/*
-		AutoResubscribe bool
-		ResubscribeAttempts         int
-		ResubscribeHeartbeatTimeout time.Duration
-		resubscribeTry              int
-	*/
 	AutoReconnect     bool
 	ReconnectInterval time.Duration
 	ReconnectAttempts int

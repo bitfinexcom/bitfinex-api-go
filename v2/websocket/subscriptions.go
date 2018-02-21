@@ -284,7 +284,9 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if sub, ok := s.subsBySubID[subID]; ok {
-		log.Printf("activated subscription %s %s for channel %d", sub.Request.Channel, sub.Request.Symbol, chanID)
+		if chanID != 0 {
+			log.Printf("activated subscription %s %s for channel %d", sub.Request.Channel, sub.Request.Symbol, chanID)
+		}
 		sub.pending = false
 		sub.ChanID = chanID
 		s.subsByChanID[chanID] = sub
