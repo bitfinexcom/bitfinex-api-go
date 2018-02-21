@@ -224,13 +224,14 @@ func (s *subscriptions) eatSiblingDisconnects() {
 func (s *subscriptions) Reset() []*subscription {
 	subs := s.close()
 	s.lock.Lock()
-	s.subsBySubID = make(map[string]*subscription)
-	s.subsByChanID = make(map[int64]*subscription)
 	// drain any excess disconnect messages from last reset.
 	// sibling channels may also send disconnects after the first,
 	// which may disrupt the reconnect process. this could be improved
-	s.eatSiblingDisconnects()
-
+	if len(s.subsBySubID) > 0 {
+		s.eatSiblingDisconnects()
+	}
+	s.subsBySubID = make(map[string]*subscription)
+	s.subsByChanID = make(map[int64]*subscription)
 	go s.forwardDisconnects()
 	s.lock.Unlock()
 	return subs
