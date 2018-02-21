@@ -3,12 +3,13 @@ package tests
 import (
 	"bytes"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"log"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{
@@ -28,7 +29,7 @@ func (c *client) writePump() {
 	for msg := range c.send {
 		err := c.Conn.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
-			log.Printf("could not send message to client: %s", err.Error())
+			log.Printf("could not send message (%s) to client: %s", string(msg), err.Error())
 			continue
 		}
 	}

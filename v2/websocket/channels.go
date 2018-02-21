@@ -28,6 +28,7 @@ func (c *Client) handleChannel(msg []byte) error {
 		// no subscribed channel for message
 		return err
 	}
+	c.subscriptions.heartbeat(chanID)
 
 	if sub.Public {
 		switch data := raw[1].(type) {
