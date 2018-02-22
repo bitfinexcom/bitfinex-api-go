@@ -54,6 +54,8 @@ const (
 	FrequencyRealtime BookFrequency = "F0"
 	// FrequencyTwoPerSecond delivers two book updates per second.
 	FrequencyTwoPerSecond BookFrequency = "F1"
+	// PriceLevelDefault provides a constant default price level for book subscriptions.
+	PriceLevelDefault int = 25
 )
 
 type bookFrequency string
@@ -271,9 +273,6 @@ func (c *Client) listenDisconnect() {
 			log.Printf("socket disconnect: %s", e.Error())
 		}
 		c.isConnected = false
-		if e != nil {
-			log.Printf("client disconnected: %s", e.Error())
-		}
 		c.reconnect(e)
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 		if e != nil {
@@ -340,11 +339,13 @@ func (c *Client) reconnect(err error) error {
 		return err
 	}
 	for ; c.parameters.reconnectTry < c.parameters.ReconnectAttempts; c.parameters.reconnectTry++ {
+		log.Printf("waiting %s until reconnect...", c.parameters.ReconnectInterval)
 		time.Sleep(c.parameters.ReconnectInterval)
 		log.Printf("reconnect attempt %d/%d", c.parameters.reconnectTry+1, c.parameters.ReconnectAttempts)
 		c.reset()
 		err = c.connect()
 		if err == nil {
+			log.Print("reconnect OK")
 			c.parameters.reconnectTry = 0
 			return nil
 		}

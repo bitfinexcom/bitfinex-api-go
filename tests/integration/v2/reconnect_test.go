@@ -11,6 +11,13 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
+var (
+	wsPort    = 4001
+	wsService *TestWsService
+	apiRecv   *listener
+	apiClient *websocket.Client
+)
+
 func assertDisconnect(maxWait time.Duration, client *websocket.Client) error {
 	loops := 5
 	delay := maxWait / time.Duration(loops)
@@ -34,10 +41,18 @@ func newTestParams(wsPort int) *websocket.Parameters {
 	return p
 }
 
-func TestReconnectResubscribeWithAuth(t *testing.T) {
-	// create transport & nonce mocks
-	wsPort := 4001
-	wsService := NewTestWsService(wsPort)
+func setup(t *testing.T, hbTimeout time.Duration, autoReconnect, auth bool) {
+	if wsService != nil {
+		wsService.Stop()
+	}
+	if apiClient != nil {
+		apiClient.Close()
+	}
+
+	time.Sleep(time.Millisecond * 250)
+
+	wsService = NewTestWsService(wsPort)
+	wsService.PublishOnConnect(`{"event":"info","version":2}`)
 	err := wsService.Start()
 	if err != nil {
 		t.Fatal(err)
@@ -45,13 +60,19 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 
 	// create client
 	params := newTestParams(wsPort)
+	params.HeartbeatTimeout = hbTimeout
+	params.AutoReconnect = autoReconnect
 	factory := websocket.NewWebsocketAsynchronousFactory(params)
 	nonce := &IncrementingNonceGenerator{}
-	apiClient := websocket.NewWithParamsAsyncFactoryNonce(params, factory, nonce).Credentials("apiKey1", "apiSecret1")
+	apiClient = websocket.NewWithParamsAsyncFactoryNonce(params, factory, nonce)
+	if auth {
+		apiClient.Credentials("apiKey1", "apiSecret1")
+	}
 
 	// setup listener
-	listener := newListener()
-	listener.run(apiClient.Listen())
+	// listener closes when apiClient is closed
+	apiRecv = newListener()
+	apiRecv.run(apiClient.Listen())
 
 	// set ws options
 	apiClient.Connect()
@@ -59,10 +80,14 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err := wsService.WaitForClientCount(1); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestReconnectResubscribeWithAuth(t *testing.T) {
+	// create transport & nonce mocks
+	setup(t, time.Second*10, true, true)
 
 	// begin test
-	wsService.Broadcast(`{"event":"info","version":2}`)
-	infoEv, err := listener.nextInfoEvent()
+	infoEv, err := apiRecv.nextInfoEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +104,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		t.Fatalf("[1] did not expect to receive msg: %s", msg)
 	}
 	wsService.Broadcast(`{"event":"auth","status":"OK","chanId":0,"userId":1,"subId":"nonce1","auth_id":"valid-auth-guid","caps":{"orders":{"read":1,"write":0},"account":{"read":1,"write":0},"funding":{"read":1,"write":0},"history":{"read":1,"write":0},"wallets":{"read":1,"write":0},"withdraw":{"read":0,"write":0},"positions":{"read":1,"write":0}}}`)
-	authEv, err := listener.nextAuthEvent()
+	authEv, err := apiRecv.nextAuthEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +132,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		t.Fatalf("[2] did not expect to receive: %s", msg)
 	}
 	wsService.Broadcast(`{"event":"subscribed","channel":"trades","chanId":5,"symbol":"tBTCUSD","subId":"nonce2","pair":"BTCUSD"}`)
-	tradeSub, err := listener.nextSubscriptionEvent()
+	tradeSub, err := apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +144,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	assert(t, &expTradeSub, tradeSub)
 
 	// book sub
-	_, err = apiClient.SubscribeBook(context.Background(), "tBTCUSD", websocket.Precision0, websocket.FrequencyRealtime)
+	_, err = apiClient.SubscribeBook(context.Background(), "tBTCUSD", websocket.Precision0, websocket.FrequencyRealtime, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,11 +152,11 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if `{"subId":"nonce3","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0"}` != msg {
+	if `{"subId":"nonce3","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0","len":"1"}` != msg {
 		t.Fatalf("[3] did not expect to receive: %s", msg)
 	}
-	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce3","pair":"BTCUSD","prec":"P0","freq":"F0"}`)
-	bookSub, err := listener.nextSubscriptionEvent()
+	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce3","pair":"BTCUSD","prec":"P0","freq":"F0","len":"1"}`)
+	bookSub, err := apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +174,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 
 	now := time.Now()
 	// wait for client disconnect to start reconnect looping
-	err = assertDisconnect(time.Second*20, apiClient)
+	err = assertDisconnect(time.Second*10, apiClient)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +192,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 	wsService.Broadcast(`{"event":"info","version":2}`)
-	infoEv, err = listener.nextInfoEvent()
+	infoEv, err = apiRecv.nextInfoEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +207,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		t.Fatalf("[4] did not expect to receive msg: %s", msg)
 	}
 	wsService.Broadcast(`{"event":"auth","status":"OK","chanId":0,"userId":1,"subId":"nonce4","auth_id":"valid-auth-guid","caps":{"orders":{"read":1,"write":0},"account":{"read":1,"write":0},"funding":{"read":1,"write":0},"history":{"read":1,"write":0},"wallets":{"read":1,"write":0},"withdraw":{"read":0,"write":0},"positions":{"read":1,"write":0}}}`)
-	authEv, err = listener.nextAuthEvent()
+	authEv, err = apiRecv.nextAuthEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +230,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		t.Fatalf("[6] did not expect to receive: %s", msg)
 	}
 	wsService.Broadcast(`{"event":"subscribed","channel":"trades","chanId":5,"symbol":"tBTCUSD","subId":"nonce5","pair":"BTCUSD"}`)
-	tradeSub, err = listener.nextSubscriptionEvent()
+	tradeSub, err = apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,11 +244,11 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if `{"subId":"nonce6","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0"}` != msg {
+	if `{"subId":"nonce6","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0","len":"1"}` != msg {
 		t.Fatalf("[5] did not expect to receive: %s", msg)
 	}
-	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce6","pair":"BTCUSD","prec":"P0","freq":"F0"}`)
-	bookSub, err = listener.nextSubscriptionEvent()
+	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce6","pair":"BTCUSD","prec":"P0","freq":"F0","len":"1"}`)
+	bookSub, err = apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,6 +258,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		Channel:   "book",
 		Frequency: string(websocket.FrequencyRealtime),
 		Precision: string(websocket.Precision0),
+		Len:       "1",
 	}
 	assert(t, &expBookSub, bookSub)
 
@@ -240,43 +266,14 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if !apiClient.IsConnected() {
 		t.Fatal("not reconnected to websocket")
 	}
-
-	// done
-	wsService.Stop()
-	apiClient.Close()
 }
 
 func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
 	// create transport & nonce mocks
-	wsPort := 4001
-	wsService := NewTestWsService(wsPort)
-	err := wsService.Start()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// create client
-	params := newTestParams(wsPort)
-	params.AutoReconnect = false
-	params.HeartbeatTimeout = time.Second
-	factory := websocket.NewWebsocketAsynchronousFactory(params)
-	nonce := &IncrementingNonceGenerator{}
-	apiClient := websocket.NewWithParamsAsyncFactoryNonce(params, factory, nonce)
-
-	// setup listener
-	listener := newListener()
-	listener.run(apiClient.Listen())
-
-	// set ws options
-	apiClient.Connect()
-
-	if err := wsService.WaitForClientCount(1); err != nil {
-		t.Fatal(err)
-	}
+	setup(t, time.Second, false, false)
 
 	// begin test
-	wsService.Broadcast(`{"event":"info","version":2}`)
-	msg, err := listener.nextInfoEvent()
+	msg, err := apiRecv.nextInfoEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,44 +294,16 @@ func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
 	if apiClient.IsConnected() {
 		t.Fatal("API client still connected, expected heartbeat disconnect")
 	}
-
-	// done
-	wsService.Stop()
-	apiClient.Close()
 }
 
 // also tests resubscribes
 func TestHeartbeatTimeoutReconnect(t *testing.T) {
 	// create transport & nonce mocks
-	wsPort := 4001
-	wsService := NewTestWsService(wsPort)
-	wsService.PublishOnConnect(`{"event":"info","version":2}`)
-	err := wsService.Start()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// create client
-	params := newTestParams(wsPort)
-	params.HeartbeatTimeout = time.Second
-	factory := websocket.NewWebsocketAsynchronousFactory(params)
-	nonce := &IncrementingNonceGenerator{}
-	apiClient := websocket.NewWithParamsAsyncFactoryNonce(params, factory, nonce)
-
-	// setup listener
-	listener := newListener()
-	listener.run(apiClient.Listen())
-
-	// set ws options
-	apiClient.Connect()
-
-	if err := wsService.WaitForClientCount(1); err != nil {
-		t.Fatal(err)
-	}
+	setup(t, time.Second, true, false)
 
 	// begin test
 	// info msg automatically sends
-	msg, err := listener.nextInfoEvent()
+	msg, err := apiRecv.nextInfoEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -356,7 +325,7 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 		t.Fatalf("[1] did not expect to receive: %s", m)
 	}
 	wsService.Broadcast(`{"event":"subscribed","channel":"ticker","chanId":5,"symbol":"tBTCUSD","subId":"nonce1","pair":"BTCUSD"}`)
-	tickerSub, err := listener.nextSubscriptionEvent()
+	tickerSub, err := apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -379,7 +348,7 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 		t.Fatalf("[2] did not expect to receive: %s", m)
 	}
 	wsService.Broadcast(`{"event":"subscribed","channel":"ticker","chanId":5,"symbol":"tBTCUSD","subId":"nonce2","pair":"BTCUSD"}`)
-	tickerSub, err = listener.nextSubscriptionEvent()
+	tickerSub, err = apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -389,43 +358,15 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 		Channel: "ticker",
 	}
 	assert(t, &expTickerSub, tickerSub)
-
-	// done
-	wsService.Stop()
-	apiClient.Close()
 }
 
 func TestHeartbeatNoTimeoutData(t *testing.T) {
 	// create transport & nonce mocks
-	wsPort := 4001
-	wsService := NewTestWsService(wsPort)
-	wsService.PublishOnConnect(`{"event":"info","version":2}`)
-	err := wsService.Start()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// create client
-	params := newTestParams(wsPort)
-	params.HeartbeatTimeout = time.Second
-	factory := websocket.NewWebsocketAsynchronousFactory(params)
-	nonce := &IncrementingNonceGenerator{}
-	apiClient := websocket.NewWithParamsAsyncFactoryNonce(params, factory, nonce)
-
-	// setup listener
-	listener := newListener()
-	listener.run(apiClient.Listen())
-
-	// set ws options
-	apiClient.Connect()
-
-	if err := wsService.WaitForClientCount(1); err != nil {
-		t.Fatal(err)
-	}
+	setup(t, time.Second, true, false)
 
 	// begin test
 	// info msg automatically sends
-	msg, err := listener.nextInfoEvent()
+	msg, err := apiRecv.nextInfoEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -447,7 +388,7 @@ func TestHeartbeatNoTimeoutData(t *testing.T) {
 		t.Fatalf("[1] did not expect to receive: %s", m)
 	}
 	wsService.Broadcast(`{"event":"subscribed","channel":"ticker","chanId":5,"symbol":"tBTCUSD","subId":"nonce1","pair":"BTCUSD"}`)
-	tickerSub, err := listener.nextSubscriptionEvent()
+	tickerSub, err := apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -465,7 +406,7 @@ func TestHeartbeatNoTimeoutData(t *testing.T) {
 		time.Sleep(time.Millisecond * 250)
 	}
 
-	tick, err := listener.nextTick()
+	tick, err := apiRecv.nextTick()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -487,8 +428,4 @@ func TestHeartbeatNoTimeoutData(t *testing.T) {
 	if !apiClient.IsConnected() {
 		t.Fatal("expected client connected, client has disconnected")
 	}
-
-	// done
-	wsService.Stop()
-	apiClient.Close()
 }
