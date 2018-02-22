@@ -54,6 +54,8 @@ const (
 	FrequencyRealtime BookFrequency = "F0"
 	// FrequencyTwoPerSecond delivers two book updates per second.
 	FrequencyTwoPerSecond BookFrequency = "F1"
+	// PriceLevelDefault provides a constant default price level for book subscriptions.
+	PriceLevelDefault int = 25
 )
 
 type bookFrequency string
