@@ -57,49 +57,7 @@ type subscription struct {
 
 	Request *SubscriptionRequest
 
-	// heartbeats
-	hbInterval time.Duration
 	hbDeadline time.Time
-	hbCancel   chan bool
-	hbTimeout  chan time.Time
-	hbReset    chan time.Time
-
-	// to parent
-	parentDisconnect chan error
-}
-
-func (s *subscription) Activate(t time.Time) {
-	s.hbDeadline = t.Add(s.hbInterval)
-	go s.timeoutHearbeat()
-}
-
-func (s *subscription) Heartbeat(t time.Time) {
-	s.hbReset <- t
-}
-
-// timeout returns a cancel channel to cancel the heartbeat timeout created by this goroutine
-func (s *subscription) timeoutHearbeat() {
-	for {
-		go func() {
-			time.Sleep(s.hbInterval)
-			s.hbTimeout <- time.Now()
-		}()
-		select {
-		case t := <-s.hbReset: // heartbeat received, deadline moved
-			s.hbDeadline = t.Add(s.hbInterval)
-		case <-s.hbCancel: // underlying connection closed
-			return
-		case t := <-s.hbTimeout: // heartbeat timeout expired
-			if t.After(s.hbDeadline) {
-				s.parentDisconnect <- fmt.Errorf("channel %d timed out heartbeat %s", s.ChanID, s.hbInterval.String())
-				return
-			}
-		}
-	}
-}
-
-func (s *subscription) Close() {
-	close(s.hbCancel)
 }
 
 func isPublic(request *SubscriptionRequest) bool {
@@ -116,17 +74,12 @@ func isPublic(request *SubscriptionRequest) bool {
 	return false
 }
 
-func newSubscription(request *SubscriptionRequest, interval time.Duration, parentDisconnect chan error) *subscription {
+func newSubscription(request *SubscriptionRequest) *subscription {
 	return &subscription{
-		ChanID:           -1,
-		Request:          request,
-		pending:          true,
-		Public:           isPublic(request),
-		hbInterval:       interval,
-		hbCancel:         make(chan bool),
-		hbReset:          make(chan time.Time),
-		hbTimeout:        make(chan time.Time),
-		parentDisconnect: parentDisconnect,
+		ChanID:  -1,
+		Request: request,
+		pending: true,
+		Public:  isPublic(request),
 	}
 }
 
@@ -140,13 +93,19 @@ func (s subscription) Pending() bool {
 
 func newSubscriptions(heartbeatTimeout time.Duration) *subscriptions {
 	subs := &subscriptions{
-		subsBySubID:         make(map[string]*subscription),
-		subsByChanID:        make(map[int64]*subscription),
-		hbTimeout:           heartbeatTimeout,
-		hbParentDisconnect:  make(chan error),
-		hbChannelDisconnect: make(chan error),
+		subsBySubID:  make(map[string]*subscription),
+		subsByChanID: make(map[int64]*subscription),
+		hbTimeout:    heartbeatTimeout,
+		hbShutdown:   make(chan struct{}),
+		hbDisconnect: make(chan error),
 	}
+	go subs.control()
 	return subs
+}
+
+type heartbeat struct {
+	ChanID int64
+	*time.Time
 }
 
 type subscriptions struct {
@@ -155,15 +114,10 @@ type subscriptions struct {
 	subsBySubID  map[string]*subscription // subscription map indexed by subscription ID
 	subsByChanID map[int64]*subscription  // subscription map indexed by channel ID
 
-	hbTimeout           time.Duration
-	hbParentDisconnect  chan error // parent listens to this channel to receive disconnect events
-	hbChannelDisconnect chan error // parent listens to this channel to recieve heartbeat timeouts
-}
-
-func (s *subscriptions) Empty() bool {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	return len(s.subsBySubID) == 0
+	hbActive     bool
+	hbDisconnect chan error // disconnect parent due to heartbeat timeout
+	hbTimeout    time.Duration
+	hbShutdown   chan struct{}
 }
 
 // SubscriptionSet is a typed version of an array of subscription pointers, intended to meet the sortable interface.
@@ -180,26 +134,55 @@ func (s SubscriptionSet) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (s *subscriptions) forwardDisconnects() {
-	if e, ok := <-s.hbChannelDisconnect; ok {
-		s.hbParentDisconnect <- e
+func (s *subscriptions) heartbeat(chanID int64) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if sub, ok := s.subsByChanID[chanID]; ok {
+		sub.hbDeadline = time.Now().Add(s.hbTimeout)
 	}
 }
 
-// Close will stop pending heartbeat timeouts. This is a terminal call and should only be called once.
-func (s *subscriptions) Close() {
-	s.close() // eat return
-	close(s.hbParentDisconnect)
-	close(s.hbChannelDisconnect)
+func (s *subscriptions) sweep(exp time.Time) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if !s.hbActive {
+		return nil
+	}
+	for _, sub := range s.subsByChanID {
+		if exp.After(sub.hbDeadline) {
+			s.hbActive = false
+			return fmt.Errorf("heartbeat disconnect on channel %d expired at %s (%s timeout)", sub.ChanID, sub.hbDeadline, s.hbTimeout)
+		}
+	}
+	return nil
 }
 
-func (s *subscriptions) close() []*subscription {
+func (s *subscriptions) control() {
+	for {
+		select {
+		case <-s.hbShutdown:
+			return
+		default:
+		}
+		if err := s.sweep(time.Now()); err != nil {
+			s.hbDisconnect <- err
+		}
+		time.Sleep(time.Second * 2)
+	}
+}
+
+// Close is terminal. Do not call heartbeat after close.
+func (s *subscriptions) Close() {
+	s.reset()
+	close(s.hbShutdown)
+}
+
+func (s *subscriptions) reset() []*subscription {
 	s.lock.Lock()
 	var subs []*subscription
 	if len(s.subsBySubID) > 0 {
 		subs = make([]*subscription, 0, len(s.subsBySubID))
 		for _, sub := range s.subsBySubID {
-			sub.Close()
 			subs = append(subs, sub)
 		}
 		sort.Sort(SubscriptionSet(subs))
@@ -208,44 +191,27 @@ func (s *subscriptions) close() []*subscription {
 	return subs
 }
 
-func (s *subscriptions) eatSiblingDisconnects() {
-	for {
-		select {
-		case <-s.hbChannelDisconnect:
-			// eat
-		case <-time.After(s.hbTimeout):
-			return // no longer hungry
-		}
-	}
-}
-
 // Reset clears all subscriptions from the currently managed list, and returns
 // a slice of the existing subscriptions prior to reset.  Returns nil if no subscriptions exist.
 func (s *subscriptions) Reset() []*subscription {
-	subs := s.close()
+	subs := s.reset()
 	s.lock.Lock()
-	// drain any excess disconnect messages from last reset.
-	// sibling channels may also send disconnects after the first,
-	// which may disrupt the reconnect process. this could be improved
-	if len(s.subsBySubID) > 0 {
-		s.eatSiblingDisconnects()
-	}
+	s.hbActive = false
 	s.subsBySubID = make(map[string]*subscription)
 	s.subsByChanID = make(map[int64]*subscription)
-	go s.forwardDisconnects()
 	s.lock.Unlock()
 	return subs
 }
 
 // ListenDisconnect returns an error channel which receives a message when a heartbeat has expired a channel.
 func (s *subscriptions) ListenDisconnect() <-chan error {
-	return s.hbParentDisconnect
+	return s.hbDisconnect
 }
 
 func (s *subscriptions) add(sub *SubscriptionRequest) *subscription {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	subscription := newSubscription(sub, s.hbTimeout, s.hbChannelDisconnect)
+	subscription := newSubscription(sub)
 	s.subsBySubID[sub.SubID] = subscription
 	return subscription
 }
@@ -257,7 +223,6 @@ func (s *subscriptions) removeByChannelID(chanID int64) error {
 	if !ok {
 		return fmt.Errorf("could not find channel ID %d", chanID)
 	}
-	sub.Close()
 	delete(s.subsByChanID, chanID)
 	if _, ok = s.subsBySubID[sub.SubID()]; ok {
 		delete(s.subsBySubID, sub.SubID())
@@ -273,7 +238,6 @@ func (s *subscriptions) removeBySubscriptionID(subID string) error {
 		return fmt.Errorf("could not find subscription ID %s to remove", subID)
 	}
 	// exists, remove both indices
-	sub.Close()
 	delete(s.subsBySubID, subID)
 	if _, ok = s.subsByChanID[sub.ChanID]; ok {
 		delete(s.subsByChanID, sub.ChanID)
@@ -290,8 +254,9 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 		}
 		sub.pending = false
 		sub.ChanID = chanID
+		sub.hbDeadline = time.Now().Add(s.hbTimeout)
 		s.subsByChanID[chanID] = sub
-		sub.Activate(time.Now())
+		s.hbActive = true
 		return nil
 	}
 	return fmt.Errorf("could not find subscription ID %s to activate", subID)
@@ -313,13 +278,4 @@ func (s *subscriptions) lookupBySubscriptionID(subID string) (*subscription, err
 		return sub, nil
 	}
 	return nil, fmt.Errorf("could not find subscription ID %s", subID)
-}
-
-func (s *subscriptions) heartbeat(chanID int64) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	if sub, ok := s.subsByChanID[chanID]; ok {
-		sub.Heartbeat(time.Now())
-	}
-	return fmt.Errorf("could not find channel ID to update heartbeat %d", chanID)
 }
