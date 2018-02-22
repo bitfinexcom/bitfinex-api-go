@@ -47,7 +47,6 @@ func (c *Client) handleChannel(msg []byte) error {
 	} else {
 		c.handlePrivateChannel(raw)
 	}
-
 	return nil
 }
 

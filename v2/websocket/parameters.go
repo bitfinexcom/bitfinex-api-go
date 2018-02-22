@@ -22,7 +22,7 @@ type Parameters struct {
 func NewDefaultParameters() *Parameters {
 	return &Parameters{
 		AutoReconnect:          true,
-		ReconnectInterval:      time.Second,
+		ReconnectInterval:      time.Second * 3,
 		reconnectTry:           0,
 		ReconnectAttempts:      5,
 		URL:                    productionBaseURL,

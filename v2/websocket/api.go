@@ -47,9 +47,12 @@ func (c *Client) SubscribeTrades(ctx context.Context, symbol string) (string, er
 	return c.Subscribe(ctx, req)
 }
 
-// SubscribeBook sends a subscription request for market data for a given symbol, at a given frequency, with a given precision, returning no more than len price entries.
-// Default values are Precision0, Frequency0, and Len=1.
-func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision BookPrecision, frequency BookFrequency, len int) (string, error) {
+// SubscribeBook sends a subscription request for market data for a given symbol, at a given frequency, with a given precision, returning no more than priceLevels price entries.
+// Default values are Precision0, Frequency0, and priceLevels=25.
+func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision BookPrecision, frequency BookFrequency, priceLevels int) (string, error) {
+	if priceLevels <= 0 {
+		priceLevels = 25
+	}
 	req := &SubscriptionRequest{
 		SubID:     c.nonce.GetNonce(),
 		Event:     EventSubscribe,
@@ -57,7 +60,7 @@ func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision Boo
 		Symbol:    symbol,
 		Precision: string(precision),
 		Frequency: string(frequency),
-		Len:       fmt.Sprintf("%d", len),
+		Len:       fmt.Sprintf("%d", priceLevels),
 	}
 	return c.Subscribe(ctx, req)
 }
