@@ -98,6 +98,7 @@ func newSubscriptions(heartbeatTimeout time.Duration) *subscriptions {
 		hbTimeout:    heartbeatTimeout,
 		hbShutdown:   make(chan struct{}),
 		hbDisconnect: make(chan error),
+		hbSleep:      heartbeatTimeout / time.Duration(4),
 	}
 	go subs.control()
 	return subs
@@ -117,6 +118,7 @@ type subscriptions struct {
 	hbActive     bool
 	hbDisconnect chan error // disconnect parent due to heartbeat timeout
 	hbTimeout    time.Duration
+	hbSleep      time.Duration
 	hbShutdown   chan struct{}
 }
 
@@ -167,7 +169,7 @@ func (s *subscriptions) control() {
 		if err := s.sweep(time.Now()); err != nil {
 			s.hbDisconnect <- err
 		}
-		time.Sleep(time.Second * 2)
+		time.Sleep(s.hbSleep)
 	}
 }
 
