@@ -42,8 +42,8 @@ const (
 	Precision2 BookPrecision = "P2"
 	Precision1 BookPrecision = "P1"
 	Precision3 BookPrecision = "P3"
-	// Raw precision (full book)
-	PrecisionFullBook BookPrecision = "R0"
+	// Raw precision
+	PrecisionRawBook BookPrecision = "R0"
 )
 
 // private type
