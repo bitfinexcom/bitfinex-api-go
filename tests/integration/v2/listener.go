@@ -357,6 +357,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.positionSnapshot <- msg.(*bitfinex.PositionSnapshot)
 				case *bitfinex.WalletSnapshot:
 					l.walletSnapshot <- msg.(*bitfinex.WalletSnapshot)
+				default:
+					log.Printf("COULD NOT TYPE MSG ^")
 				}
 			}
 		}

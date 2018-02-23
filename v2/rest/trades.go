@@ -11,7 +11,7 @@ type TradeService struct {
 }
 
 // All returns all orders for the authenticated account.
-func (s *TradeService) All(symbol string) (bitfinex.TradeSnapshot, error) {
+func (s *TradeService) All(symbol string) (*bitfinex.TradeSnapshot, error) {
 
 	raw, err := s.Request(NewRequestWithData(path.Join("trades", symbol, "hist"), map[string]interface{}{"start": nil, "end": nil, "limit": nil}))
 
@@ -19,10 +19,16 @@ func (s *TradeService) All(symbol string) (bitfinex.TradeSnapshot, error) {
 		return nil, err
 	}
 
-	os, err := bitfinex.NewTradeSnapshotFromRaw(raw)
+	dat := make([][]float64, 0)
+	for _, r := range raw {
+		if f, ok := r.([]float64); ok {
+			dat = append(dat, f)
+		}
+	}
+
+	os, err := bitfinex.NewTradeSnapshotFromRaw(symbol, dat)
 	if err != nil {
 		return nil, err
 	}
-
 	return os, nil
 }

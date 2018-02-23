@@ -178,8 +178,7 @@ func TestNewOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// inner object is not an object ref, unlike most factory return values
-	assert(t, &bitfinex.Notification{Type: "on-req", NotifyInfo: bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}}, not)
+	assert(t, &bitfinex.Notification{Type: "on-req", NotifyInfo: &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}}, not)
 }
 
 func TestFills(t *testing.T) {
@@ -215,27 +214,33 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	eps := make([]bitfinex.Position, 1)
-	eps[0] = bitfinex.Position{
+	eps := make([]*bitfinex.Position, 1)
+	eps[0] = &bitfinex.Position{
 		Symbol:    "tBTCUSD",
 		Status:    "ACTIVE",
 		Amount:    7,
 		BasePrice: 916.52002351,
 	}
-	assertSlice(t, eps, *ps)
+	snap := &bitfinex.PositionSnapshot{
+		Snapshot: eps,
+	}
+	assertSlice(t, snap, ps)
 	w, err := listener.nextWalletSnapshot()
 	if err != nil {
 		t.Fatal(err)
 	}
-	ews := make([]bitfinex.Wallet, 7)
-	ews[0] = bitfinex.Wallet{Type: "exchange", Currency: "BTC", Balance: 30}
-	ews[1] = bitfinex.Wallet{Type: "exchange", Currency: "USD", Balance: 80000}
-	ews[2] = bitfinex.Wallet{Type: "exchange", Currency: "ETH", Balance: 100}
-	ews[3] = bitfinex.Wallet{Type: "margin", Currency: "BTC", Balance: 10}
-	ews[4] = bitfinex.Wallet{Type: "margin", Currency: "USD", Balance: 9987.16871968}
-	ews[5] = bitfinex.Wallet{Type: "funding", Currency: "BTC", Balance: 10}
-	ews[6] = bitfinex.Wallet{Type: "funding", Currency: "USD", Balance: 10000}
-	assertSlice(t, ews, *w)
+	ews := make([]*bitfinex.Wallet, 7)
+	ews[0] = &bitfinex.Wallet{Type: "exchange", Currency: "BTC", Balance: 30}
+	ews[1] = &bitfinex.Wallet{Type: "exchange", Currency: "USD", Balance: 80000}
+	ews[2] = &bitfinex.Wallet{Type: "exchange", Currency: "ETH", Balance: 100}
+	ews[3] = &bitfinex.Wallet{Type: "margin", Currency: "BTC", Balance: 10}
+	ews[4] = &bitfinex.Wallet{Type: "margin", Currency: "USD", Balance: 9987.16871968}
+	ews[5] = &bitfinex.Wallet{Type: "funding", Currency: "BTC", Balance: 10}
+	ews[6] = &bitfinex.Wallet{Type: "funding", Currency: "USD", Balance: 10000}
+	wsnap := &bitfinex.WalletSnapshot{
+		Snapshot: ews,
+	}
+	assertSlice(t, wsnap, w)
 
 	// submit order
 	err = ws.SubmitOrder(context.Background(), &bitfinex.OrderNewRequest{

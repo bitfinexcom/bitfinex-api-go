@@ -53,7 +53,31 @@ func assertSlice(t *testing.T, expected, actual interface{}) {
 		}
 	}
 
-	t.Fatal()
+	t.Fatalf("FAIL %s: expected %#v, got %#v", reflect.TypeOf(expected), expected, actual)
+}
+
+func isPrimitive(exp interface{}) bool {
+	t := reflect.TypeOf(exp)
+	switch t.Kind() {
+	case reflect.Interface:
+		return false
+	case reflect.Struct:
+		return false
+	case reflect.Array:
+		return false
+	case reflect.Func:
+		return false
+	case reflect.Map:
+		return false
+	case reflect.Ptr:
+		return false
+	case reflect.Slice:
+		return false
+	case reflect.UnsafePointer:
+		return false
+	default:
+		return true
+	}
 }
 
 // does not work on slices
@@ -61,6 +85,14 @@ func assert(t *testing.T, expected interface{}, actual interface{}) {
 
 	prexp := reflect.ValueOf(expected)
 	pract := reflect.ValueOf(actual)
+
+	if isPrimitive(actual) {
+		if expected != actual {
+			t.Fatalf("expected %#v, got %#v", expected, actual)
+		}
+		t.Logf("OK %s", reflect.TypeOf(expected).Name())
+		return
+	}
 
 	if pract.IsNil() {
 		t.Errorf("nil actual value: %#v", actual)
@@ -102,10 +134,13 @@ func assert(t *testing.T, expected interface{}, actual interface{}) {
 			t.Fail()
 			return
 		}
-		if expValueField.Interface() != actValueField.Interface() {
-			t.Errorf("expected %s %#v, got %#v", expTypeField.Name, expValueField.Interface(), actValueField.Interface())
-			t.Fail()
-		}
+		assert(t, expValueField.Interface(), actValueField.Interface())
+		/*
+			if expValueField.Interface() != actValueField.Interface() {
+				t.Errorf("expected %s %#v, got %#v", expTypeField.Name, expValueField.Interface(), actValueField.Interface())
+				t.Fail()
+			}
+		*/
 	}
 	if t.Failed() {
 		t.Logf("FAIL %s", exp.Type().Name())
