@@ -48,7 +48,7 @@ type UnsubscribeRequest struct {
 	ChanID int64  `json:"chanId"`
 }
 
-type messageFactory func(chanID int64, raw []interface{}) (interface{}, error)
+type messageFactory func(chanID int64, objType string, raw []interface{}) (interface{}, error)
 
 type subscription struct {
 	ChanID  int64

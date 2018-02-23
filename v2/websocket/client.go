@@ -226,7 +226,7 @@ func extractSymbolResolutionFromKey(subscription string) (symbol string, resolut
 }
 
 func (c *Client) registerPublicFactories() {
-	c.registerFactory(ChanTicker, func(chanID int64, raw []interface{}) (interface{}, error) {
+	c.registerFactory(ChanTicker, func(chanID int64, objType string, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
 		if err == nil {
 			tick, err := bitfinex.NewTickerFromRaw(sub.Request.Symbol, raw)
@@ -234,15 +234,18 @@ func (c *Client) registerPublicFactories() {
 		}
 		return nil, err
 	})
-	c.registerFactory(ChanTrades, func(chanID int64, raw []interface{}) (interface{}, error) {
+	c.registerFactory(ChanTrades, func(chanID int64, objType string, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
+		if "tu" == objType {
+			return nil, nil // do not process TradeUpdate messages on public feed, only need to process TradeExecution (first copy seen)
+		}
 		if err == nil {
 			trade, err := bitfinex.NewTradeFromRaw(sub.Request.Symbol, raw)
 			return &trade, err
 		}
 		return nil, err
 	})
-	c.registerFactory(ChanBook, func(chanID int64, raw []interface{}) (interface{}, error) {
+	c.registerFactory(ChanBook, func(chanID int64, objType string, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
 		if err == nil {
 			update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
@@ -250,7 +253,7 @@ func (c *Client) registerPublicFactories() {
 		}
 		return nil, err
 	})
-	c.registerFactory(ChanCandles, func(chanID int64, raw []interface{}) (interface{}, error) {
+	c.registerFactory(ChanCandles, func(chanID int64, objType string, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
 		if err != nil {
 			return nil, err

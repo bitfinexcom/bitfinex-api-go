@@ -30,7 +30,6 @@ func (c *Client) handleChannel(msg []byte) error {
 	}
 	//log.Printf("heartbeat channel hb %d", chanID)
 	c.subscriptions.heartbeat(chanID)
-
 	if sub.Public {
 		switch data := raw[1].(type) {
 		case string:
@@ -38,11 +37,11 @@ func (c *Client) handleChannel(msg []byte) error {
 			case "hb":
 				c.handleHeartbeat(chanID)
 			default:
-				data := raw[2].([]interface{})
-				c.handlePublicChannel(chanID, sub.Request.Channel, data)
+				body := raw[2].([]interface{})
+				c.handlePublicChannel(chanID, sub.Request.Channel, data, body)
 			}
 		case []interface{}:
-			c.handlePublicChannel(chanID, sub.Request.Channel, data)
+			c.handlePublicChannel(chanID, sub.Request.Channel, "", data)
 		}
 	} else {
 		c.handlePrivateChannel(raw)
@@ -50,7 +49,7 @@ func (c *Client) handleChannel(msg []byte) error {
 	return nil
 }
 
-func (c *Client) handlePublicChannel(chanID int64, channel string, data []interface{}) error {
+func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data []interface{}) error {
 	// unauthenticated data slice
 	// returns interface{} (which is really [][]float64)
 	obj, err := c.processDataSlice(data)
@@ -66,12 +65,14 @@ func (c *Client) handlePublicChannel(chanID int64, channel string, data []interf
 			for i, ft := range flt[0] {
 				arr[i] = ft
 			}
-			msg, err := factory(chanID, arr)
+			msg, err := factory(chanID, objType, arr)
 			if err != nil {
 				// factory error
 				return err
 			}
-			c.listener <- msg
+			if msg != nil {
+				c.listener <- msg
+			}
 		} else if len(flt) > 1 {
 			// snapshot
 			for _, fta := range flt {
@@ -79,11 +80,13 @@ func (c *Client) handlePublicChannel(chanID int64, channel string, data []interf
 				for j, ft := range fta {
 					sub[j] = ft
 				}
-				msg, err := factory(chanID, sub)
+				msg, err := factory(chanID, objType, sub)
 				if err != nil {
 					return err
 				}
-				c.listener <- msg
+				if msg != nil {
+					c.listener <- msg
+				}
 			}
 		} else {
 			return fmt.Errorf("data too small to process: %#v", obj)
