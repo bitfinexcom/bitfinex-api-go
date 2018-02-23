@@ -1107,7 +1107,7 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t Ticker, err error) {
 	return
 }
 
-type bookAction int
+type bookAction byte
 
 // BookAction represents a new/update or removal for a book entry.
 type BookAction bookAction
