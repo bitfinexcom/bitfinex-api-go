@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 )
 
 // Prefixes for available pairs
@@ -363,6 +364,7 @@ type Trade struct {
 	MTS    int64
 	Amount float64
 	Price  float64
+	Side   OrderSide
 }
 
 func NewTradeFromRaw(pair string, raw []interface{}) (o Trade, err error) {
@@ -370,12 +372,21 @@ func NewTradeFromRaw(pair string, raw []interface{}) (o Trade, err error) {
 		return o, fmt.Errorf("data slice too short for trade: %#v", raw)
 	}
 
+	amt := f64ValOrZero(raw[2])
+	var side OrderSide
+	if amt > 0 {
+		side = Bid
+	} else {
+		side = Ask
+	}
+
 	o = Trade{
 		Pair:   pair,
 		ID:     i64ValOrZero(raw[0]),
 		MTS:    i64ValOrZero(raw[1]),
-		Amount: f64ValOrZero(raw[2]),
+		Amount: math.Abs(amt),
 		Price:  f64ValOrZero(raw[3]),
+		Side:   side,
 	}
 
 	return
@@ -1096,6 +1107,18 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t Ticker, err error) {
 	return
 }
 
+type bookAction int
+
+// BookAction represents a new/update or removal for a book entry.
+type BookAction bookAction
+
+const (
+	//BookUpdateEntry represents a new or updated book entry.
+	BookUpdateEntry BookAction = 0
+	//BookRemoveEntry represents a removal of a book entry.
+	BookRemoveEntry BookAction = 1
+)
+
 // BookUpdate represents an order book price update.
 type BookUpdate struct {
 	Symbol string
@@ -1103,27 +1126,52 @@ type BookUpdate struct {
 	Count  int64
 	Amount float64
 	Side   OrderSide
+	Action BookAction
 }
 
-func NewBookUpdateFromRaw(symbol string, raw []interface{}) (b BookUpdate, err error) {
+func IsRawBook(precision string) bool {
+	return precision == "R0"
+}
+
+// NewBookUpdateFromRaw creates a new book update object from raw data.  Precision determines how
+// to interpret the side (baked into Count versus Amount)
+func NewBookUpdateFromRaw(symbol, precision string, raw []interface{}) (b BookUpdate, err error) {
 	if len(raw) < 3 {
 		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(raw), raw)
 	}
 
 	amt := f64ValOrZero(raw[2])
+	px := f64ValOrZero(raw[0])
+	cnt := i64ValOrZero(raw[1])
 	var side OrderSide
+
+	var actionCtrl float64
+	if IsRawBook(precision) {
+		actionCtrl = px
+	} else {
+		actionCtrl = float64(cnt)
+	}
+
 	if amt > 0 {
 		side = Bid
 	} else {
 		side = Ask
 	}
 
+	var action BookAction
+	if actionCtrl <= 0 {
+		action = BookRemoveEntry
+	} else {
+		action = BookUpdateEntry
+	}
+
 	b = BookUpdate{
 		Symbol: symbol,
-		Price:  f64ValOrZero(raw[0]),
-		Count:  i64ValOrZero(raw[1]),
-		Amount: amt,
+		Price:  math.Abs(px),
+		Count:  cnt,
+		Amount: math.Abs(amt),
 		Side:   side,
+		Action: action,
 	}
 
 	return

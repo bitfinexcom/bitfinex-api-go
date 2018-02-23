@@ -144,7 +144,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	assert(t, &expTradeSub, tradeSub)
 
 	// book sub
-	_, err = apiClient.SubscribeBook(context.Background(), "tBTCUSD", websocket.Precision0, websocket.FrequencyRealtime, 1)
+	_, err = apiClient.SubscribeBook(context.Background(), "tBTCUSD", websocket.Precision0, websocket.FrequencyRealtime, 25)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,10 +152,10 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if `{"subId":"nonce3","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0","len":"1"}` != msg {
+	if `{"subId":"nonce3","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0","len":"25"}` != msg {
 		t.Fatalf("[3] did not expect to receive: %s", msg)
 	}
-	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce3","pair":"BTCUSD","prec":"P0","freq":"F0","len":"1"}`)
+	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce3","pair":"BTCUSD","prec":"P0","freq":"F0","len":"25"}`)
 	bookSub, err := apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
@@ -244,10 +244,10 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if `{"subId":"nonce6","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0","len":"1"}` != msg {
+	if `{"subId":"nonce6","event":"subscribe","channel":"book","symbol":"tBTCUSD","prec":"P0","freq":"F0","len":"25"}` != msg {
 		t.Fatalf("[5] did not expect to receive: %s", msg)
 	}
-	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce6","pair":"BTCUSD","prec":"P0","freq":"F0","len":"1"}`)
+	wsService.Broadcast(`{"event":"subscribed","channel":"book","chanId":8,"symbol":"tBTCUSD","subId":"nonce6","pair":"BTCUSD","prec":"P0","freq":"F0","len":"25"}`)
 	bookSub, err = apiRecv.nextSubscriptionEvent()
 	if err != nil {
 		t.Fatal(err)
@@ -258,7 +258,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		Channel:   "book",
 		Frequency: string(websocket.FrequencyRealtime),
 		Precision: string(websocket.Precision0),
-		Len:       "1",
+		Len:       "25",
 	}
 	assert(t, &expBookSub, bookSub)
 

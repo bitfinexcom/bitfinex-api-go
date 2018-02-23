@@ -37,10 +37,13 @@ const (
 
 // Book precision levels
 const (
+	// Aggregate precision levels
 	Precision0 BookPrecision = "P0"
 	Precision2 BookPrecision = "P2"
 	Precision1 BookPrecision = "P1"
 	Precision3 BookPrecision = "P3"
+	// Raw precision (full book)
+	PrecisionFullBook BookPrecision = "R0"
 )
 
 // private type
@@ -242,7 +245,7 @@ func (c *Client) registerPublicFactories() {
 	c.registerFactory(ChanBook, func(chanID int64, raw []interface{}) (interface{}, error) {
 		sub, err := c.subscriptions.lookupByChannelID(chanID)
 		if err == nil {
-			update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, raw)
+			update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
 			return &update, err
 		}
 		return nil, err

@@ -49,9 +49,9 @@ func (c *Client) SubscribeTrades(ctx context.Context, symbol string) (string, er
 
 // SubscribeBook sends a subscription request for market data for a given symbol, at a given frequency, with a given precision, returning no more than priceLevels price entries.
 // Default values are Precision0, Frequency0, and priceLevels=25.
-func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision BookPrecision, frequency BookFrequency, priceLevels int) (string, error) {
-	if priceLevels <= 0 {
-		priceLevels = 25
+func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision BookPrecision, frequency BookFrequency, priceLevel int) (string, error) {
+	if priceLevel < 0 {
+		return "", fmt.Errorf("negative price levels not supported: %d", priceLevel)
 	}
 	req := &SubscriptionRequest{
 		SubID:     c.nonce.GetNonce(),
@@ -59,8 +59,10 @@ func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision Boo
 		Channel:   ChanBook,
 		Symbol:    symbol,
 		Precision: string(precision),
-		Frequency: string(frequency),
-		Len:       fmt.Sprintf("%d", priceLevels),
+		Len:       fmt.Sprintf("%d", priceLevel), // needed for R0?
+	}
+	if !bitfinex.IsRawBook(string(precision)) {
+		req.Frequency = string(frequency)
 	}
 	return c.Subscribe(ctx, req)
 }
