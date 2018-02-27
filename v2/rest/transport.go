@@ -1,16 +1,17 @@
 package rest
 
 import (
-	"net/url"
-	"encoding/json"
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type HttpTransport struct {
-	BaseURL 	*url.URL
-	HTTPClient	*http.Client
-	httpDo		func(c *http.Client, req *http.Request) (*http.Response, error)
+	BaseURL    *url.URL
+	HTTPClient *http.Client
+	httpDo     func(c *http.Client, req *http.Request) (*http.Response, error)
 }
 
 func (h HttpTransport) Request(req Request) ([]interface{}, error) {
@@ -41,9 +42,9 @@ func (h HttpTransport) Request(req Request) ([]interface{}, error) {
 		return nil, err
 	}
 
-	_, err = h.do(httpReq, &raw)
+	resp, err := h.do(httpReq, &raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not parse response: %s", resp.Response.Status)
 	}
 
 	return raw, nil

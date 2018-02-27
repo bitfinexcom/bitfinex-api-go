@@ -410,7 +410,7 @@ func NewTradeSnapshotFromRaw(pair string, raw [][]float64) (*TradeSnapshot, erro
 	}
 	snapshot := make([]*Trade, 0)
 	for _, flt := range raw {
-		t, err := NewTradeFromRaw(pair, toInterface(flt))
+		t, err := NewTradeFromRaw(pair, ToInterface(flt))
 		if err == nil {
 			snapshot = append(snapshot, t)
 		}
@@ -1157,7 +1157,7 @@ func NewTickerSnapshotFromRaw(symbol string, raw [][]float64) (*TickerSnapshot, 
 	}
 	snap := make([]*Ticker, 0)
 	for _, f := range raw {
-		c, err := NewTickerFromRaw(symbol, toInterface(f))
+		c, err := NewTickerFromRaw(symbol, ToInterface(f))
 		if err == nil {
 			snap = append(snap, c)
 		}
@@ -1219,7 +1219,7 @@ func NewBookUpdateSnapshotFromRaw(symbol, precision string, raw [][]float64) (*B
 	}
 	snap := make([]*BookUpdate, 0)
 	for _, f := range raw {
-		b, err := NewBookUpdateFromRaw(symbol, precision, toInterface(f))
+		b, err := NewBookUpdateFromRaw(symbol, precision, ToInterface(f))
 		if err == nil {
 			snap = append(snap, b)
 		}
@@ -1290,7 +1290,17 @@ type CandleSnapshot struct {
 	Snapshot []*Candle
 }
 
-func toInterface(flt []float64) []interface{} {
+func ToFloat64Slice(slice []interface{}) []float64 {
+	data := make([]float64, 0, len(slice))
+	for _, i := range slice {
+		if f, ok := i.(float64); ok {
+			data = append(data, f)
+		}
+	}
+	return data
+}
+
+func ToInterface(flt []float64) []interface{} {
 	data := make([]interface{}, len(flt))
 	for j, f := range flt {
 		data[j] = f
@@ -1304,7 +1314,7 @@ func NewCandleSnapshotFromRaw(symbol string, resolution CandleResolution, raw []
 	}
 	snap := make([]*Candle, 0)
 	for _, f := range raw {
-		c, err := NewCandleFromRaw(symbol, resolution, toInterface(f))
+		c, err := NewCandleFromRaw(symbol, resolution, ToInterface(f))
 		if err == nil {
 			snap = append(snap, c)
 		}
