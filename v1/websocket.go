@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -54,6 +55,7 @@ const (
 
 // BfChanData :
 type BfChanData struct {
+	ChanID          int
 	Channel, Symbol string
 	Datas           []interface{}
 }
@@ -94,7 +96,7 @@ func NewWebSocketService(c *Client) *WebSocketService {
 		client:      c,
 		chanIDMap:   make(map[int]*subscribeToChannel, 0),
 		subscribes:  make([]*subscribeToChannel, 0),
-		defaultChan: make(chan BfChanData, 512),
+		defaultChan: make(chan BfChanData, 1024),
 	}
 }
 
@@ -121,7 +123,9 @@ func (w *WebSocketService) Connect() error {
 
 // Close web socket connection
 func (w *WebSocketService) Close() {
-	w.ws.Close()
+	if w.ws != nil {
+		w.ws.Close()
+	}
 }
 
 func (w *WebSocketService) GetDefaultChan() chan BfChanData {
@@ -180,6 +184,11 @@ func (w *WebSocketService) sendSubscribeMessages(channel, pair string) error {
 		Pair:    pair,
 	})
 
+	if w.ws == nil {
+		log.Printf("websocket disconnected!")
+		return fmt.Errorf("websocket disconnected")
+	}
+
 	err := w.ws.WriteMessage(websocket.TextMessage, msg)
 	if err != nil {
 		return err
@@ -197,6 +206,7 @@ func (w *WebSocketService) Stop() {
 func (w *WebSocketService) Run() error {
 	lastws := w.ws
 	defer func() {
+		log.Printf("close websocket")
 		lastws.Close()
 	}()
 	w.runtimes++
@@ -207,6 +217,7 @@ func (w *WebSocketService) Run() error {
 			log.Printf("ReadMessage failed : %v", err)
 			return err
 		}
+		//log.Printf(string(p))
 		if bytes.Contains(p, []byte("event")) {
 			w.handleEventMessage(p)
 		} else {
@@ -230,6 +241,7 @@ func (w *WebSocketService) handleEventMessage(msg []byte) {
 	if event.Event != "subscribed" {
 		return
 	}
+	log.Printf("got event %s", string(msg))
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	for _, k := range w.subscribes {
@@ -262,7 +274,7 @@ func (w *WebSocketService) handleDataMessage(msg []byte) {
 	}
 	// len(BfChanData.datas) == 1 means "snapshot" slice or "heartbeat", else means "update" slice,
 	// receiver can idenfity them easily.
-	subptr.Chan <- BfChanData{subptr.Channel, subptr.Pair, datas[1:]}
+	subptr.Chan <- BfChanData{chanID, subptr.Channel, subptr.Pair, datas[1:]}
 }
 
 /////////////////////////////
@@ -335,6 +347,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 		ch <- TermData{
 			Error: err.Error(),
 		}
+		log.Printf("ws.WriteMessage failed : %v", err)
 		ws.Close()
 		return
 	}
@@ -345,6 +358,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 			ch <- TermData{
 				Error: err.Error(),
 			}
+			log.Printf("ws.ReadMessage failed : %v", err)
 			ws.Close()
 			return
 		}
@@ -390,6 +404,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 				ch <- TermData{
 					Error: "Error connecting to private web socket channel.",
 				}
+				log.Printf("Auth failed, close websocket")
 				ws.Close()
 			}
 		}
