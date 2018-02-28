@@ -28,23 +28,23 @@ func (c *Client) handleChannel(msg []byte) error {
 		// no subscribed channel for message
 		return err
 	}
-	//log.Printf("heartbeat channel hb %d", chanID)
 	c.subscriptions.heartbeat(chanID)
 	if sub.Public {
 		switch data := raw[1].(type) {
 		case string:
 			switch data {
 			case "hb":
-				c.handleHeartbeat(chanID)
+				// no-op, already updated heartbeat timeout from this event
+				return nil
 			default:
 				body := raw[2].([]interface{})
-				c.handlePublicChannel(chanID, sub.Request.Channel, data, body)
+				return c.handlePublicChannel(chanID, sub.Request.Channel, data, body)
 			}
 		case []interface{}:
-			c.handlePublicChannel(chanID, sub.Request.Channel, "", data)
+			return c.handlePublicChannel(chanID, sub.Request.Channel, "", data)
 		}
 	} else {
-		c.handlePrivateChannel(raw)
+		return c.handlePrivateChannel(raw)
 	}
 	return nil
 }
@@ -67,14 +67,12 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 			}
 			msg, err := factory.Build(chanID, objType, arr)
 			if err != nil {
-				// factory error
 				return err
 			}
 			if msg != nil {
 				c.listener <- msg
 			}
 		} else if len(flt) > 1 {
-			// snapshot
 			msg, err := factory.BuildSnapshot(chanID, flt)
 			if err != nil {
 				return err
@@ -82,12 +80,9 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 			if msg != nil {
 				c.listener <- msg
 			}
-		} else {
-			return fmt.Errorf("data too small to process: %#v", obj)
 		}
 	} else {
 		// factory lookup error
-		log.Printf("could not find public factory for %s channel", channel)
 		return fmt.Errorf("could not find public factory for %s channel", channel)
 	}
 	return nil
@@ -428,6 +423,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		return o // better than nothing
 	default:
+		log.Printf("unhandled channel data, term: %s", term)
 	}
 
 	return fmt.Errorf("term %q not recognized", term)

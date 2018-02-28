@@ -440,7 +440,10 @@ func (c *Client) checkResubscription() {
 			}
 			sub.Request.SubID = c.nonce.GetNonce() // new nonce
 			log.Printf("resubscribing to %s with nonce %s", sub.Request.String(), sub.Request.SubID)
-			c.Subscribe(context.Background(), sub.Request)
+			_, err := c.Subscribe(context.Background(), sub.Request)
+			if err != nil {
+				log.Printf("could not resubscribe: %s", err.Error())
+			}
 		}
 	}
 }
