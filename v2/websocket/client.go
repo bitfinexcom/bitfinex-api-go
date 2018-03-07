@@ -131,6 +131,7 @@ type Client struct {
 	isConnected        bool
 	terminal           bool
 	resetSubscriptions []*subscription
+	init               bool
 
 	// connection & operational behavior
 	parameters *Parameters
@@ -284,6 +285,7 @@ func (c *Client) reset() {
 		c.resetSubscriptions = subs
 	}
 	c.shutdown = make(chan bool)
+	c.init = true
 	c.asynchronous = c.asyncFactory.Create()
 	// wait for shutdown signals from child & caller
 	go c.listenDisconnect()
@@ -365,6 +367,9 @@ func (c *Client) close(e error) {
 }
 
 func (c *Client) closeAsyncAndWait(t time.Duration) {
+	if !c.init {
+		return
+	}
 	timeout := make(chan bool)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
