@@ -10,7 +10,7 @@ type eventType struct {
 }
 
 type InfoEvent struct {
-	Version int `json:"version"`
+	Version float64 `json:"version"`
 }
 
 type RawEvent struct {
