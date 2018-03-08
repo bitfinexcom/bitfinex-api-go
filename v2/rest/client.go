@@ -30,6 +30,10 @@ type Client struct {
 	Synchronous
 }
 
+func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
+	return NewClientWithURLHttpDo(productionBaseURL, httpDo)
+}
+
 func NewClient() *Client {
 	httpDo := func(c *http.Client, req *http.Request) (*http.Response, error) {
 		return c.Do(req)
@@ -37,14 +41,21 @@ func NewClient() *Client {
 	return NewClientWithHttpDo(httpDo)
 }
 
-func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
-	url, _ := url.Parse(productionBaseURL)
+func NewClientWithURLHttpDo(base string, httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
+	url, _ := url.Parse(base)
 	sync := &HttpTransport{
 		BaseURL:    url,
 		httpDo:     httpDo,
 		HTTPClient: http.DefaultClient,
 	}
 	return NewClientWithSynchronous(sync)
+}
+
+func NewClientWithURL(url string) *Client {
+	httpDo := func(c *http.Client, req *http.Request) (*http.Response, error) {
+		return c.Do(req)
+	}
+	return NewClientWithURLHttpDo(url, httpDo)
 }
 
 // mock me

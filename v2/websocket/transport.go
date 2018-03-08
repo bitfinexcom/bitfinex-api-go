@@ -76,7 +76,7 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	if err != nil {
 		return err
 	}
-	//log.Printf("ws->srv: %s", string(bs))
+	log.Printf("ws->srv: %s", string(bs))
 
 	select {
 	case <-ctx.Done():
@@ -128,7 +128,7 @@ func (w *ws) listenWs() {
 			w.cleanup(err)
 			return
 		}
-		//log.Printf("srv->ws: %s", string(msg))
+		log.Printf("srv->ws: %s", string(msg))
 		w.downstream <- msg
 	}
 }

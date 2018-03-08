@@ -219,31 +219,44 @@ type Order struct {
 // NewOrderFromRaw takes the raw list of values as returned from the websocket
 // service and tries to convert it into an Order.
 func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
-	if len(raw) < 26 {
+	if len(raw) == 12 {
+		o = &Order{
+			ID:         int64(f64ValOrZero(raw[0])),
+			Symbol:     sValOrEmpty(raw[1]),
+			Amount:     f64ValOrZero(raw[2]),
+			AmountOrig: f64ValOrZero(raw[3]),
+			Type:       sValOrEmpty(raw[4]),
+			Status:     OrderStatus(sValOrEmpty(raw[5])),
+			Price:      f64ValOrZero(raw[6]),
+			PriceAvg:   f64ValOrZero(raw[7]),
+			MTSUpdated: i64ValOrZero(raw[8]),
+			// 3 trailing zeroes, what do they map to?
+		}
+	} else if len(raw) < 26 {
 		return o, fmt.Errorf("data slice too short for order: %#v", raw)
-	}
-
-	// TODO: API docs say ID, GID, CID, MTS_CREATE, MTS_UPDATE are int but API returns float
-	o = &Order{
-		ID:            int64(f64ValOrZero(raw[0])),
-		GID:           int64(f64ValOrZero(raw[1])),
-		CID:           int64(f64ValOrZero(raw[2])),
-		Symbol:        sValOrEmpty(raw[3]),
-		MTSCreated:    int64(f64ValOrZero(raw[4])),
-		MTSUpdated:    int64(f64ValOrZero(raw[5])),
-		Amount:        f64ValOrZero(raw[6]),
-		AmountOrig:    f64ValOrZero(raw[7]),
-		Type:          sValOrEmpty(raw[8]),
-		TypePrev:      sValOrEmpty(raw[9]),
-		Flags:         i64ValOrZero(raw[12]),
-		Status:        OrderStatus(sValOrEmpty(raw[13])),
-		Price:         f64ValOrZero(raw[16]),
-		PriceAvg:      f64ValOrZero(raw[17]),
-		PriceTrailing: f64ValOrZero(raw[18]),
-		PriceAuxLimit: f64ValOrZero(raw[19]),
-		Notify:        bValOrFalse(raw[23]),
-		Hidden:        bValOrFalse(raw[24]),
-		PlacedID:      i64ValOrZero(raw[25]),
+	} else {
+		// TODO: API docs say ID, GID, CID, MTS_CREATE, MTS_UPDATE are int but API returns float
+		o = &Order{
+			ID:            int64(f64ValOrZero(raw[0])),
+			GID:           int64(f64ValOrZero(raw[1])),
+			CID:           int64(f64ValOrZero(raw[2])),
+			Symbol:        sValOrEmpty(raw[3]),
+			MTSCreated:    int64(f64ValOrZero(raw[4])),
+			MTSUpdated:    int64(f64ValOrZero(raw[5])),
+			Amount:        f64ValOrZero(raw[6]),
+			AmountOrig:    f64ValOrZero(raw[7]),
+			Type:          sValOrEmpty(raw[8]),
+			TypePrev:      sValOrEmpty(raw[9]),
+			Flags:         i64ValOrZero(raw[12]),
+			Status:        OrderStatus(sValOrEmpty(raw[13])),
+			Price:         f64ValOrZero(raw[16]),
+			PriceAvg:      f64ValOrZero(raw[17]),
+			PriceTrailing: f64ValOrZero(raw[18]),
+			PriceAuxLimit: f64ValOrZero(raw[19]),
+			Notify:        bValOrFalse(raw[23]),
+			Hidden:        bValOrFalse(raw[24]),
+			PlacedID:      i64ValOrZero(raw[25]),
+		}
 	}
 
 	return
@@ -313,23 +326,31 @@ type Position struct {
 }
 
 func NewPositionFromRaw(raw []interface{}) (o *Position, err error) {
-	if len(raw) < 10 {
+	if len(raw) == 6 {
+		o = &Position{
+			Symbol:            sValOrEmpty(raw[0]),
+			Status:            PositionStatus(sValOrEmpty(raw[1])),
+			Amount:            f64ValOrZero(raw[2]),
+			BasePrice:         f64ValOrZero(raw[3]),
+			MarginFunding:     f64ValOrZero(raw[4]),
+			MarginFundingType: i64ValOrZero(raw[5]),
+		}
+	} else if len(raw) < 10 {
 		return o, fmt.Errorf("data slice too short for position: %#v", raw)
+	} else {
+		o = &Position{
+			Symbol:               sValOrEmpty(raw[0]),
+			Status:               PositionStatus(sValOrEmpty(raw[1])),
+			Amount:               f64ValOrZero(raw[2]),
+			BasePrice:            f64ValOrZero(raw[3]),
+			MarginFunding:        f64ValOrZero(raw[4]),
+			MarginFundingType:    i64ValOrZero(raw[5]),
+			ProfitLoss:           f64ValOrZero(raw[6]),
+			ProfitLossPercentage: f64ValOrZero(raw[7]),
+			LiquidationPrice:     f64ValOrZero(raw[8]),
+			Leverage:             f64ValOrZero(raw[9]),
+		}
 	}
-
-	o = &Position{
-		Symbol:               sValOrEmpty(raw[0]),
-		Status:               PositionStatus(sValOrEmpty(raw[1])),
-		Amount:               f64ValOrZero(raw[2]),
-		BasePrice:            f64ValOrZero(raw[3]),
-		MarginFunding:        f64ValOrZero(raw[4]),
-		MarginFundingType:    i64ValOrZero(raw[5]),
-		ProfitLoss:           f64ValOrZero(raw[6]),
-		ProfitLossPercentage: f64ValOrZero(raw[7]),
-		LiquidationPrice:     f64ValOrZero(raw[8]),
-		Leverage:             f64ValOrZero(raw[9]),
-	}
-
 	return
 }
 
@@ -438,7 +459,12 @@ type TradeExecutionUpdate struct {
 // public trade update just looks like a trade
 func NewTradeExecutionUpdateFromRaw(raw []interface{}) (o *TradeExecutionUpdate, err error) {
 	if len(raw) == 4 {
-		o = &TradeExecutionUpdate{ID: i64ValOrZero(raw[0]), MTS: i64ValOrZero(raw[1]), ExecAmount: f64ValOrZero(raw[2]), ExecPrice: f64ValOrZero(raw[3])}
+		o = &TradeExecutionUpdate{
+			ID:         i64ValOrZero(raw[0]),
+			MTS:        i64ValOrZero(raw[1]),
+			ExecAmount: f64ValOrZero(raw[2]),
+			ExecPrice:  f64ValOrZero(raw[3]),
+		}
 		return
 	}
 	if len(raw) == 11 {
@@ -536,18 +562,24 @@ type Wallet struct {
 }
 
 func NewWalletFromRaw(raw []interface{}) (o *Wallet, err error) {
-	if len(raw) < 5 {
+	if len(raw) == 4 {
+		o = &Wallet{
+			Type:              sValOrEmpty(raw[0]),
+			Currency:          sValOrEmpty(raw[1]),
+			Balance:           f64ValOrZero(raw[2]),
+			UnsettledInterest: f64ValOrZero(raw[3]),
+		}
+	} else if len(raw) < 5 {
 		return o, fmt.Errorf("data slice too short for wallet: %#v", raw)
+	} else {
+		o = &Wallet{
+			Type:              sValOrEmpty(raw[0]),
+			Currency:          sValOrEmpty(raw[1]),
+			Balance:           f64ValOrZero(raw[2]),
+			UnsettledInterest: f64ValOrZero(raw[3]),
+			BalanceAvailable:  f64ValOrZero(raw[4]),
+		}
 	}
-
-	o = &Wallet{
-		Type:              sValOrEmpty(raw[0]),
-		Currency:          sValOrEmpty(raw[1]),
-		Balance:           f64ValOrZero(raw[2]),
-		UnsettledInterest: f64ValOrZero(raw[3]),
-		BalanceAvailable:  f64ValOrZero(raw[4]),
-	}
-
 	return
 }
 
@@ -1092,39 +1124,42 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 		Text:   sValOrEmpty(raw[7]),
 	}
 
+	// raw[4] = notify info
 	var nraw []interface{}
-	nraw = raw[4].([]interface{})
-	switch o.Type {
-	case "on-req":
-		on, err := NewOrderFromRaw(nraw)
-		if err != nil {
-			return o, err
+	if raw[4] != nil {
+		nraw = raw[4].([]interface{})
+		switch o.Type {
+		case "on-req":
+			on, err := NewOrderFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			orderNew := OrderNew(*on)
+			o.NotifyInfo = &orderNew
+		case "oc-req":
+			oc, err := NewOrderFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			orderCancel := OrderCancel(*oc)
+			o.NotifyInfo = &orderCancel
+		case "fon-req":
+			fon, err := NewOfferFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			fundingOffer := FundingOfferNew(*fon)
+			o.NotifyInfo = &fundingOffer
+		case "foc-req":
+			foc, err := NewOfferFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			fundingOffer := FundingOfferCancel(*foc)
+			o.NotifyInfo = &fundingOffer
+		case "uca":
+			o.NotifyInfo = raw[4]
 		}
-		orderNew := OrderNew(*on)
-		o.NotifyInfo = &orderNew
-	case "oc-req":
-		oc, err := NewOrderFromRaw(nraw)
-		if err != nil {
-			return o, err
-		}
-		orderCancel := OrderCancel(*oc)
-		o.NotifyInfo = &orderCancel
-	case "fon-req":
-		fon, err := NewOfferFromRaw(nraw)
-		if err != nil {
-			return o, err
-		}
-		fundingOffer := FundingOfferNew(*fon)
-		o.NotifyInfo = &fundingOffer
-	case "foc-req":
-		foc, err := NewOfferFromRaw(nraw)
-		if err != nil {
-			return o, err
-		}
-		fundingOffer := FundingOfferCancel(*foc)
-		o.NotifyInfo = &fundingOffer
-	case "uca":
-		o.NotifyInfo = raw[4]
 	}
 
 	return
