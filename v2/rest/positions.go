@@ -10,7 +10,7 @@ type PositionService struct {
 }
 
 // All returns all positions for the authenticated account.
-func (s *PositionService) All() (bitfinex.PositionSnapshot, error) {
+func (s *PositionService) All() (*bitfinex.PositionSnapshot, error) {
 	raw, err := s.Request(NewRequest("positions"))
 
 	if err != nil {

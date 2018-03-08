@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 )
 
 // Prefixes for available pairs
@@ -217,32 +218,45 @@ type Order struct {
 
 // NewOrderFromRaw takes the raw list of values as returned from the websocket
 // service and tries to convert it into an Order.
-func NewOrderFromRaw(raw []interface{}) (o Order, err error) {
-	if len(raw) < 26 {
+func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
+	if len(raw) == 12 {
+		o = &Order{
+			ID:         int64(f64ValOrZero(raw[0])),
+			Symbol:     sValOrEmpty(raw[1]),
+			Amount:     f64ValOrZero(raw[2]),
+			AmountOrig: f64ValOrZero(raw[3]),
+			Type:       sValOrEmpty(raw[4]),
+			Status:     OrderStatus(sValOrEmpty(raw[5])),
+			Price:      f64ValOrZero(raw[6]),
+			PriceAvg:   f64ValOrZero(raw[7]),
+			MTSUpdated: i64ValOrZero(raw[8]),
+			// 3 trailing zeroes, what do they map to?
+		}
+	} else if len(raw) < 26 {
 		return o, fmt.Errorf("data slice too short for order: %#v", raw)
-	}
-
-	// TODO: API docs say ID, GID, CID, MTS_CREATE, MTS_UPDATE are int but API returns float
-	o = Order{
-		ID:            int64(f64ValOrZero(raw[0])),
-		GID:           int64(f64ValOrZero(raw[1])),
-		CID:           int64(f64ValOrZero(raw[2])),
-		Symbol:        sValOrEmpty(raw[3]),
-		MTSCreated:    int64(f64ValOrZero(raw[4])),
-		MTSUpdated:    int64(f64ValOrZero(raw[5])),
-		Amount:        f64ValOrZero(raw[6]),
-		AmountOrig:    f64ValOrZero(raw[7]),
-		Type:          sValOrEmpty(raw[8]),
-		TypePrev:      sValOrEmpty(raw[9]),
-		Flags:         i64ValOrZero(raw[12]),
-		Status:        OrderStatus(sValOrEmpty(raw[13])),
-		Price:         f64ValOrZero(raw[16]),
-		PriceAvg:      f64ValOrZero(raw[17]),
-		PriceTrailing: f64ValOrZero(raw[18]),
-		PriceAuxLimit: f64ValOrZero(raw[19]),
-		Notify:        bValOrFalse(raw[23]),
-		Hidden:        bValOrFalse(raw[24]),
-		PlacedID:      i64ValOrZero(raw[25]),
+	} else {
+		// TODO: API docs say ID, GID, CID, MTS_CREATE, MTS_UPDATE are int but API returns float
+		o = &Order{
+			ID:            int64(f64ValOrZero(raw[0])),
+			GID:           int64(f64ValOrZero(raw[1])),
+			CID:           int64(f64ValOrZero(raw[2])),
+			Symbol:        sValOrEmpty(raw[3]),
+			MTSCreated:    int64(f64ValOrZero(raw[4])),
+			MTSUpdated:    int64(f64ValOrZero(raw[5])),
+			Amount:        f64ValOrZero(raw[6]),
+			AmountOrig:    f64ValOrZero(raw[7]),
+			Type:          sValOrEmpty(raw[8]),
+			TypePrev:      sValOrEmpty(raw[9]),
+			Flags:         i64ValOrZero(raw[12]),
+			Status:        OrderStatus(sValOrEmpty(raw[13])),
+			Price:         f64ValOrZero(raw[16]),
+			PriceAvg:      f64ValOrZero(raw[17]),
+			PriceTrailing: f64ValOrZero(raw[18]),
+			PriceAuxLimit: f64ValOrZero(raw[19]),
+			Notify:        bValOrFalse(raw[23]),
+			Hidden:        bValOrFalse(raw[24]),
+			PlacedID:      i64ValOrZero(raw[25]),
+		}
 	}
 
 	return
@@ -250,32 +264,36 @@ func NewOrderFromRaw(raw []interface{}) (o Order, err error) {
 
 // OrderSnapshotFromRaw takes a raw list of values as returned from the websocket
 // service and tries to convert it into an OrderSnapshot.
-func NewOrderSnapshotFromRaw(raw []interface{}) (os OrderSnapshot, err error) {
+func NewOrderSnapshotFromRaw(raw []interface{}) (s *OrderSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
 
+	os := make([]*Order, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				o, err := NewOrderFromRaw(l)
 				if err != nil {
-					return os, err
+					return s, err
 				}
 				os = append(os, o)
 			}
 		}
 	default:
-		return os, fmt.Errorf("not an order snapshot")
+		return s, fmt.Errorf("not an order snapshot")
 	}
+	s = &OrderSnapshot{Snapshot: os}
 
 	return
 }
 
 // OrderSnapshot is a collection of Orders that would usually be sent on
 // inital connection.
-type OrderSnapshot []Order
+type OrderSnapshot struct {
+	Snapshot []*Order
+}
 
 // OrderUpdate is an Order that gets sent out after every change to an
 // order.
@@ -307,51 +325,63 @@ type Position struct {
 	Leverage             float64
 }
 
-func NewPositionFromRaw(raw []interface{}) (o Position, err error) {
-	if len(raw) < 10 {
+func NewPositionFromRaw(raw []interface{}) (o *Position, err error) {
+	if len(raw) == 6 {
+		o = &Position{
+			Symbol:            sValOrEmpty(raw[0]),
+			Status:            PositionStatus(sValOrEmpty(raw[1])),
+			Amount:            f64ValOrZero(raw[2]),
+			BasePrice:         f64ValOrZero(raw[3]),
+			MarginFunding:     f64ValOrZero(raw[4]),
+			MarginFundingType: i64ValOrZero(raw[5]),
+		}
+	} else if len(raw) < 10 {
 		return o, fmt.Errorf("data slice too short for position: %#v", raw)
+	} else {
+		o = &Position{
+			Symbol:               sValOrEmpty(raw[0]),
+			Status:               PositionStatus(sValOrEmpty(raw[1])),
+			Amount:               f64ValOrZero(raw[2]),
+			BasePrice:            f64ValOrZero(raw[3]),
+			MarginFunding:        f64ValOrZero(raw[4]),
+			MarginFundingType:    i64ValOrZero(raw[5]),
+			ProfitLoss:           f64ValOrZero(raw[6]),
+			ProfitLossPercentage: f64ValOrZero(raw[7]),
+			LiquidationPrice:     f64ValOrZero(raw[8]),
+			Leverage:             f64ValOrZero(raw[9]),
+		}
 	}
-
-	o = Position{
-		Symbol:               sValOrEmpty(raw[0]),
-		Status:               PositionStatus(sValOrEmpty(raw[1])),
-		Amount:               f64ValOrZero(raw[2]),
-		BasePrice:            f64ValOrZero(raw[3]),
-		MarginFunding:        f64ValOrZero(raw[4]),
-		MarginFundingType:    i64ValOrZero(raw[5]),
-		ProfitLoss:           f64ValOrZero(raw[6]),
-		ProfitLossPercentage: f64ValOrZero(raw[7]),
-		LiquidationPrice:     f64ValOrZero(raw[8]),
-		Leverage:             f64ValOrZero(raw[9]),
-	}
-
 	return
 }
 
-type PositionSnapshot []Position
+type PositionSnapshot struct {
+	Snapshot []*Position
+}
 type PositionNew Position
 type PositionUpdate Position
 type PositionCancel Position
 
-func NewPositionSnapshotFromRaw(raw []interface{}) (ps PositionSnapshot, err error) {
+func NewPositionSnapshotFromRaw(raw []interface{}) (s *PositionSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
 
+	ps := make([]*Position, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				p, err := NewPositionFromRaw(l)
 				if err != nil {
-					return ps, err
+					return s, err
 				}
 				ps = append(ps, p)
 			}
 		}
 	default:
-		return ps, fmt.Errorf("not a position snapshot")
+		return s, fmt.Errorf("not a position snapshot")
 	}
+	s = &PositionSnapshot{Snapshot: ps}
 
 	return
 }
@@ -363,22 +393,51 @@ type Trade struct {
 	MTS    int64
 	Amount float64
 	Price  float64
+	Side   OrderSide
 }
 
-func NewTradeFromRaw(pair string, raw []interface{}) (o Trade, err error) {
+func NewTradeFromRaw(pair string, raw []interface{}) (o *Trade, err error) {
 	if len(raw) < 4 {
 		return o, fmt.Errorf("data slice too short for trade: %#v", raw)
 	}
 
-	o = Trade{
+	amt := f64ValOrZero(raw[2])
+	var side OrderSide
+	if amt > 0 {
+		side = Bid
+	} else {
+		side = Ask
+	}
+
+	o = &Trade{
 		Pair:   pair,
 		ID:     i64ValOrZero(raw[0]),
 		MTS:    i64ValOrZero(raw[1]),
-		Amount: f64ValOrZero(raw[2]),
+		Amount: math.Abs(amt),
 		Price:  f64ValOrZero(raw[3]),
+		Side:   side,
 	}
 
 	return
+}
+
+type TradeSnapshot struct {
+	Snapshot []*Trade
+}
+
+func NewTradeSnapshotFromRaw(pair string, raw [][]float64) (*TradeSnapshot, error) {
+	if len(raw) <= 0 {
+		return nil, fmt.Errorf("data slice is too short for trade snapshot: %#v", raw)
+	}
+	snapshot := make([]*Trade, 0)
+	for _, flt := range raw {
+		t, err := NewTradeFromRaw(pair, ToInterface(flt))
+		if err == nil {
+			snapshot = append(snapshot, t)
+		}
+	}
+
+	return &TradeSnapshot{Snapshot: snapshot}, nil
 }
 
 // TradeExecutionUpdate represents a full update to a trade on the private data feed.  Following a TradeExecution,
@@ -398,13 +457,18 @@ type TradeExecutionUpdate struct {
 }
 
 // public trade update just looks like a trade
-func NewTradeExecutionUpdateFromRaw(raw []interface{}) (o TradeExecutionUpdate, err error) {
+func NewTradeExecutionUpdateFromRaw(raw []interface{}) (o *TradeExecutionUpdate, err error) {
 	if len(raw) == 4 {
-		o = TradeExecutionUpdate{ID: i64ValOrZero(raw[0]), MTS: i64ValOrZero(raw[1]), ExecAmount: f64ValOrZero(raw[2]), ExecPrice: f64ValOrZero(raw[3])}
+		o = &TradeExecutionUpdate{
+			ID:         i64ValOrZero(raw[0]),
+			MTS:        i64ValOrZero(raw[1]),
+			ExecAmount: f64ValOrZero(raw[2]),
+			ExecPrice:  f64ValOrZero(raw[3]),
+		}
 		return
 	}
 	if len(raw) == 11 {
-		o = TradeExecutionUpdate{
+		o = &TradeExecutionUpdate{
 			ID:          i64ValOrZero(raw[0]),
 			Pair:        sValOrEmpty(raw[1]),
 			MTS:         i64ValOrZero(raw[2]),
@@ -422,27 +486,31 @@ func NewTradeExecutionUpdateFromRaw(raw []interface{}) (o TradeExecutionUpdate, 
 	return o, fmt.Errorf("data slice too short for trade update: %#v", raw)
 }
 
-type TradeSnapshot []TradeExecutionUpdate
-type HistoricalTradeSnapshot TradeSnapshot
+type TradeExecutionUpdateSnapshot struct {
+	Snapshot []*TradeExecutionUpdate
+}
+type HistoricalTradeSnapshot TradeExecutionUpdateSnapshot
 
-func NewTradeSnapshotFromRaw(raw []interface{}) (ts TradeSnapshot, err error) {
+func NewTradeExecutionUpdateSnapshotFromRaw(raw []interface{}) (s *TradeExecutionUpdateSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
+	ts := make([]*TradeExecutionUpdate, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				t, err := NewTradeExecutionUpdateFromRaw(l)
 				if err != nil {
-					return ts, err
+					return s, err
 				}
 				ts = append(ts, t)
 			}
 		}
 	default:
-		return ts, fmt.Errorf("not a trade snapshot: %#v", raw)
+		return s, fmt.Errorf("not a trade snapshot: %#v", raw)
 	}
+	s = &TradeExecutionUpdateSnapshot{Snapshot: ts}
 
 	return
 }
@@ -460,14 +528,14 @@ type TradeExecution struct {
 	Maker      int
 }
 
-func NewTradeExecutionFromRaw(raw []interface{}) (o TradeExecution, err error) {
+func NewTradeExecutionFromRaw(raw []interface{}) (o *TradeExecution, err error) {
 	if len(raw) < 6 {
 		log.Printf("[ERROR] not enough members (%d, need at least 6) for trade execution: %#v", raw)
 		return o, fmt.Errorf("data slice too short for trade execution: %#v", raw)
 	}
 
 	// trade executions sometimes omit order type, price, and maker flag
-	o = TradeExecution{
+	o = &TradeExecution{
 		ID:      i64ValOrZero(raw[0]),
 		Pair:    sValOrEmpty(raw[1]),
 		MTS:     i64ValOrZero(raw[2]),
@@ -493,44 +561,54 @@ type Wallet struct {
 	BalanceAvailable  float64
 }
 
-func NewWalletFromRaw(raw []interface{}) (o Wallet, err error) {
-	if len(raw) < 5 {
+func NewWalletFromRaw(raw []interface{}) (o *Wallet, err error) {
+	if len(raw) == 4 {
+		o = &Wallet{
+			Type:              sValOrEmpty(raw[0]),
+			Currency:          sValOrEmpty(raw[1]),
+			Balance:           f64ValOrZero(raw[2]),
+			UnsettledInterest: f64ValOrZero(raw[3]),
+		}
+	} else if len(raw) < 5 {
 		return o, fmt.Errorf("data slice too short for wallet: %#v", raw)
+	} else {
+		o = &Wallet{
+			Type:              sValOrEmpty(raw[0]),
+			Currency:          sValOrEmpty(raw[1]),
+			Balance:           f64ValOrZero(raw[2]),
+			UnsettledInterest: f64ValOrZero(raw[3]),
+			BalanceAvailable:  f64ValOrZero(raw[4]),
+		}
 	}
-
-	o = Wallet{
-		Type:              sValOrEmpty(raw[0]),
-		Currency:          sValOrEmpty(raw[1]),
-		Balance:           f64ValOrZero(raw[2]),
-		UnsettledInterest: f64ValOrZero(raw[3]),
-		BalanceAvailable:  f64ValOrZero(raw[4]),
-	}
-
 	return
 }
 
 type WalletUpdate Wallet
-type WalletSnapshot []Wallet
+type WalletSnapshot struct {
+	Snapshot []*Wallet
+}
 
-func NewWalletSnapshotFromRaw(raw []interface{}) (ws WalletSnapshot, err error) {
+func NewWalletSnapshotFromRaw(raw []interface{}) (s *WalletSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
 
+	ws := make([]*Wallet, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				o, err := NewWalletFromRaw(l)
 				if err != nil {
-					return ws, err
+					return s, err
 				}
 				ws = append(ws, o)
 			}
 		}
 	default:
-		return ws, fmt.Errorf("not an wallet snapshot")
+		return s, fmt.Errorf("not an wallet snapshot")
 	}
+	s = &WalletSnapshot{Snapshot: ws}
 
 	return
 }
@@ -542,12 +620,12 @@ type BalanceInfo struct {
 	Currency   string*/
 }
 
-func NewBalanceInfoFromRaw(raw []interface{}) (o BalanceInfo, err error) {
+func NewBalanceInfoFromRaw(raw []interface{}) (o *BalanceInfo, err error) {
 	if len(raw) < 2 {
 		return o, fmt.Errorf("data slice too short for balance info: %#v", raw)
 	}
 
-	o = BalanceInfo{
+	o = &BalanceInfo{
 		TotalAUM: f64ValOrZero(raw[0]),
 		NetAUM:   f64ValOrZero(raw[1]),
 		/*WalletType: sValOrEmpty(raw[2]),
@@ -600,12 +678,12 @@ type MarginInfoUpdate struct {
 	TradableBalance float64
 }
 
-func NewMarginInfoUpdateFromRaw(symbol string, raw []interface{}) (o MarginInfoUpdate, err error) {
+func NewMarginInfoUpdateFromRaw(symbol string, raw []interface{}) (o *MarginInfoUpdate, err error) {
 	if len(raw) < 1 {
 		return o, fmt.Errorf("data slice too short for margin info update: %#v", raw)
 	}
 
-	o = MarginInfoUpdate{
+	o = &MarginInfoUpdate{
 		Symbol:          symbol,
 		TradableBalance: f64ValOrZero(raw[0]),
 	}
@@ -620,12 +698,12 @@ type MarginInfoBase struct {
 	MarginNet      float64
 }
 
-func NewMarginInfoBaseFromRaw(raw []interface{}) (o MarginInfoBase, err error) {
+func NewMarginInfoBaseFromRaw(raw []interface{}) (o *MarginInfoBase, err error) {
 	if len(raw) < 4 {
 		return o, fmt.Errorf("data slice too short for margin info base: %#v", raw)
 	}
 
-	o = MarginInfoBase{
+	o = &MarginInfoBase{
 		UserProfitLoss: f64ValOrZero(raw[0]),
 		UserSwaps:      f64ValOrZero(raw[1]),
 		MarginBalance:  f64ValOrZero(raw[2]),
@@ -643,7 +721,7 @@ type FundingInfo struct {
 	DurationLend float64
 }
 
-func NewFundingInfoFromRaw(raw []interface{}) (o FundingInfo, err error) {
+func NewFundingInfoFromRaw(raw []interface{}) (o *FundingInfo, err error) {
 	if len(raw) < 3 { // "sym", symbol, data
 		return o, fmt.Errorf("data slice too short for funding info: %#v", raw)
 	}
@@ -662,7 +740,7 @@ func NewFundingInfoFromRaw(raw []interface{}) (o FundingInfo, err error) {
 		return o, fmt.Errorf("data too short: %#v", data)
 	}
 
-	o = FundingInfo{
+	o = &FundingInfo{
 		Symbol:       sym,
 		YieldLoan:    f64ValOrZero(data[0]),
 		YieldLend:    f64ValOrZero(data[1]),
@@ -701,12 +779,12 @@ type Offer struct {
 	RateReal   float64
 }
 
-func NewOfferFromRaw(raw []interface{}) (o Offer, err error) {
+func NewOfferFromRaw(raw []interface{}) (o *Offer, err error) {
 	if len(raw) < 21 {
 		return o, fmt.Errorf("data slice too short for offer: %#v", raw)
 	}
 
-	o = Offer{
+	o = &Offer{
 		ID:         i64ValOrZero(raw[0]),
 		Symbol:     sValOrEmpty(raw[1]),
 		MTSCreated: i64ValOrZero(raw[2]),
@@ -731,26 +809,33 @@ func NewOfferFromRaw(raw []interface{}) (o Offer, err error) {
 type FundingOfferNew Offer
 type FundingOfferUpdate Offer
 type FundingOfferCancel Offer
-type FundingOfferSnapshot []Offer
+type FundingOfferSnapshot struct {
+	Snapshot []*Offer
+}
 
-func NewFundingOfferSnapshotFromRaw(raw []interface{}) (fos FundingOfferSnapshot, err error) {
+func NewFundingOfferSnapshotFromRaw(raw []interface{}) (snap *FundingOfferSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
 
+	fos := make([]*Offer, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				o, err := NewOfferFromRaw(l)
 				if err != nil {
-					return fos, err
+					return snap, err
 				}
 				fos = append(fos, o)
 			}
 		}
 	default:
-		return fos, fmt.Errorf("not a funding offer snapshot")
+		return snap, fmt.Errorf("not a funding offer snapshot")
+	}
+
+	snap = &FundingOfferSnapshot{
+		Snapshot: fos,
 	}
 
 	return
@@ -789,12 +874,12 @@ type Credit struct {
 	PositionPair  string
 }
 
-func NewCreditFromRaw(raw []interface{}) (o Credit, err error) {
+func NewCreditFromRaw(raw []interface{}) (o *Credit, err error) {
 	if len(raw) < 22 {
 		return o, fmt.Errorf("data slice too short for offer: %#v", raw)
 	}
 
-	o = Credit{
+	o = &Credit{
 		ID:            i64ValOrZero(raw[0]),
 		Symbol:        sValOrEmpty(raw[1]),
 		Side:          sValOrEmpty(raw[2]),
@@ -824,26 +909,32 @@ type FundingCreditNew Credit
 type FundingCreditUpdate Credit
 type FundingCreditCancel Credit
 
-type FundingCreditSnapshot []Credit
+type FundingCreditSnapshot struct {
+	Snapshot []*Credit
+}
 
-func NewFundingCreditSnapshotFromRaw(raw []interface{}) (fcs FundingCreditSnapshot, err error) {
+func NewFundingCreditSnapshotFromRaw(raw []interface{}) (snap *FundingCreditSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
 
+	fcs := make([]*Credit, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				o, err := NewCreditFromRaw(l)
 				if err != nil {
-					return fcs, err
+					return snap, err
 				}
 				fcs = append(fcs, o)
 			}
 		}
 	default:
-		return fcs, fmt.Errorf("not a funding credit snapshot")
+		return snap, fmt.Errorf("not a funding credit snapshot")
+	}
+	snap = &FundingCreditSnapshot{
+		Snapshot: fcs,
 	}
 
 	return
@@ -879,12 +970,12 @@ type Loan struct {
 	NoClose       bool
 }
 
-func NewLoanFromRaw(raw []interface{}) (o Loan, err error) {
+func NewLoanFromRaw(raw []interface{}) (o *Loan, err error) {
 	if len(raw) < 21 {
 		return o, fmt.Errorf("data slice too short (len=%d) for loan: %#v", len(raw), raw)
 	}
 
-	o = Loan{
+	o = &Loan{
 		ID:            i64ValOrZero(raw[0]),
 		Symbol:        sValOrEmpty(raw[1]),
 		Side:          sValOrEmpty(raw[2]),
@@ -913,26 +1004,32 @@ type FundingLoanNew Loan
 type FundingLoanUpdate Loan
 type FundingLoanCancel Loan
 
-type FundingLoanSnapshot []Loan
+type FundingLoanSnapshot struct {
+	Snapshot []*Loan
+}
 
-func NewFundingLoanSnapshotFromRaw(raw []interface{}) (fls FundingLoanSnapshot, err error) {
+func NewFundingLoanSnapshotFromRaw(raw []interface{}) (snap *FundingLoanSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
 
+	fls := make([]*Loan, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				o, err := NewLoanFromRaw(l)
 				if err != nil {
-					return fls, err
+					return snap, err
 				}
 				fls = append(fls, o)
 			}
 		}
 	default:
-		return fls, fmt.Errorf("not a funding loan snapshot")
+		return snap, fmt.Errorf("not a funding loan snapshot")
+	}
+	snap = &FundingLoanSnapshot{
+		Snapshot: fls,
 	}
 
 	return
@@ -949,12 +1046,12 @@ type FundingTrade struct {
 	Maker      int64
 }
 
-func NewFundingTradeFromRaw(raw []interface{}) (o FundingTrade, err error) {
+func NewFundingTradeFromRaw(raw []interface{}) (o *FundingTrade, err error) {
 	if len(raw) < 8 {
 		return o, fmt.Errorf("data slice too short for funding trade: %#v", raw)
 	}
 
-	o = FundingTrade{
+	o = &FundingTrade{
 		ID:         i64ValOrZero(raw[0]),
 		Symbol:     sValOrEmpty(raw[1]),
 		MTSCreated: i64ValOrZero(raw[2]),
@@ -970,27 +1067,33 @@ func NewFundingTradeFromRaw(raw []interface{}) (o FundingTrade, err error) {
 
 type FundingTradeExecution FundingTrade
 type FundingTradeUpdate FundingTrade
-type FundingTradeSnapshot []FundingTrade
+type FundingTradeSnapshot struct {
+	Snapshot []*FundingTrade
+}
 type HistoricalFundingTradeSnapshot FundingTradeSnapshot
 
-func NewFundingTradeSnapshotFromRaw(raw []interface{}) (fts FundingTradeSnapshot, err error) {
+func NewFundingTradeSnapshotFromRaw(raw []interface{}) (snap *FundingTradeSnapshot, err error) {
 	if len(raw) == 0 {
 		return
 	}
 
+	fts := make([]*FundingTrade, 0)
 	switch raw[0].(type) {
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				o, err := NewFundingTradeFromRaw(l)
 				if err != nil {
-					return fts, err
+					return snap, err
 				}
 				fts = append(fts, o)
 			}
 		}
 	default:
-		return fts, fmt.Errorf("not a funding trade snapshot")
+		return snap, fmt.Errorf("not a funding trade snapshot")
+	}
+	snap = &FundingTradeSnapshot{
+		Snapshot: fts,
 	}
 
 	return
@@ -1006,12 +1109,12 @@ type Notification struct {
 	Text       string
 }
 
-func NewNotificationFromRaw(raw []interface{}) (o Notification, err error) {
+func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 	if len(raw) < 8 {
 		return o, fmt.Errorf("data slice too short for notification: %#v", raw)
 	}
 
-	o = Notification{
+	o = &Notification{
 		MTS:       i64ValOrZero(raw[0]),
 		Type:      sValOrEmpty(raw[1]),
 		MessageID: i64ValOrZero(raw[2]),
@@ -1021,35 +1124,42 @@ func NewNotificationFromRaw(raw []interface{}) (o Notification, err error) {
 		Text:   sValOrEmpty(raw[7]),
 	}
 
+	// raw[4] = notify info
 	var nraw []interface{}
-	nraw = raw[4].([]interface{})
-	switch o.Type {
-	case "on-req":
-		on, err := NewOrderFromRaw(nraw)
-		if err != nil {
-			return o, err
+	if raw[4] != nil {
+		nraw = raw[4].([]interface{})
+		switch o.Type {
+		case "on-req":
+			on, err := NewOrderFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			orderNew := OrderNew(*on)
+			o.NotifyInfo = &orderNew
+		case "oc-req":
+			oc, err := NewOrderFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			orderCancel := OrderCancel(*oc)
+			o.NotifyInfo = &orderCancel
+		case "fon-req":
+			fon, err := NewOfferFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			fundingOffer := FundingOfferNew(*fon)
+			o.NotifyInfo = &fundingOffer
+		case "foc-req":
+			foc, err := NewOfferFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			fundingOffer := FundingOfferCancel(*foc)
+			o.NotifyInfo = &fundingOffer
+		case "uca":
+			o.NotifyInfo = raw[4]
 		}
-		o.NotifyInfo = OrderNew(on)
-	case "oc-req":
-		oc, err := NewOrderFromRaw(nraw)
-		if err != nil {
-			return o, err
-		}
-		o.NotifyInfo = OrderCancel(oc)
-	case "fon-req":
-		fon, err := NewOfferFromRaw(nraw)
-		if err != nil {
-			return o, err
-		}
-		o.NotifyInfo = FundingOfferNew(fon)
-	case "foc-req":
-		foc, err := NewOfferFromRaw(nraw)
-		if err != nil {
-			return o, err
-		}
-		o.NotifyInfo = FundingOfferCancel(foc)
-	case "uca":
-		o.NotifyInfo = raw[4]
 	}
 
 	return
@@ -1072,14 +1182,30 @@ type Ticker struct {
 }
 
 type TickerUpdate Ticker
-type TickerSnapshot []Ticker
+type TickerSnapshot struct {
+	Snapshot []*Ticker
+}
 
-func NewTickerFromRaw(symbol string, raw []interface{}) (t Ticker, err error) {
+func NewTickerSnapshotFromRaw(symbol string, raw [][]float64) (*TickerSnapshot, error) {
+	if len(raw) <= 0 {
+		return nil, fmt.Errorf("data slice too short for ticker snapshot: %#v", raw)
+	}
+	snap := make([]*Ticker, 0)
+	for _, f := range raw {
+		c, err := NewTickerFromRaw(symbol, ToInterface(f))
+		if err == nil {
+			snap = append(snap, c)
+		}
+	}
+	return &TickerSnapshot{Snapshot: snap}, nil
+}
+
+func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 	if len(raw) < 10 {
 		return t, fmt.Errorf("data slice too short for ticker, expected %d got %d: %#v", 10, len(raw), raw)
 	}
 
-	t = Ticker{
+	t = &Ticker{
 		Symbol:          symbol,
 		Bid:             f64ValOrZero(raw[0]),
 		BidSize:         f64ValOrZero(raw[1]),
@@ -1096,6 +1222,18 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t Ticker, err error) {
 	return
 }
 
+type bookAction byte
+
+// BookAction represents a new/update or removal for a book entry.
+type BookAction bookAction
+
+const (
+	//BookUpdateEntry represents a new or updated book entry.
+	BookUpdateEntry BookAction = 0
+	//BookRemoveEntry represents a removal of a book entry.
+	BookRemoveEntry BookAction = 1
+)
+
 // BookUpdate represents an order book price update.
 type BookUpdate struct {
 	Symbol string
@@ -1103,27 +1241,70 @@ type BookUpdate struct {
 	Count  int64
 	Amount float64
 	Side   OrderSide
+	Action BookAction
 }
 
-func NewBookUpdateFromRaw(symbol string, raw []interface{}) (b BookUpdate, err error) {
+type BookUpdateSnapshot struct {
+	Snapshot []*BookUpdate
+}
+
+func NewBookUpdateSnapshotFromRaw(symbol, precision string, raw [][]float64) (*BookUpdateSnapshot, error) {
+	if len(raw) <= 0 {
+		return nil, fmt.Errorf("data slice too short for book snapshot: %#v", raw)
+	}
+	snap := make([]*BookUpdate, 0)
+	for _, f := range raw {
+		b, err := NewBookUpdateFromRaw(symbol, precision, ToInterface(f))
+		if err == nil {
+			snap = append(snap, b)
+		}
+	}
+	return &BookUpdateSnapshot{Snapshot: snap}, nil
+}
+
+func IsRawBook(precision string) bool {
+	return precision == "R0"
+}
+
+// NewBookUpdateFromRaw creates a new book update object from raw data.  Precision determines how
+// to interpret the side (baked into Count versus Amount)
+func NewBookUpdateFromRaw(symbol, precision string, raw []interface{}) (b *BookUpdate, err error) {
 	if len(raw) < 3 {
 		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(raw), raw)
 	}
 
 	amt := f64ValOrZero(raw[2])
+	px := f64ValOrZero(raw[0])
+	cnt := i64ValOrZero(raw[1])
 	var side OrderSide
+
+	var actionCtrl float64
+	if IsRawBook(precision) {
+		actionCtrl = px
+	} else {
+		actionCtrl = float64(cnt)
+	}
+
 	if amt > 0 {
 		side = Bid
 	} else {
 		side = Ask
 	}
 
-	b = BookUpdate{
+	var action BookAction
+	if actionCtrl <= 0 {
+		action = BookRemoveEntry
+	} else {
+		action = BookUpdateEntry
+	}
+
+	b = &BookUpdate{
 		Symbol: symbol,
-		Price:  f64ValOrZero(raw[0]),
-		Count:  i64ValOrZero(raw[1]),
-		Amount: amt,
+		Price:  math.Abs(px),
+		Count:  cnt,
+		Amount: math.Abs(amt),
 		Side:   side,
+		Action: action,
 	}
 
 	return
@@ -1140,12 +1321,48 @@ type Candle struct {
 	Volume     float64
 }
 
-func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interface{}) (c Candle, err error) {
+type CandleSnapshot struct {
+	Snapshot []*Candle
+}
+
+func ToFloat64Slice(slice []interface{}) []float64 {
+	data := make([]float64, 0, len(slice))
+	for _, i := range slice {
+		if f, ok := i.(float64); ok {
+			data = append(data, f)
+		}
+	}
+	return data
+}
+
+func ToInterface(flt []float64) []interface{} {
+	data := make([]interface{}, len(flt))
+	for j, f := range flt {
+		data[j] = f
+	}
+	return data
+}
+
+func NewCandleSnapshotFromRaw(symbol string, resolution CandleResolution, raw [][]float64) (*CandleSnapshot, error) {
+	if len(raw) <= 0 {
+		return nil, fmt.Errorf("data slice too short for candle snapshot: %#v", raw)
+	}
+	snap := make([]*Candle, 0)
+	for _, f := range raw {
+		c, err := NewCandleFromRaw(symbol, resolution, ToInterface(f))
+		if err == nil {
+			snap = append(snap, c)
+		}
+	}
+	return &CandleSnapshot{Snapshot: snap}, nil
+}
+
+func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interface{}) (c *Candle, err error) {
 	if len(raw) < 6 {
 		return c, fmt.Errorf("data slice too short for candle, expected %d got %d: %#v", 6, len(raw), raw)
 	}
 
-	c = Candle{
+	c = &Candle{
 		Symbol:     symbol,
 		Resolution: resolution,
 		MTS:        i64ValOrZero(raw[0]),

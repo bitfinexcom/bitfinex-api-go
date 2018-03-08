@@ -28,29 +28,28 @@ func (c *Client) handleChannel(msg []byte) error {
 		// no subscribed channel for message
 		return err
 	}
-	//log.Printf("heartbeat channel hb %d", chanID)
 	c.subscriptions.heartbeat(chanID)
-
 	if sub.Public {
 		switch data := raw[1].(type) {
 		case string:
 			switch data {
 			case "hb":
-				c.handleHeartbeat(chanID)
+				// no-op, already updated heartbeat timeout from this event
+				return nil
 			default:
-				data := raw[2].([]interface{})
-				c.handlePublicChannel(chanID, sub.Request.Channel, data)
+				body := raw[2].([]interface{})
+				return c.handlePublicChannel(chanID, sub.Request.Channel, data, body)
 			}
 		case []interface{}:
-			c.handlePublicChannel(chanID, sub.Request.Channel, data)
+			return c.handlePublicChannel(chanID, sub.Request.Channel, "", data)
 		}
 	} else {
-		c.handlePrivateChannel(raw)
+		return c.handlePrivateChannel(raw)
 	}
 	return nil
 }
 
-func (c *Client) handlePublicChannel(chanID int64, channel string, data []interface{}) error {
+func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data []interface{}) error {
 	// unauthenticated data slice
 	// returns interface{} (which is really [][]float64)
 	obj, err := c.processDataSlice(data)
@@ -66,31 +65,24 @@ func (c *Client) handlePublicChannel(chanID int64, channel string, data []interf
 			for i, ft := range flt[0] {
 				arr[i] = ft
 			}
-			msg, err := factory(chanID, arr)
+			msg, err := factory.Build(chanID, objType, arr)
 			if err != nil {
-				// factory error
 				return err
 			}
-			c.listener <- msg
-		} else if len(flt) > 1 {
-			// snapshot
-			for _, fta := range flt {
-				sub := make([]interface{}, len(fta))
-				for j, ft := range fta {
-					sub[j] = ft
-				}
-				msg, err := factory(chanID, sub)
-				if err != nil {
-					return err
-				}
+			if msg != nil {
 				c.listener <- msg
 			}
-		} else {
-			return fmt.Errorf("data too small to process: %#v", obj)
+		} else if len(flt) > 1 {
+			msg, err := factory.BuildSnapshot(chanID, flt)
+			if err != nil {
+				return err
+			}
+			if msg != nil {
+				c.listener <- msg
+			}
 		}
 	} else {
 		// factory lookup error
-		log.Printf("could not find public factory for %s channel", channel)
 		return fmt.Errorf("could not find public factory for %s channel", channel)
 	}
 	return nil
@@ -200,207 +192,207 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		if err != nil {
 			return err
 		}
-		bu := bitfinex.BalanceUpdate(o)
+		bu := bitfinex.BalanceUpdate(*o)
 		return &bu
 	case "ps":
 		o, err := bitfinex.NewPositionSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "pn":
 		o, err := bitfinex.NewPositionFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		pn := bitfinex.PositionNew(o)
+		pn := bitfinex.PositionNew(*o)
 		return &pn
 	case "pu":
 		o, err := bitfinex.NewPositionFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		pu := bitfinex.PositionUpdate(o)
+		pu := bitfinex.PositionUpdate(*o)
 		return &pu
 	case "pc":
 		o, err := bitfinex.NewPositionFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		pc := bitfinex.PositionCancel(o)
+		pc := bitfinex.PositionCancel(*o)
 		return &pc
 	case "ws":
 		o, err := bitfinex.NewWalletSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "wu":
 		o, err := bitfinex.NewWalletFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		wu := bitfinex.WalletUpdate(o)
+		wu := bitfinex.WalletUpdate(*o)
 		return &wu
 	case "os":
 		o, err := bitfinex.NewOrderSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "on":
 		o, err := bitfinex.NewOrderFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		on := bitfinex.OrderNew(o)
+		on := bitfinex.OrderNew(*o)
 		return &on
 	case "ou":
 		o, err := bitfinex.NewOrderFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		ou := bitfinex.OrderUpdate(o)
+		ou := bitfinex.OrderUpdate(*o)
 		return &ou
 	case "oc":
 		o, err := bitfinex.NewOrderFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		oc := bitfinex.OrderCancel(o)
+		oc := bitfinex.OrderCancel(*o)
 		return &oc
 	case "hts":
-		o, err := bitfinex.NewTradeSnapshotFromRaw(raw)
+		o, err := bitfinex.NewTradeExecutionUpdateSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		hts := bitfinex.HistoricalTradeSnapshot(o)
+		hts := bitfinex.HistoricalTradeSnapshot(*o)
 		return &hts
 	case "te":
 		o, err := bitfinex.NewTradeExecutionFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "tu":
 		tu, err := bitfinex.NewTradeExecutionUpdateFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &tu
+		return tu
 	case "fte":
 		o, err := bitfinex.NewFundingTradeFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fte := bitfinex.FundingTradeExecution(o)
+		fte := bitfinex.FundingTradeExecution(*o)
 		return &fte
 	case "ftu":
 		o, err := bitfinex.NewFundingTradeFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		ftu := bitfinex.FundingTradeUpdate(o)
+		ftu := bitfinex.FundingTradeUpdate(*o)
 		return &ftu
 	case "hfts":
 		o, err := bitfinex.NewFundingTradeSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		nfts := bitfinex.HistoricalFundingTradeSnapshot(o)
+		nfts := bitfinex.HistoricalFundingTradeSnapshot(*o)
 		return &nfts
 	case "n":
 		o, err := bitfinex.NewNotificationFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "fos":
 		o, err := bitfinex.NewFundingOfferSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "fon":
 		o, err := bitfinex.NewOfferFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fon := bitfinex.FundingOfferNew(o)
+		fon := bitfinex.FundingOfferNew(*o)
 		return &fon
 	case "fou":
 		o, err := bitfinex.NewOfferFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fou := bitfinex.FundingOfferUpdate(o)
+		fou := bitfinex.FundingOfferUpdate(*o)
 		return &fou
 	case "foc":
 		o, err := bitfinex.NewOfferFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		foc := bitfinex.FundingOfferCancel(o)
+		foc := bitfinex.FundingOfferCancel(*o)
 		return &foc
 	case "fiu":
 		o, err := bitfinex.NewFundingInfoFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "fcs":
 		o, err := bitfinex.NewFundingCreditSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "fcn":
 		o, err := bitfinex.NewCreditFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fcn := bitfinex.FundingCreditNew(o)
+		fcn := bitfinex.FundingCreditNew(*o)
 		return &fcn
 	case "fcu":
 		o, err := bitfinex.NewCreditFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fcu := bitfinex.FundingCreditUpdate(o)
+		fcu := bitfinex.FundingCreditUpdate(*o)
 		return &fcu
 	case "fcc":
 		o, err := bitfinex.NewCreditFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fcc := bitfinex.FundingCreditCancel(o)
+		fcc := bitfinex.FundingCreditCancel(*o)
 		return &fcc
 	case "fls":
 		o, err := bitfinex.NewFundingLoanSnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		return &o
+		return o
 	case "fln":
 		o, err := bitfinex.NewLoanFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fln := bitfinex.FundingLoanNew(o)
+		fln := bitfinex.FundingLoanNew(*o)
 		return &fln
 	case "flu":
 		o, err := bitfinex.NewLoanFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		flu := bitfinex.FundingLoanUpdate(o)
+		flu := bitfinex.FundingLoanUpdate(*o)
 		return &flu
 	case "flc":
 		o, err := bitfinex.NewLoanFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		flc := bitfinex.FundingLoanCancel(o)
+		flc := bitfinex.FundingLoanCancel(*o)
 		return &flc
 		//case "uac":
 	case "hb":
@@ -423,16 +415,15 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		// return a strongly typed reference, rather than dereference a generic interface
 		// too bad golang doesn't inherit an interface's underlying type when creating a reference to the interface
-		if _, ok := o.(bitfinex.MarginInfoBase); ok {
-			base := o.(bitfinex.MarginInfoBase)
-			return &base
+		if base, ok := o.(*bitfinex.MarginInfoBase); ok {
+			return base
 		}
-		if _, ok := o.(bitfinex.MarginInfoUpdate); ok {
-			update := o.(bitfinex.MarginInfoUpdate)
-			return &update
+		if update, ok := o.(*bitfinex.MarginInfoUpdate); ok {
+			return update
 		}
-		return nil
+		return o // better than nothing
 	default:
+		log.Printf("unhandled channel data, term: %s", term)
 	}
 
 	return fmt.Errorf("term %q not recognized", term)

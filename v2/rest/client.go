@@ -25,8 +25,13 @@ type Client struct {
 	Positions PositionService
 	Trades    TradeService
 	Platform  PlatformService
+	Book      BookService
 
 	Synchronous
+}
+
+func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
+	return NewClientWithURLHttpDo(productionBaseURL, httpDo)
 }
 
 func NewClient() *Client {
@@ -36,8 +41,8 @@ func NewClient() *Client {
 	return NewClientWithHttpDo(httpDo)
 }
 
-func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
-	url, _ := url.Parse(productionBaseURL)
+func NewClientWithURLHttpDo(base string, httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
+	url, _ := url.Parse(base)
 	sync := &HttpTransport{
 		BaseURL:    url,
 		httpDo:     httpDo,
@@ -46,12 +51,23 @@ func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Res
 	return NewClientWithSynchronous(sync)
 }
 
+func NewClientWithURL(url string) *Client {
+	httpDo := func(c *http.Client, req *http.Request) (*http.Response, error) {
+		return c.Do(req)
+	}
+	return NewClientWithURLHttpDo(url, httpDo)
+}
+
 // mock me
 func NewClientWithSynchronous(sync Synchronous) *Client {
 	c := &Client{
 		Synchronous: sync,
 	}
 	c.Orders = OrderService{Synchronous: c}
+	c.Book = BookService{Synchronous: c}
+	c.Trades = TradeService{Synchronous: c}
+	c.Platform = PlatformService{Synchronous: c}
+	c.Positions = PositionService{Synchronous: c}
 	return c
 }
 

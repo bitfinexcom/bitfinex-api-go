@@ -10,7 +10,7 @@ type eventType struct {
 }
 
 type InfoEvent struct {
-	Version int `json:"version"`
+	Version float64 `json:"version"`
 }
 
 type RawEvent struct {
@@ -95,10 +95,6 @@ func (c *Client) handleEvent(msg []byte) error {
 	case "auth":
 		a := AuthEvent{}
 		err = json.Unmarshal(msg, &a)
-		if err != nil {
-			return err
-		}
-		err = c.subscriptions.activate(a.SubID, a.ChanID)
 		if err != nil {
 			return err
 		}

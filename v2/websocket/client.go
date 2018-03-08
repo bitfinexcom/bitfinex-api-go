@@ -37,10 +37,13 @@ const (
 
 // Book precision levels
 const (
+	// Aggregate precision levels
 	Precision0 BookPrecision = "P0"
 	Precision2 BookPrecision = "P2"
 	Precision1 BookPrecision = "P1"
 	Precision3 BookPrecision = "P3"
+	// Raw precision
+	PrecisionRawBook BookPrecision = "R0"
 )
 
 // private type
@@ -128,6 +131,7 @@ type Client struct {
 	isConnected        bool
 	terminal           bool
 	resetSubscriptions []*subscription
+	init               bool
 
 	// connection & operational behavior
 	parameters *Parameters
@@ -223,42 +227,10 @@ func extractSymbolResolutionFromKey(subscription string) (symbol string, resolut
 }
 
 func (c *Client) registerPublicFactories() {
-	c.registerFactory(ChanTicker, func(chanID int64, raw []interface{}) (interface{}, error) {
-		sub, err := c.subscriptions.lookupByChannelID(chanID)
-		if err == nil {
-			tick, err := bitfinex.NewTickerFromRaw(sub.Request.Symbol, raw)
-			return &tick, err
-		}
-		return nil, err
-	})
-	c.registerFactory(ChanTrades, func(chanID int64, raw []interface{}) (interface{}, error) {
-		sub, err := c.subscriptions.lookupByChannelID(chanID)
-		if err == nil {
-			trade, err := bitfinex.NewTradeFromRaw(sub.Request.Symbol, raw)
-			return &trade, err
-		}
-		return nil, err
-	})
-	c.registerFactory(ChanBook, func(chanID int64, raw []interface{}) (interface{}, error) {
-		sub, err := c.subscriptions.lookupByChannelID(chanID)
-		if err == nil {
-			update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, raw)
-			return &update, err
-		}
-		return nil, err
-	})
-	c.registerFactory(ChanCandles, func(chanID int64, raw []interface{}) (interface{}, error) {
-		sub, err := c.subscriptions.lookupByChannelID(chanID)
-		if err != nil {
-			return nil, err
-		}
-		sym, res, err := extractSymbolResolutionFromKey(sub.Request.Key)
-		if err != nil {
-			return nil, err
-		}
-		book, err := bitfinex.NewCandleFromRaw(sym, res, raw)
-		return &book, err
-	})
+	c.registerFactory(ChanTicker, newTickerFactory(c.subscriptions))
+	c.registerFactory(ChanTrades, newTradeFactory(c.subscriptions))
+	c.registerFactory(ChanBook, newBookFactory(c.subscriptions))
+	c.registerFactory(ChanCandles, newCandlesFactory(c.subscriptions))
 }
 
 // IsConnected returns true if the underlying asynchronous transport is connected to an endpoint.
@@ -313,6 +285,7 @@ func (c *Client) reset() {
 		c.resetSubscriptions = subs
 	}
 	c.shutdown = make(chan bool)
+	c.init = true
 	c.asynchronous = c.asyncFactory.Create()
 	// wait for shutdown signals from child & caller
 	go c.listenDisconnect()
@@ -394,6 +367,9 @@ func (c *Client) close(e error) {
 }
 
 func (c *Client) closeAsyncAndWait(t time.Duration) {
+	if !c.init {
+		return
+	}
 	timeout := make(chan bool)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -469,7 +445,10 @@ func (c *Client) checkResubscription() {
 			}
 			sub.Request.SubID = c.nonce.GetNonce() // new nonce
 			log.Printf("resubscribing to %s with nonce %s", sub.Request.String(), sub.Request.SubID)
-			c.Subscribe(context.Background(), sub.Request)
+			_, err := c.Subscribe(context.Background(), sub.Request)
+			if err != nil {
+				log.Printf("could not resubscribe: %s", err.Error())
+			}
 		}
 	}
 }

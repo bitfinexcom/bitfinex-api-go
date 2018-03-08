@@ -78,6 +78,8 @@ func TestPublicTicker(t *testing.T) {
 					subs <- m
 				case *websocket.InfoEvent:
 					infos <- m
+				case *bitfinex.TickerSnapshot:
+					tick <- m
 				case *bitfinex.Ticker:
 					tick <- m
 				default:
@@ -87,7 +89,7 @@ func TestPublicTicker(t *testing.T) {
 		}
 	}()
 
-	ctx, cxl := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
 	id, err := c.SubscribeTicker(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
@@ -142,6 +144,8 @@ func TestPublicTrades(t *testing.T) {
 					subs <- m
 				case *websocket.InfoEvent:
 					infos <- m
+				case *bitfinex.TradeExecutionUpdateSnapshot:
+					trades <- m
 				case *bitfinex.Trade:
 					trades <- m
 				case *bitfinex.TradeExecutionUpdate:
@@ -157,7 +161,7 @@ func TestPublicTrades(t *testing.T) {
 		}
 	}()
 
-	ctx, cxl := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
 	id, err := c.SubscribeTrades(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
@@ -212,6 +216,8 @@ func TestPublicBooks(t *testing.T) {
 					subs <- m
 				case *websocket.InfoEvent:
 					infos <- m
+				case *bitfinex.BookUpdateSnapshot:
+					books <- m
 				case *bitfinex.BookUpdate:
 					books <- m
 				default:
@@ -221,14 +227,14 @@ func TestPublicBooks(t *testing.T) {
 		}
 	}()
 
-	ctx, cxl := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
 	id, err := c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, websocket.Precision0, websocket.FrequencyRealtime, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := wait2(books, 1, errch, 2*time.Second); err != nil {
+	if err := wait2(books, 1, errch, 5*time.Second); err != nil {
 		t.Fatalf("failed to receive book update message from websocket: %s", err)
 	}
 
@@ -237,7 +243,7 @@ func TestPublicBooks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := wait2(unsubs, 1, errch, 2*time.Second); err != nil {
+	if err := wait2(unsubs, 1, errch, 5*time.Second); err != nil {
 		t.Errorf("failed to receive unsubscribe message from websocket: %s", err)
 	}
 }
@@ -278,6 +284,8 @@ func TestPublicCandles(t *testing.T) {
 					infos <- m
 				case *bitfinex.Candle:
 					candles <- m
+				case *bitfinex.CandleSnapshot:
+					candles <- m
 				default:
 					t.Logf("test recv: %#v", msg)
 				}
@@ -285,7 +293,7 @@ func TestPublicCandles(t *testing.T) {
 		}
 	}()
 
-	ctx, cxl := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
 	id, err := c.SubscribeCandles(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.OneMonth)
 	if err != nil {

@@ -17,18 +17,18 @@ func main() {
 		log.Fatal("Error connecting to web socket : ", err)
 	}
 
-	// subscribe to BTCUSD ticker
-	ctx, cxl1 := context.WithTimeout(context.Background(), time.Second*1)
+	// subscribe to BTCUSD book
+	ctx, cxl1 := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl1()
-	_, err = c.SubscribeTicker(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
+	_, err = c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, websocket.Precision0, websocket.FrequencyRealtime, 25)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// subscribe to IOTUSD trades
-	ctx, cxl2 := context.WithTimeout(context.Background(), time.Second*1)
+	// subscribe to BTCUSD trades
+	ctx, cxl2 := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl2()
-	_, err = c.SubscribeTrades(ctx, bitfinex.TradingPrefix+bitfinex.IOTUSD)
+	_, err = c.SubscribeTrades(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
 		log.Fatal(err)
 	}

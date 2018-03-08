@@ -30,8 +30,8 @@ func TestOrdersAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(orders) != 3 {
-		t.Fatalf("expected three orders but got %d", len(orders))
+	if len(orders.Snapshot) != 3 {
+		t.Fatalf("expected three orders but got %d", len(orders.Snapshot))
 	}
 }
 
@@ -56,8 +56,8 @@ func TestOrdersHistory(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(orders) != 3 {
-		t.Errorf("expected three orders but got %d", len(orders))
+	if len(orders.Snapshot) != 3 {
+		t.Errorf("expected three orders but got %d", len(orders.Snapshot))
 	}
 
 	_, err = NewClient().Orders.History("")
