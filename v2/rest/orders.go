@@ -52,21 +52,18 @@ func (s *OrderService) Status(orderID int64) (o *bitfinex.Order, err error) {
 }
 
 // All returns all orders for the authenticated account.
-func (s *OrderService) History(symbol string) (*bitfinex.OrderSnapshot, error) {
+func (s *OrderService) History(symbol string, params ...map[string]interface{}) (*bitfinex.OrderSnapshot, error) {
 	if symbol == "" {
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
 
-	// r := NewRequest(path.Join("orders", symbol, "hist"))
-	r, err := s.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders"), nil)
+	p := ReadParams(params...)
+	r, err := s.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders", symbol, "hist"), p)
 	if err != nil {
 		return nil, err
 	}
 
 	raw, err := s.Request(r)
-
-	// raw, err := s.Request(NewRequest(path.Join("orders", symbol, "hist")))
-
 	if err != nil {
 		return nil, err
 	}

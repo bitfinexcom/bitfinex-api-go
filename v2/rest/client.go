@@ -117,6 +117,17 @@ func NewRequestWithDataMethod(refURL string, data map[string]interface{}, method
 	}
 }
 
+func ReadParams(params ...map[string]interface{}) map[string]interface{} {
+	var p map[string]interface{}
+	if len(params) > 0 {
+		p = params[0]
+	} else {
+		p = make(map[string]interface{})
+	}
+
+	return p
+}
+
 // newResponse creates new wrapper.
 func newResponse(r *http.Response) *Response {
 	// Use a LimitReader of arbitrary size (here ~8.39MB) to prevent us from
