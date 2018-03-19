@@ -2,13 +2,15 @@ package rest
 
 import (
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"path"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // OrderService manages data flow for the Order API endpoint
 type OrderService struct {
 	Synchronous
+	Authenticator
 }
 
 // All returns all orders for the authenticated account.
@@ -55,7 +57,15 @@ func (s *OrderService) History(symbol string) (*bitfinex.OrderSnapshot, error) {
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
 
-	raw, err := s.Request(NewRequest(path.Join("orders", symbol, "hist")))
+	// r := NewRequest(path.Join("orders", symbol, "hist"))
+	r, err := s.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders"), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := s.Request(r)
+
+	// raw, err := s.Request(NewRequest(path.Join("orders", symbol, "hist")))
 
 	if err != nil {
 		return nil, err

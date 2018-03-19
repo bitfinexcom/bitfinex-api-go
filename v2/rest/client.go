@@ -28,6 +28,7 @@ type Client struct {
 	Book      BookService
 
 	Synchronous
+	Authenticator
 }
 
 func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
@@ -61,9 +62,11 @@ func NewClientWithURL(url string) *Client {
 // mock me
 func NewClientWithSynchronous(sync Synchronous) *Client {
 	c := &Client{
-		Synchronous: sync,
+		Synchronous:   sync,
+		Authenticator: NewAuthenticator(),
 	}
-	c.Orders = OrderService{Synchronous: c}
+
+	c.Orders = OrderService{Synchronous: c, Authenticator: c.Authenticator}
 	c.Book = BookService{Synchronous: c}
 	c.Trades = TradeService{Synchronous: c}
 	c.Platform = PlatformService{Synchronous: c}
@@ -72,6 +75,8 @@ func NewClientWithSynchronous(sync Synchronous) *Client {
 }
 
 func (c Client) Credentials(key string, secret string) *Client {
+	c.Authenticator.SetCredentials(key, secret)
+
 	c.apiKey = key
 	c.apiSecret = secret
 	return &c
@@ -79,10 +84,11 @@ func (c Client) Credentials(key string, secret string) *Client {
 
 // Request is a wrapper for standard http.Request.  Default method is POST with no data.
 type Request struct {
-	RefURL string                 // ref url
-	Data   map[string]interface{} // body data
-	Method string                 // http method
-	Params url.Values             // query parameters
+	RefURL  string                 // ref url
+	Data    map[string]interface{} // body data
+	Method  string                 // http method
+	Params  url.Values             // query parameters
+	Headers map[string]string
 }
 
 // Response is a wrapper for standard http.Response and provides more methods.

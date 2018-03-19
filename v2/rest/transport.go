@@ -37,6 +37,9 @@ func (h HttpTransport) Request(req Request) ([]interface{}, error) {
 
 	u := h.BaseURL.ResolveReference(rel)
 	httpReq, err := http.NewRequest(req.Method, u.String(), body)
+	for k, v := range req.Headers {
+		httpReq.Header.Add(k, v)
+	}
 
 	if err != nil {
 		return nil, err

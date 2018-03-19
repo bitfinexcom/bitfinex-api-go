@@ -20,16 +20,16 @@ func main() {
 	secret := os.Getenv("BFX_API_SECRET")
 	c := rest.NewClient().Credentials(key, secret)
 
-	available, err := c.Platform.Status()
-	if err != nil {
-		log.Fatalf("getting status: %s", err)
-	}
+	// available, err := c.Platform.Status()
+	// if err != nil {
+	// 	log.Fatalf("getting status: %s", err)
+	// }
 
-	if !available {
-		log.Fatalf("API not available")
-	}
+	// if !available {
+	// 	log.Fatalf("API not available")
+	// }
 
-	os, err := c.Orders.History(bitfinex.TradingPrefix + bitfinex.IOTBTC)
+	os, err := c.Orders.History(bitfinex.TradingPrefix + bitfinex.BTCUSD)
 	if err != nil {
 		log.Fatalf("getting orders: %s", err)
 	}
