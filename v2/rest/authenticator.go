@@ -14,13 +14,24 @@ type Authenticator interface {
 	NewAuthenticatedPostRequest(string, map[string]interface{}) (Request, error)
 }
 
+type Noncer interface {
+	CreateNonce() string
+}
+
+type noncer struct{}
+
+func (n *noncer) CreateNonce() string {
+	return strconv.FormatInt(time.Now().UnixNano()/10000, 10)
+}
+
 type authenticator struct {
 	Key    string
 	Secret string
+	Noncer
 }
 
 func NewAuthenticator() Authenticator {
-	return &authenticator{}
+	return &authenticator{Noncer: &noncer{}}
 }
 
 func (a *authenticator) SetCredentials(key string, secret string) {
@@ -49,7 +60,7 @@ func (a *authenticator) authHeaders(path string, data map[string]interface{}) (a
 		data = make(map[string]interface{})
 	}
 
-	nonce := strconv.FormatInt(time.Now().UnixNano()/10000, 10)
+	nonce := a.CreateNonce()
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		return
