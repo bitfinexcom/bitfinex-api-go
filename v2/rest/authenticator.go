@@ -11,21 +11,28 @@ import (
 
 type Authenticator interface {
 	SetCredentials(key string, secret string)
+	SetNonceGenerator(utils.NonceGenerator)
 	NewAuthenticatedPostRequest(string, map[string]interface{}) (Request, error)
 }
 
 type authenticator struct {
 	Key    string
 	Secret string
+	utils.NonceGenerator
 }
 
 func NewAuthenticator() Authenticator {
-	return &authenticator{}
+	return &authenticator{NonceGenerator: utils.NewEpochNonceGenerator()}
 }
 
 func (a *authenticator) SetCredentials(key string, secret string) {
 	a.Key = key
 	a.Secret = secret
+}
+
+// For late binding Nonce Generator
+func (a *authenticator) SetNonceGenerator(ng utils.NonceGenerator) {
+	a.NonceGenerator = ng
 }
 
 func (a *authenticator) NewAuthenticatedPostRequest(refURL string, data map[string]interface{}) (req Request, err error) {
@@ -51,7 +58,7 @@ func (a *authenticator) authHeaders(path string, data map[string]interface{}) (a
 		data = make(map[string]interface{})
 	}
 
-	nonce := GetNonce()
+	nonce := a.GetNonce()
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		return

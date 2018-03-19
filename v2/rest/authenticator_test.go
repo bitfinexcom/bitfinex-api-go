@@ -5,16 +5,16 @@ import (
 	"testing"
 )
 
+type mockNonceGenerator struct{}
+
+func (mng *mockNonceGenerator) GetNonce() string {
+	return "152145189228798"
+}
+
 func TestNewAuthenticatedPostRequest(t *testing.T) {
-	gn := GetNonce
-	defer func() { GetNonce = gn }()
-
-	GetNonce = func() string {
-		return "152145189228798"
-	}
-
 	a := NewAuthenticator()
 	a.SetCredentials("abc", "123")
+	a.SetNonceGenerator(&mockNonceGenerator{})
 
 	req, err := a.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders", "BTCUSD", "hist"), nil)
 	if err != nil {
@@ -43,15 +43,9 @@ func TestNewAuthenticatedPostRequest(t *testing.T) {
 }
 
 func TestNewAuthenticatedPostRequestWithParams(t *testing.T) {
-	gn := GetNonce
-	defer func() { GetNonce = gn }()
-
-	GetNonce = func() string {
-		return "152145189228798"
-	}
-
 	a := NewAuthenticator()
 	a.SetCredentials("abc", "123")
+	a.SetNonceGenerator(&mockNonceGenerator{})
 
 	params := make(map[string]interface{})
 	params["limit"] = 2
