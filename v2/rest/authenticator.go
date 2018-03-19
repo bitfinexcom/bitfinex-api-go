@@ -5,8 +5,8 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
-	"strconv"
-	"time"
+
+	"github.com/bitfinexcom/bitfinex-api-go/utils"
 )
 
 type Authenticator interface {
@@ -14,24 +14,13 @@ type Authenticator interface {
 	NewAuthenticatedPostRequest(string, map[string]interface{}) (Request, error)
 }
 
-type Noncer interface {
-	CreateNonce() string
-}
-
-type noncer struct{}
-
-func (n *noncer) CreateNonce() string {
-	return strconv.FormatInt(time.Now().UnixNano()/10000, 10)
-}
-
 type authenticator struct {
 	Key    string
 	Secret string
-	Noncer
 }
 
 func NewAuthenticator() Authenticator {
-	return &authenticator{Noncer: &noncer{}}
+	return &authenticator{}
 }
 
 func (a *authenticator) SetCredentials(key string, secret string) {
@@ -55,12 +44,14 @@ func (a *authenticator) NewAuthenticatedPostRequest(refURL string, data map[stri
 	return
 }
 
+var GetNonce = utils.GetNonce
+
 func (a *authenticator) authHeaders(path string, data map[string]interface{}) (ah map[string]string, err error) {
 	if data == nil {
 		data = make(map[string]interface{})
 	}
 
-	nonce := a.CreateNonce()
+	nonce := GetNonce()
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		return

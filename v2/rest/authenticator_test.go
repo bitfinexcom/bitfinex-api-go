@@ -5,14 +5,15 @@ import (
 	"testing"
 )
 
-type mockNoncer struct{}
-
-func (mn *mockNoncer) CreateNonce() string {
-	return "152145189228798"
-}
-
 func TestNewAuthenticatedPostRequest(t *testing.T) {
-	a := &authenticator{Noncer: &mockNoncer{}}
+	gn := GetNonce
+	defer func() { GetNonce = gn }()
+
+	GetNonce = func() string {
+		return "152145189228798"
+	}
+
+	a := NewAuthenticator()
 	a.SetCredentials("abc", "123")
 
 	req, err := a.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders", "BTCUSD", "hist"), nil)
@@ -42,7 +43,14 @@ func TestNewAuthenticatedPostRequest(t *testing.T) {
 }
 
 func TestNewAuthenticatedPostRequestWithParams(t *testing.T) {
-	a := &authenticator{Noncer: &mockNoncer{}}
+	gn := GetNonce
+	defer func() { GetNonce = gn }()
+
+	GetNonce = func() string {
+		return "152145189228798"
+	}
+
+	a := NewAuthenticator()
 	a.SetCredentials("abc", "123")
 
 	params := make(map[string]interface{})
