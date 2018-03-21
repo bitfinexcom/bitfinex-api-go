@@ -53,7 +53,6 @@ func (w *ws) Connect() error {
 	log.Printf("connecting ws to %s", w.BaseURL)
 	ws, resp, err := d.Dial(w.BaseURL, nil)
 	if err != nil {
-		close(w.downstream) // signal to parent connection failure thru listen channel
 		if err == websocket.ErrBadHandshake {
 			log.Printf("bad handshake: status code %d", resp.StatusCode)
 		}
