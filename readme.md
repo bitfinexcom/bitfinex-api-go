@@ -1,7 +1,7 @@
 # Bitfinex Trading API for Golang. Bitcoin, Ether and Litecoin trading
 * Official implementation
 * REST API
-* WebSockets API 
+* WebSockets API
 
 ## Installation
 
@@ -51,6 +51,25 @@ if err != nil {
 } else {
     return order
 }
+```
+
+
+### Getting orders via v2 REST API
+``` go
+restClient = rest.NewClient().Credentials("key", "secret")
+
+// Optionally you can set nonce generator for the authenticator and share it with REST and websocket
+// This is typically needed when you use one API key for websocket and REST API and you want to make requests simultaneously
+// utils is defined in github.com/bitfinexcom/bitfinex-api-go/utils
+nonceGenerator := utils.NewEpochNonceGenerator()
+restClient.SetNonceGenerator(nonceGenerator)
+
+os, err := c.Orders.All(bitfinex.TradingPrefix + bitfinex.ETHUSD)
+if err != nil {
+	log.Fatalf("getting orders: %s", err)
+}
+
+log.Printf("orders: %#v\n", os)
 ```
 
 See [examples](https://github.com/bitfinexcom/bitfinex-api-go/tree/master/examples) and [doc.go](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/doc.go) for more examples.

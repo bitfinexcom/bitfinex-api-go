@@ -24,7 +24,7 @@ func TestOrdersAll(t *testing.T) {
 		return &resp, nil
 	}
 
-	orders, err := NewClientWithHttpDo(httpDo).Orders.All("")
+	orders, err := NewClientWithHttpDo(httpDo).Orders.All("BTCUSD")
 
 	if err != nil {
 		t.Error(err)
