@@ -8,13 +8,17 @@ import (
 
 // OrderService manages data flow for the Order API endpoint
 type OrderService struct {
+	requestFactory
 	Synchronous
 }
 
 // All returns all orders for the authenticated account.
 func (s *OrderService) All(symbol string) (*bitfinex.OrderSnapshot, error) {
-	raw, err := s.Request(NewRequest(path.Join("orders", symbol)))
-
+	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +58,11 @@ func (s *OrderService) History(symbol string) (*bitfinex.OrderSnapshot, error) {
 	if symbol == "" {
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
-
-	raw, err := s.Request(NewRequest(path.Join("orders", symbol, "hist")))
-
+	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol, "hist"))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
 	if err != nil {
 		return nil, err
 	}

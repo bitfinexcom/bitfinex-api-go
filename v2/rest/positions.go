@@ -6,12 +6,17 @@ import (
 
 // PositionService manages the Position endpoint.
 type PositionService struct {
+	requestFactory
 	Synchronous
 }
 
 // All returns all positions for the authenticated account.
 func (s *PositionService) All() (*bitfinex.PositionSnapshot, error) {
-	raw, err := s.Request(NewRequest("positions"))
+	req, err := s.requestFactory.NewAuthenticatedRequest("positions")
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
 
 	if err != nil {
 		return nil, err
