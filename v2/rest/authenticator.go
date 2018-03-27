@@ -51,8 +51,6 @@ func (a *authenticator) NewAuthenticatedPostRequest(refURL string, data map[stri
 	return
 }
 
-var GetNonce = utils.GetNonce
-
 func (a *authenticator) authHeaders(path string, data map[string]interface{}) (ah map[string]string, err error) {
 	if data == nil {
 		data = make(map[string]interface{})

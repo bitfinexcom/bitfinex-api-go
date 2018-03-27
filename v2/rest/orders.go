@@ -15,8 +15,16 @@ type OrderService struct {
 
 // All returns all orders for the authenticated account.
 func (s *OrderService) All(symbol string) (*bitfinex.OrderSnapshot, error) {
-	raw, err := s.Request(NewRequest(path.Join("orders", symbol)))
+	if symbol == "" {
+		return nil, fmt.Errorf("symbol cannot be empty")
+	}
 
+	r, err := s.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders", symbol), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := s.Request(r)
 	if err != nil {
 		return nil, err
 	}
