@@ -2,19 +2,29 @@ package rest
 
 import (
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"path"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // OrderService manages data flow for the Order API endpoint
 type OrderService struct {
 	Synchronous
+	Authenticator
 }
 
 // All returns all orders for the authenticated account.
 func (s *OrderService) All(symbol string) (*bitfinex.OrderSnapshot, error) {
-	raw, err := s.Request(NewRequest(path.Join("orders", symbol)))
+	if symbol == "" {
+		return nil, fmt.Errorf("symbol cannot be empty")
+	}
 
+	r, err := s.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders", symbol), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := s.Request(r)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +60,18 @@ func (s *OrderService) Status(orderID int64) (o *bitfinex.Order, err error) {
 }
 
 // All returns all orders for the authenticated account.
-func (s *OrderService) History(symbol string) (*bitfinex.OrderSnapshot, error) {
+func (s *OrderService) History(symbol string, params ...map[string]interface{}) (*bitfinex.OrderSnapshot, error) {
 	if symbol == "" {
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
 
-	raw, err := s.Request(NewRequest(path.Join("orders", symbol, "hist")))
+	p := ReadParams(params...)
+	r, err := s.NewAuthenticatedPostRequest(path.Join("auth", "r", "orders", symbol, "hist"), p)
+	if err != nil {
+		return nil, err
+	}
 
+	raw, err := s.Request(r)
 	if err != nil {
 		return nil, err
 	}
