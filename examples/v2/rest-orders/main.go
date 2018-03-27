@@ -20,15 +20,22 @@ func main() {
 	secret := os.Getenv("BFX_API_SECRET")
 	c := rest.NewClient().Credentials(key, secret)
 
-	// request without params
-	os, err := c.Orders.History(bitfinex.TradingPrefix + bitfinex.BTCUSD)
+	os, err := c.Orders.All(bitfinex.TradingPrefix + bitfinex.ETHUSD)
 	if err != nil {
 		log.Fatalf("getting orders: %s", err)
 	}
 
 	log.Printf("orders: %#v\n", os)
 
-	// request orders with params
+	// history request without params
+	os, err = c.Orders.History(bitfinex.TradingPrefix + bitfinex.BTCUSD)
+	if err != nil {
+		log.Fatalf("getting orders: %s", err)
+	}
+
+	log.Printf("orders: %#v\n", os)
+
+	// history request orders with params
 	params := make(map[string]interface{})
 	params["limit"] = 2
 
@@ -37,5 +44,5 @@ func main() {
 		log.Fatalf("getting orders: %s", err)
 	}
 
-	log.Printf("orders with params: %#v\n", os)
+	log.Printf("orders: %#v\n", os)
 }
