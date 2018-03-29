@@ -1,8 +1,12 @@
 package rest
 
 import (
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/bitfinexcom/bitfinex-api-go/utils"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +14,11 @@ import (
 )
 
 var productionBaseURL = "https://api.bitfinex.com/v2/"
+
+type requestFactory interface {
+	NewAuthenticatedRequestWithData(refURL string, data map[string]interface{}) (Request, error)
+	NewAuthenticatedRequest(refURL string) (Request, error)
+}
 
 type Synchronous interface {
 	Request(request Request) ([]interface{}, error)
@@ -19,6 +28,7 @@ type Client struct {
 	// base members for synchronous API
 	apiKey    string
 	apiSecret string
+	nonce     utils.NonceGenerator
 
 	// service providers
 	Orders    OrderService
@@ -48,7 +58,7 @@ func NewClientWithURLHttpDo(base string, httpDo func(c *http.Client, r *http.Req
 		httpDo:     httpDo,
 		HTTPClient: http.DefaultClient,
 	}
-	return NewClientWithSynchronous(sync)
+	return NewClientWithSynchronousNonce(sync, utils.NewEpochNonceGenerator()) // make nonce easier to inject?
 }
 
 func NewClientWithURL(url string) *Client {
@@ -58,37 +68,66 @@ func NewClientWithURL(url string) *Client {
 	return NewClientWithURLHttpDo(url, httpDo)
 }
 
-// mock me
-func NewClientWithSynchronous(sync Synchronous) *Client {
+// mock me in tests
+func NewClientWithSynchronousNonce(sync Synchronous, nonce utils.NonceGenerator) *Client {
 	c := &Client{
 		Synchronous: sync,
+		nonce:       nonce,
 	}
-	c.Orders = OrderService{Synchronous: c}
+	c.Orders = OrderService{Synchronous: c, requestFactory: c}
 	c.Book = BookService{Synchronous: c}
-	c.Trades = TradeService{Synchronous: c}
+	c.Trades = TradeService{Synchronous: c, requestFactory: c}
 	c.Platform = PlatformService{Synchronous: c}
-	c.Positions = PositionService{Synchronous: c}
+	c.Positions = PositionService{Synchronous: c, requestFactory: c}
 	return c
 }
 
-func (c Client) Credentials(key string, secret string) *Client {
+func (c *Client) Credentials(key string, secret string) *Client {
 	c.apiKey = key
 	c.apiSecret = secret
-	return &c
+	return c
 }
 
 // Request is a wrapper for standard http.Request.  Default method is POST with no data.
 type Request struct {
-	RefURL string                 // ref url
-	Data   map[string]interface{} // body data
-	Method string                 // http method
-	Params url.Values             // query parameters
+	RefURL  string                 // ref url
+	Data    map[string]interface{} // body data
+	Method  string                 // http method
+	Params  url.Values             // query parameters
+	Headers map[string]string
 }
 
 // Response is a wrapper for standard http.Response and provides more methods.
 type Response struct {
 	Response *http.Response
 	Body     []byte
+}
+
+func (c *Client) sign(msg string) string {
+	sig := hmac.New(sha512.New384, []byte(c.apiSecret))
+	sig.Write([]byte(msg))
+	return hex.EncodeToString(sig.Sum(nil))
+}
+
+func (c *Client) NewAuthenticatedRequest(refURL string) (Request, error) {
+	return c.NewAuthenticatedRequestWithData(refURL, nil)
+}
+
+func (c *Client) NewAuthenticatedRequestWithData(refURL string, data map[string]interface{}) (Request, error) {
+	authURL := "auth/r/" + refURL
+	req := NewRequestWithData(authURL, data)
+	nonce := c.nonce.GetNonce()
+	b, err := json.Marshal(data)
+	if err != nil {
+		return Request{}, err
+	}
+	msg := "/api/v2/" + authURL + nonce + string(b)
+	req.Headers["Content-Type"] = "applicaiton/json"
+	req.Headers["Accept"] = "application/json"
+	req.Headers["bfx-nonce"] = nonce
+	req.Headers["bfx-signature"] = c.sign(msg)
+	req.Headers["bfx-apikey"] = c.apiKey
+	return req, nil
 }
 
 func NewRequest(refURL string) Request {
@@ -105,9 +144,10 @@ func NewRequestWithData(refURL string, data map[string]interface{}) Request {
 
 func NewRequestWithDataMethod(refURL string, data map[string]interface{}, method string) Request {
 	return Request{
-		RefURL: refURL,
-		Data:   data,
-		Method: method,
+		RefURL:  refURL,
+		Data:    data,
+		Method:  method,
+		Headers: make(map[string]string),
 	}
 }
 
