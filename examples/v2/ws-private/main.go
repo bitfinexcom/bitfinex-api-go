@@ -17,9 +17,12 @@ import (
 
 func main() {
 
+	uri := os.Getenv("BFX_API_URI")
 	key := os.Getenv("BFX_API_KEY")
 	secret := os.Getenv("BFX_API_SECRET")
-	c := websocket.New().Credentials(key, secret)
+	p := websocket.NewDefaultParameters()
+	p.URL = uri
+	c := websocket.NewWithParams(p).Credentials(key, secret)
 
 	err := c.Connect()
 	if err != nil {

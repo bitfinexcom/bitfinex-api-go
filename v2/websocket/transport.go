@@ -13,12 +13,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func newWs(baseURL string) *ws {
+func newWs(baseURL string, logTransport bool) *ws {
 	return &ws{
-		BaseURL:    baseURL,
-		downstream: make(chan []byte),
-		shutdown:   make(chan struct{}),
-		finished:   make(chan error),
+		BaseURL:      baseURL,
+		downstream:   make(chan []byte),
+		shutdown:     make(chan struct{}),
+		finished:     make(chan error),
+		logTransport: logTransport,
 	}
 }
 
@@ -29,6 +30,7 @@ type ws struct {
 	TLSSkipVerify bool
 	downstream    chan []byte
 	userShutdown  bool
+	logTransport  bool
 
 	shutdown chan struct{} // signal to kill looping goroutines
 	finished chan error    // signal to parent with error, if applicable
@@ -86,6 +88,9 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 
 	w.wsLock.Lock()
 	defer w.wsLock.Unlock()
+	if w.logTransport {
+		log.Printf("ws->srv: %s", string(bs))
+	}
 	err = w.ws.WriteMessage(websocket.TextMessage, bs)
 	if err != nil {
 		w.cleanup(err)
@@ -125,6 +130,9 @@ func (w *ws) listenWs() {
 			}
 			w.cleanup(err)
 			return
+		}
+		if w.logTransport {
+			log.Printf("srv->ws: %s", string(msg))
 		}
 		w.downstream <- msg
 	}

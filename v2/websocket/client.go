@@ -115,7 +115,7 @@ func NewWebsocketAsynchronousFactory(parameters *Parameters) AsynchronousFactory
 
 // Create returns a new websocket transport.
 func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
-	return newWs(w.parameters.URL)
+	return newWs(w.parameters.URL, w.parameters.LogTransport)
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.

@@ -15,6 +15,7 @@ type Parameters struct {
 	ResubscribeOnReconnect bool
 
 	HeartbeatTimeout time.Duration
+	LogTransport     bool
 
 	URL string
 }
@@ -29,5 +30,6 @@ func NewDefaultParameters() *Parameters {
 		ShutdownTimeout:        time.Second * 5,
 		ResubscribeOnReconnect: true,
 		HeartbeatTimeout:       time.Second * 10, // HB = 5s
+		LogTransport:           false,            // log transport send/recv
 	}
 }
