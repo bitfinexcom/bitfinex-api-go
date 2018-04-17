@@ -35,37 +35,6 @@ const (
 	ChanCandles = "candles"
 )
 
-// Book precision levels
-const (
-	// Aggregate precision levels
-	Precision0 BookPrecision = "P0"
-	Precision2 BookPrecision = "P2"
-	Precision1 BookPrecision = "P1"
-	Precision3 BookPrecision = "P3"
-	// Raw precision
-	PrecisionRawBook BookPrecision = "R0"
-)
-
-// private type
-type bookPrecision string
-
-// BookPrecision provides a typed book precision level.
-type BookPrecision bookPrecision
-
-const (
-	// FrequencyRealtime book frequency gives updates as they occur in real-time.
-	FrequencyRealtime BookFrequency = "F0"
-	// FrequencyTwoPerSecond delivers two book updates per second.
-	FrequencyTwoPerSecond BookFrequency = "F1"
-	// PriceLevelDefault provides a constant default price level for book subscriptions.
-	PriceLevelDefault int = 25
-)
-
-type bookFrequency string
-
-// BookFrequency provides a typed book frequency.
-type BookFrequency bookFrequency
-
 // Events
 const (
 	EventSubscribe   = "subscribe"
@@ -115,7 +84,7 @@ func NewWebsocketAsynchronousFactory(parameters *Parameters) AsynchronousFactory
 
 // Create returns a new websocket transport.
 func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
-	return newWs(w.parameters.URL)
+	return newWs(w.parameters.URL, w.parameters.LogTransport)
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.

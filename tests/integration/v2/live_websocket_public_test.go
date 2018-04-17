@@ -229,7 +229,7 @@ func TestPublicBooks(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
-	id, err := c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, websocket.Precision0, websocket.FrequencyRealtime, 1)
+	id, err := c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 1)
 	if err != nil {
 		t.Fatal(err)
 	}

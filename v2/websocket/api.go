@@ -49,7 +49,7 @@ func (c *Client) SubscribeTrades(ctx context.Context, symbol string) (string, er
 
 // SubscribeBook sends a subscription request for market data for a given symbol, at a given frequency, with a given precision, returning no more than priceLevels price entries.
 // Default values are Precision0, Frequency0, and priceLevels=25.
-func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision BookPrecision, frequency BookFrequency, priceLevel int) (string, error) {
+func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision bitfinex.BookPrecision, frequency bitfinex.BookFrequency, priceLevel int) (string, error) {
 	if priceLevel < 0 {
 		return "", fmt.Errorf("negative price levels not supported: %d", priceLevel)
 	}

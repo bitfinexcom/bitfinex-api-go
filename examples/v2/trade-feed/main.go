@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 	"log"
 	"net/http"
@@ -22,9 +21,9 @@ func main() {
 		for msg := range client.Listen() {
 			log.Printf("recv: %#v", msg)
 			if _, ok := msg.(*websocket.InfoEvent); ok {
-				_, err := client.SubscribeBook(context.Background(), "BTCUSD", bitfinex.Precision0, bitfinex.FrequencyRealtime, 1)
+				_, err := client.SubscribeTrades(context.Background(), "tBTCUSD")
 				if err != nil {
-					log.Printf("could not subscribe to book: %s", err.Error())
+					log.Printf("could not subscribe to trades: %s", err.Error())
 				}
 			}
 		}
