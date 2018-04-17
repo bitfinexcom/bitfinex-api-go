@@ -81,6 +81,37 @@ type orderSide byte
 // OrderSide provides a typed set of order sides.
 type OrderSide orderSide
 
+// Book precision levels
+const (
+	// Aggregate precision levels
+	Precision0 BookPrecision = "P0"
+	Precision2 BookPrecision = "P2"
+	Precision1 BookPrecision = "P1"
+	Precision3 BookPrecision = "P3"
+	// Raw precision
+	PrecisionRawBook BookPrecision = "R0"
+)
+
+// private type
+type bookPrecision string
+
+// BookPrecision provides a typed book precision level.
+type BookPrecision bookPrecision
+
+const (
+	// FrequencyRealtime book frequency gives updates as they occur in real-time.
+	FrequencyRealtime BookFrequency = "F0"
+	// FrequencyTwoPerSecond delivers two book updates per second.
+	FrequencyTwoPerSecond BookFrequency = "F1"
+	// PriceLevelDefault provides a constant default price level for book subscriptions.
+	PriceLevelDefault int = 25
+)
+
+type bookFrequency string
+
+// BookFrequency provides a typed book frequency.
+type BookFrequency bookFrequency
+
 // OrderNewRequest represents an order to be posted to the bitfinex websocket
 // service.
 type OrderNewRequest struct {

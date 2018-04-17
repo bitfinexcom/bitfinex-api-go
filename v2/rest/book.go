@@ -7,28 +7,11 @@ import (
 	"strconv"
 )
 
-// Book precision levels
-const (
-	// Aggregate precision levels
-	Precision0 BookPrecision = "P0"
-	Precision2 BookPrecision = "P2"
-	Precision1 BookPrecision = "P1"
-	Precision3 BookPrecision = "P3"
-	// Raw precision
-	PrecisionRawBook BookPrecision = "R0"
-)
-
-// private type
-type bookPrecision string
-
-// BookPrecision provides a typed book precision level.
-type BookPrecision bookPrecision
-
 type BookService struct {
 	Synchronous
 }
 
-func (b *BookService) All(symbol string, precision BookPrecision, priceLevels int) (*bitfinex.BookUpdateSnapshot, error) {
+func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, priceLevels int) (*bitfinex.BookUpdateSnapshot, error) {
 	req := NewRequestWithMethod(path.Join("book", symbol, string(precision)), "GET")
 	req.Params = make(url.Values)
 	req.Params.Add("len", strconv.Itoa(priceLevels))
