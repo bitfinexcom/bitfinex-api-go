@@ -1236,12 +1236,13 @@ const (
 
 // BookUpdate represents an order book price update.
 type BookUpdate struct {
-	Symbol string
-	Price  float64
-	Count  int64
-	Amount float64
-	Side   OrderSide
-	Action BookAction
+	ID     int64      // the book update ID, optional
+	Symbol string     // book symbol
+	Price  float64    // updated price
+	Count  int64      // updated count, optional
+	Amount float64    // updated amount
+	Side   OrderSide  // side
+	Action BookAction // action (add/remove)
 }
 
 type BookUpdateSnapshot struct {
@@ -1268,20 +1269,26 @@ func IsRawBook(precision string) bool {
 
 // NewBookUpdateFromRaw creates a new book update object from raw data.  Precision determines how
 // to interpret the side (baked into Count versus Amount)
-func NewBookUpdateFromRaw(symbol, precision string, raw []interface{}) (b *BookUpdate, err error) {
-	if len(raw) < 3 {
-		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(raw), raw)
+// raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
+func NewBookUpdateFromRaw(symbol, precision string, data []interface{}) (b *BookUpdate, err error) {
+	if len(data) < 3 {
+		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(data), data)
 	}
+	var px float64
+	var id, cnt int64
+	amt := f64ValOrZero(data[2])
 
-	amt := f64ValOrZero(raw[2])
-	px := f64ValOrZero(raw[0])
-	cnt := i64ValOrZero(raw[1])
 	var side OrderSide
-
 	var actionCtrl float64
 	if IsRawBook(precision) {
+		// [ID, price, amount]
+		id = i64ValOrZero(data[0])
+		px = f64ValOrZero(data[1])
 		actionCtrl = px
 	} else {
+		// [price, amount, count]
+		px = f64ValOrZero(data[0])
+		cnt = i64ValOrZero(data[1])
 		actionCtrl = float64(cnt)
 	}
 
@@ -1305,6 +1312,7 @@ func NewBookUpdateFromRaw(symbol, precision string, raw []interface{}) (b *BookU
 		Amount: math.Abs(amt),
 		Side:   side,
 		Action: action,
+		ID:     id,
 	}
 
 	return
