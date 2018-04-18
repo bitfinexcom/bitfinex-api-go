@@ -49,9 +49,33 @@ type Capabilities struct {
 	Positions Capability `json:"positions"`
 }
 
+// error codes pulled from v2 docs & API usage
+const (
+	ErrorCodeUnknownEvent         int = 10000
+	ErrorCodeUnknownPair              = 10001
+	ErrorCodeUnknownBookPrecision     = 10011
+	ErrorCodeUnknownBookLength        = 10012
+	ErrorCodeSubscriptionFailed       = 10300
+	ErrorCodeAlreadySubscribed        = 10301
+	ErrorCodeUnknownChannel           = 10302
+	ErrorCodeUnsubscribeFailed        = 10400
+	ErrorCodeNotSubscribed            = 10401
+)
+
 type ErrorEvent struct {
 	Code    int    `json:"code"`
 	Message string `json:"msg"`
+
+	// also contain members related to subscription reject
+	SubID     string `json:"subId"`
+	Channel   string `json:"channel"`
+	ChanID    int64  `json:"chanId"`
+	Symbol    string `json:"symbol"`
+	Precision string `json:"prec,omitempty"`
+	Frequency string `json:"freq,omitempty"`
+	Key       string `json:"key,omitempty"`
+	Len       string `json:"len,omitempty"`
+	Pair      string `json:"pair"`
 }
 
 type UnsubscribeEvent struct {
