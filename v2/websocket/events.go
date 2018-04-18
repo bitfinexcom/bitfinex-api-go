@@ -65,6 +65,17 @@ const (
 type ErrorEvent struct {
 	Code    int    `json:"code"`
 	Message string `json:"msg"`
+
+	// also contain members related to subscription reject
+	SubID     string `json:"subId"`
+	Channel   string `json:"channel"`
+	ChanID    int64  `json:"chanId"`
+	Symbol    string `json:"symbol"`
+	Precision string `json:"prec,omitempty"`
+	Frequency string `json:"freq,omitempty"`
+	Key       string `json:"key,omitempty"`
+	Len       string `json:"len,omitempty"`
+	Pair      string `json:"pair"`
 }
 
 type UnsubscribeEvent struct {

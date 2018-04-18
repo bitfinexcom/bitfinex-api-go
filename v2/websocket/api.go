@@ -87,3 +87,12 @@ func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewReques
 func (c *Client) SubmitCancel(ctx context.Context, cancel *bitfinex.OrderCancelRequest) error {
 	return c.asynchronous.Send(ctx, cancel)
 }
+
+// LookupSubscription looks up a subscription request by ID
+func (c *Client) LookupSubscription(subID string) (*SubscriptionRequest, error) {
+	s, err := c.subscriptions.lookupBySubscriptionID(subID)
+	if err != nil {
+		return nil, err
+	}
+	return s.Request, nil
+}
