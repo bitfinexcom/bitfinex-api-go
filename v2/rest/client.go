@@ -121,7 +121,12 @@ func (c *Client) NewAuthenticatedRequestWithData(refURL string, data map[string]
 	if err != nil {
 		return Request{}, err
 	}
-	msg := "/api/v2/" + authURL + nonce + string(b)
+	msg := "/api/v2/" + authURL + nonce
+	if data != nil {
+	  	msg += string(b)
+	} else {
+		msg += "{}"
+	}
 	req.Headers["Content-Type"] = "application/json"
 	req.Headers["Accept"] = "application/json"
 	req.Headers["bfx-nonce"] = nonce
