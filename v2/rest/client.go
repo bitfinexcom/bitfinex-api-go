@@ -122,7 +122,7 @@ func (c *Client) NewAuthenticatedRequestWithData(refURL string, data map[string]
 		return Request{}, err
 	}
 	msg := "/api/v2/" + authURL + nonce + string(b)
-	req.Headers["Content-Type"] = "applicaiton/json"
+	req.Headers["Content-Type"] = "application/json"
 	req.Headers["Accept"] = "application/json"
 	req.Headers["bfx-nonce"] = nonce
 	req.Headers["bfx-signature"] = c.sign(msg)
