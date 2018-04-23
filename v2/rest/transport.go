@@ -37,14 +37,21 @@ func (h HttpTransport) Request(req Request) ([]interface{}, error) {
 
 	u := h.BaseURL.ResolveReference(rel)
 	httpReq, err := http.NewRequest(req.Method, u.String(), body)
-
+	for k, v := range req.Headers {
+		httpReq.Header.Add(k, v)
+	}
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := h.do(httpReq, &raw)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse response: %s", resp.Response.Status)
+		if resp != nil {
+			return nil, fmt.Errorf("%v", err)
+		} else {
+			return nil, fmt.Errorf("could not parse response: %s", resp.Response.Status)
+		}
+
 	}
 
 	return raw, nil
