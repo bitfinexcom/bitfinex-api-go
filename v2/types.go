@@ -112,6 +112,13 @@ type bookFrequency string
 // BookFrequency provides a typed book frequency.
 type BookFrequency bookFrequency
 
+const (
+	OrderFlagHidden   int = 64
+	OrderFlagClose        = 512
+	OrderFlagPostOnly     = 4096
+	OrderFlagOCO          = 16384
+)
+
 // OrderNewRequest represents an order to be posted to the bitfinex websocket
 // service.
 type OrderNewRequest struct {
@@ -139,8 +146,7 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 		Price         float64 `json:"price,string"`
 		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
-		Hidden        int     `json:"hidden,omitempty"`
-		PostOnly      int     `json:"postonly,omitempty"`
+		Flags         int     `json:"flags,omitempty"`
 	}{
 		GID:           o.GID,
 		CID:           o.CID,
@@ -153,11 +159,11 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 	}
 
 	if o.Hidden {
-		aux.Hidden = 1
+		aux.Flags = aux.Flags + OrderFlagHidden
 	}
 
 	if o.PostOnly {
-		aux.PostOnly = 1
+		aux.Flags = aux.Flags + OrderFlagPostOnly
 	}
 
 	body := []interface{}{0, "on", nil, aux}
