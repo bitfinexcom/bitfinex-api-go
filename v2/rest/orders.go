@@ -74,3 +74,20 @@ func (s *OrderService) History(symbol string) (*bitfinex.OrderSnapshot, error) {
 
 	return os, nil
 }
+
+// OrderTrades returns a set of executed trades related to an order.
+func (s *OrderService) OrderTrades(symbol string, orderID int64) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
+	if symbol == "" {
+		return nil, fmt.Errorf("symbol cannot be empty")
+	}
+	key := fmt.Sprintf("%s:%d", symbol, orderID)
+	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("order", key, "trades"))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return bitfinex.NewTradeExecutionUpdateSnapshotFromRaw(raw)
+}
