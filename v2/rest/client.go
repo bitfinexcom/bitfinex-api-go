@@ -40,25 +40,33 @@ type Client struct {
 	Synchronous
 }
 
+func NewClient() *Client {
+	return NewClientWithURLNonce(productionBaseURL, utils.NewEpochNonceGenerator())
+}
+
+func NewClientWithURLNonce(url string, nonce utils.NonceGenerator) *Client {
+	httpDo := func(c *http.Client, req *http.Request) (*http.Response, error) {
+		return c.Do(req)
+	}
+	return NewClientWithURLHttpDoNonce(url, httpDo, nonce)
+}
+
 func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
 	return NewClientWithURLHttpDo(productionBaseURL, httpDo)
 }
 
-func NewClient() *Client {
-	httpDo := func(c *http.Client, req *http.Request) (*http.Response, error) {
-		return c.Do(req)
-	}
-	return NewClientWithHttpDo(httpDo)
+func NewClientWithURLHttpDo(base string, httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
+	return NewClientWithURLHttpDoNonce(base, httpDo, utils.NewEpochNonceGenerator())
 }
 
-func NewClientWithURLHttpDo(base string, httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
+func NewClientWithURLHttpDoNonce(base string, httpDo func(c *http.Client, r *http.Request) (*http.Response, error), nonce utils.NonceGenerator) *Client {
 	url, _ := url.Parse(base)
 	sync := &HttpTransport{
 		BaseURL:    url,
 		httpDo:     httpDo,
 		HTTPClient: http.DefaultClient,
 	}
-	return NewClientWithSynchronousNonce(sync, utils.NewEpochNonceGenerator()) // make nonce easier to inject?
+	return NewClientWithSynchronousNonce(sync, nonce)
 }
 
 func NewClientWithURL(url string) *Client {
@@ -68,8 +76,12 @@ func NewClientWithURL(url string) *Client {
 	return NewClientWithURLHttpDo(url, httpDo)
 }
 
-// mock me in tests
 func NewClientWithSynchronousNonce(sync Synchronous, nonce utils.NonceGenerator) *Client {
+	return NewClientWithSynchronousURLNonce(sync, productionBaseURL, nonce)
+}
+
+// mock me in tests
+func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.NonceGenerator) *Client {
 	c := &Client{
 		Synchronous: sync,
 		nonce:       nonce,
@@ -123,7 +135,7 @@ func (c *Client) NewAuthenticatedRequestWithData(refURL string, data map[string]
 	}
 	msg := "/api/v2/" + authURL + nonce
 	if data != nil {
-	  	msg += string(b)
+		msg += string(b)
 	} else {
 		msg += "{}"
 	}
