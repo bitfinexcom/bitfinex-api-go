@@ -218,6 +218,7 @@ const (
 	OrderTypeFOK                  = "FOK"
 	OrderTypeExchangeFOK          = "EXCHANGE FOK"
 	OrderTypeStopLimit            = "STOP LIMIT"
+	OrderTypeExchangeStopLimit    = "EXCHANGE STOP LIMIT"
 )
 
 // OrderStatus represents the possible statuses an order can be in.
