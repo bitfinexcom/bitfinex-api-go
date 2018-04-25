@@ -56,6 +56,9 @@ type authState byte
 // AuthState provides a typed authentication state.
 type AuthState authState // prevent user construction of authStates
 
+// DMSCancelOnDisconnect cancels session orders on disconnect.
+const DMSCancelOnDisconnect int = 4
+
 // Asynchronous interface decouples the underlying transport from API logic.
 type Asynchronous interface {
 	Connect() error
@@ -94,6 +97,7 @@ type Client struct {
 	timeout            int64 // read timeout
 	apiKey             string
 	apiSecret          string
+	cancelOnDisconnect bool
 	Authentication     AuthState
 	asynchronous       Asynchronous
 	nonce              utils.NonceGenerator
@@ -120,6 +124,12 @@ type Client struct {
 func (c *Client) Credentials(key string, secret string) *Client {
 	c.apiKey = key
 	c.apiSecret = secret
+	return c
+}
+
+// CancelOnDisconnect ensures all orders will be canceled if this API session is disconnected.
+func (c *Client) CancelOnDisconnect(cxl bool) *Client {
+	c.cancelOnDisconnect = cxl
 	return c
 }
 
@@ -473,6 +483,9 @@ func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 		AuthNonce:   nonce,
 		Filter:      filter,
 		SubID:       nonce,
+	}
+	if c.cancelOnDisconnect {
+		s.DMS = DMSCancelOnDisconnect
 	}
 	c.subscriptions.add(s)
 

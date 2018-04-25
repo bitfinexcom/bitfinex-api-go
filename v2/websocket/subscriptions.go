@@ -19,6 +19,7 @@ type SubscriptionRequest struct {
 	AuthPayload string   `json:"authPayload,omitempty"`
 	AuthNonce   string   `json:"authNonce,omitempty"`
 	Filter      []string `json:"filter,omitempty"`
+	DMS         int      `json:"dms,omitempty"` // dead man switch
 
 	// unauthenticated
 	Channel   string `json:"channel,omitempty"`
