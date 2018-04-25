@@ -56,6 +56,9 @@ type authState byte
 // AuthState provides a typed authentication state.
 type AuthState authState // prevent user construction of authStates
 
+// DMSCancelOnDisconnect cancels session orders on disconnect.
+const DMSCancelOnDisconnect int = 4
+
 // Asynchronous interface decouples the underlying transport from API logic.
 type Asynchronous interface {
 	Connect() error
@@ -482,7 +485,7 @@ func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 		SubID:       nonce,
 	}
 	if c.cancelOnDisconnect {
-		s.DMS = true
+		s.DMS = DMSCancelOnDisconnect
 	}
 	c.subscriptions.add(s)
 
