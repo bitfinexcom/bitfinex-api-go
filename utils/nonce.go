@@ -21,7 +21,7 @@ type EpochNonceGenerator struct {
 // key and as such needs to be synchronised with other instances using the same
 // key in order to avoid race conditions.
 func (u *EpochNonceGenerator) GetNonce() string {
-	return strconv.FormatUint(time.Now().UnixNano(), 10)
+	return strconv.FormatInt(time.Now().UnixNano(), 10)
 }
 
 func NewEpochNonceGenerator() *EpochNonceGenerator {
@@ -44,5 +44,5 @@ func init() {
 // key and as such needs to be synchronised with other instances using the same
 // key in order to avoid race conditions.
 func GetNonce() string {
-	return strconv.FormatUint(time.Now().UnixNano(), 10)
+	return strconv.FormatInt(time.Now().UnixNano(), 10)
 }
