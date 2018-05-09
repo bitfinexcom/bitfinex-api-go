@@ -34,6 +34,15 @@ const (
 	OneMonth       CandleResolution = "1M"
 )
 
+type Mts int64
+type SortOrder int
+const (
+	OldestFirst         SortOrder = 1
+	NewestFirst         SortOrder = -1
+)
+type QueryLimit int
+const QueryLimitMax QueryLimit = 1000
+
 func CandleResolutionFromString(str string) (CandleResolution, error) {
 	switch str {
 	case string(OneMinute):
