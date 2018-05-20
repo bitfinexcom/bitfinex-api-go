@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func f64Slice(in []interface{}) ([]float64, error) {
+func F64Slice(in []interface{}) ([]float64, error) {
 	var ret []float64
 	for _, e := range in {
 		if item, ok := e.(float64); ok {
@@ -18,8 +18,15 @@ func f64Slice(in []interface{}) ([]float64, error) {
 }
 
 func i64ValOrZero(i interface{}) int64 {
-	if r, ok := i.(int64); ok {
-		return r
+	if r, ok := i.(float64); ok {
+		return int64(r)
+	}
+	return 0
+}
+
+func iValOrZero(i interface{}) int {
+	if r, ok := i.(float64); ok {
+		return int(r)
 	}
 	return 0
 }
@@ -33,6 +40,13 @@ func i64pValOrNil(i interface{}) *int64 {
 		return &r
 	}
 	return nil
+}
+
+func ui64ValOrZero(i interface{}) uint64 {
+	if r, ok := i.(float64); ok {
+		return uint64(r)
+	}
+	return 0
 }
 
 func f64ValOrZero(i interface{}) float64 {

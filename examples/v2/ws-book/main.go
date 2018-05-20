@@ -6,56 +6,40 @@ import (
 	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
 func main() {
-	c := bitfinex.NewClient()
+	c := websocket.New()
 
-	err := c.Websocket.Connect()
+	err := c.Connect()
 	if err != nil {
 		log.Fatal("Error connecting to web socket : ", err)
 	}
-	c.Websocket.SetReadTimeout(time.Second * 2)
 
-	c.Websocket.AttachEventHandler(func(ev interface{}) {
-		log.Printf("EVENT: %#v", ev)
-	})
-
-	h := func(ev interface{}) {
-		log.Printf("PUBLIC MSG BTCUSD: %#v", ev)
-	}
-
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
-	msg := &bitfinex.PublicSubscriptionRequest{
-		Event:   "subscribe",
-		Channel: bitfinex.ChanTicker,
-		Symbol:  bitfinex.TradingPrefix + bitfinex.BTCUSD,
-	}
-	err = c.Websocket.Subscribe(ctx, msg, h)
+	// subscribe to BTCUSD book
+	ctx, cxl1 := context.WithTimeout(context.Background(), time.Second*5)
+	defer cxl1()
+	_, err = c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	h2 := func(ev interface{}) {
-		log.Printf("PUBLIC MSG IOTUSD: %#v", ev)
-	}
-
-	ctx, _ = context.WithTimeout(context.Background(), time.Second*1)
-	msg = &bitfinex.PublicSubscriptionRequest{
-		Event:   "subscribe",
-		Channel: bitfinex.ChanTrades,
-		Symbol:  bitfinex.TradingPrefix + bitfinex.IOTUSD,
-	}
-	err = c.Websocket.Subscribe(ctx, msg, h2)
+	// subscribe to BTCUSD trades
+	ctx, cxl2 := context.WithTimeout(context.Background(), time.Second*5)
+	defer cxl2()
+	_, err = c.SubscribeTrades(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for {
-		select {
-		case <-c.Websocket.Done():
-			log.Printf("channel closed: %s", c.Websocket.Err())
-			return
+	for obj := range c.Listen() {
+		switch obj.(type) {
+		case error:
+			log.Printf("channel closed: %s", obj)
+			break
+		default:
 		}
+		log.Printf("MSG RECV: %#v", obj)
 	}
 }

@@ -1,14 +1,16 @@
-package bitfinex
+package rest
 
 import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 func TestOrdersAll(t *testing.T) {
-	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
+	httpDo := func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `
 				[
 					[4419360502,null,83283216761,"tIOTBTC",1508281683000,1508281731000,63938,63938,"EXCHANGE LIMIT",null,null,null,null,"CANCELED",null,null,0.0000843,0,0,0,null,null,null,0,0,null],
@@ -22,19 +24,19 @@ func TestOrdersAll(t *testing.T) {
 		return &resp, nil
 	}
 
-	orders, err := NewClient().Orders.All("")
+	orders, err := NewClientWithHttpDo(httpDo).Orders.All("")
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	if len(orders) != 3 {
-		t.Fatalf("expected three orders but got %d", len(orders))
+	if len(orders.Snapshot) != 3 {
+		t.Fatalf("expected three orders but got %d", len(orders.Snapshot))
 	}
 }
 
 func TestOrdersHistory(t *testing.T) {
-	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
+	httpDo := func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `
 				[
 					[4419360502,null,83283216761,"tIOTBTC",1508281683000,1508281731000,63938,63938,"EXCHANGE LIMIT",null,null,null,null,"CANCELED",null,null,0.0000843,0,0,0,null,null,null,0,0,null],
@@ -48,14 +50,14 @@ func TestOrdersHistory(t *testing.T) {
 		return &resp, nil
 	}
 
-	orders, err := NewClient().Orders.History(TradingPrefix + IOTBTC)
+	orders, err := NewClientWithHttpDo(httpDo).Orders.History(bitfinex.TradingPrefix + bitfinex.IOTBTC)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	if len(orders) != 3 {
-		t.Errorf("expected three orders but got %d", len(orders))
+	if len(orders.Snapshot) != 3 {
+		t.Errorf("expected three orders but got %d", len(orders.Snapshot))
 	}
 
 	_, err = NewClient().Orders.History("")

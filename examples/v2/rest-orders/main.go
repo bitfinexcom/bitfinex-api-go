@@ -1,10 +1,18 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+)
+
+var (
+	orderid = flag.String("id", "", "lookup trades for an order ID")
+	api     = flag.String("api", "https://api.bitfinex.com/v2/", "v2 REST API URL")
 )
 
 // Set BFX_APIKEY and BFX_SECRET as :
@@ -15,9 +23,11 @@ import (
 // you can obtain it from https://www.bitfinex.com/api
 
 func main() {
+	flag.Parse()
+
 	key := os.Getenv("BFX_API_KEY")
 	secret := os.Getenv("BFX_API_SECRET")
-	c := bitfinex.NewClient().Credentials(key, secret)
+	c := rest.NewClientWithURL(*api).Credentials(key, secret)
 
 	available, err := c.Platform.Status()
 	if err != nil {
@@ -28,10 +38,23 @@ func main() {
 		log.Fatalf("API not available")
 	}
 
-	os, err := c.Orders.History(bitfinex.TradingPrefix + bitfinex.IOTBTC)
-	if err != nil {
-		log.Fatalf("getting orders: %s", err)
-	}
+	if *orderid != "" {
+		ordid, err := strconv.ParseInt(*orderid, 10, 64)
+		if err != nil {
+			log.Fatal(err)
+		}
+		os, err := c.Orders.OrderTrades(bitfinex.TradingPrefix+bitfinex.BTCUSD, ordid)
+		if err != nil {
+			log.Fatalf("getting order trades: %s", err)
+		}
 
-	log.Printf("orders: %#v\n", os)
+		log.Printf("order trades: %#v\n", os)
+	} else {
+		os, err := c.Orders.History(bitfinex.TradingPrefix + bitfinex.BTCUSD)
+		if err != nil {
+			log.Fatalf("getting orders: %s", err)
+		}
+
+		log.Printf("orders: %#v\n", os)
+	}
 }
