@@ -83,6 +83,11 @@ func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewReques
 	return c.asynchronous.Send(ctx, order)
 }
 
+// UpdateOrder sends an update order requst.
+func (c *Client) UpdateOrder(ctx context.Context, order *bitfinex.OrderUpdateRequest) error {
+	return c.asynchronous.Send(ctx, order)
+}
+
 // SubmitCancel sends a cancel request.
 func (c *Client) SubmitCancel(ctx context.Context, cancel *bitfinex.OrderCancelRequest) error {
 	return c.asynchronous.Send(ctx, cancel)
