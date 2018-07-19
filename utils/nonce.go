@@ -33,12 +33,7 @@ func NewEpochNonceGenerator() *EpochNonceGenerator {
 }
 
 // v1 support
-
-var nonce string
-
-func init() {
-	nonce = fmt.Sprintf("%v", time.Now().Unix()*10000)
-}
+const multiplier = 10000
 
 // GetNonce is a naive nonce producer that takes the current Unix nano epoch
 // and counts upwards.
@@ -46,5 +41,5 @@ func init() {
 // key and as such needs to be synchronised with other instances using the same
 // key in order to avoid race conditions.
 func GetNonce() string {
-	return nonce
+	return fmt.Sprintf("%v", time.Now().Unix() * multiplier)
 }
