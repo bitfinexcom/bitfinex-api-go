@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -33,10 +34,10 @@ func NewEpochNonceGenerator() *EpochNonceGenerator {
 
 // v1 support
 
-var nonce uint64
+var nonce string
 
 func init() {
-	nonce = uint64(time.Now().Unix()) * 1000
+	nonce = fmt.Sprintf("%v", time.Now().Unix()*10000)
 }
 
 // GetNonce is a naive nonce producer that takes the current Unix nano epoch
@@ -45,5 +46,5 @@ func init() {
 // key and as such needs to be synchronised with other instances using the same
 // key in order to avoid race conditions.
 func GetNonce() string {
-	return strconv.FormatUint(atomic.AddUint64(&nonce, 1), 10)
+	return nonce
 }
