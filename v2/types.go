@@ -568,7 +568,7 @@ type TradeExecution struct {
 
 func NewTradeExecutionFromRaw(raw []interface{}) (o *TradeExecution, err error) {
 	if len(raw) < 6 {
-		log.Printf("[ERROR] not enough members (%d, need at least 6) for trade execution: %#v", raw)
+		log.Printf("[ERROR] not enough members (%d, need at least 6) for trade execution: %#v", len(raw), raw)
 		return o, fmt.Errorf("data slice too short for trade execution: %#v", raw)
 	}
 
