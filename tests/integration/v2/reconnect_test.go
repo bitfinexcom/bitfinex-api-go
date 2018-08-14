@@ -37,7 +37,7 @@ func newTestParams(wsPort int) *websocket.Parameters {
 	p.ShutdownTimeout = time.Second * 4
 	p.URL = fmt.Sprintf("ws://localhost:%d", wsPort)
 	p.AutoReconnect = true
-	p.ReconnectInterval = time.Millisecond * 250 // first reconnect is instant, won't need to wait on this
+	p.ReconnectInterval = time.Millisecond * 500 // first reconnect is instant, won't need to wait on this
 	return p
 }
 
