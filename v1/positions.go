@@ -71,3 +71,21 @@ func (b *PositionsService) Claim(positionId int, amount string) (Position, error
 
 	return *position, nil
 }
+
+// Close a position
+func (b *PositionsService) Close(positionID int) error {
+	request := map[string]interface{}{
+		"position_id": positionID,
+	}
+	req, err := b.client.newAuthenticatedRequest("POST", "position/close", request)
+	if err != nil {
+		return err
+	}
+	var resp map[string]interface{}
+	_, err = b.client.do(req, &resp)
+	log.Printf("PositionsService.Close - return %+v, err:%v", resp, err)
+	if err != nil {
+		return err
+	}
+	return nil
+}
