@@ -1,6 +1,7 @@
 package bitfinex
 
 import (
+	"log"
 	"strconv"
 	"time"
 )
@@ -83,6 +84,7 @@ func (b *PositionsService) Close(positionID int) error {
 	}
 	var resp map[string]interface{}
 	_, err = b.client.do(req, &resp)
+
 	log.Printf("PositionsService.Close - return %+v, err:%v", resp, err)
 	if err != nil {
 		return err
