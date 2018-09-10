@@ -179,6 +179,43 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&body)
 }
 
+// OrderUpdateRequest represents an posted order to be updated on the bitfinex via
+// the websocket service.
+type OrderUpdateRequest struct {
+	ID            int64   `json:"id"`
+	GID           int64   `json:"gid,omitempty"`
+	Amount        float64 `json:"amount,string,omitempty"`
+	Price         float64 `json:"price,string,omitempty"`
+	Delta         float64 `json:"delta,string,omitempty"`
+	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
+	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
+}
+
+// MarshalJSON converts the order object into the format required by the bitfinex
+// websocket service.
+func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
+	aux := struct {
+		ID            int64   `json:"id"`
+		GID           int64   `json:"gid,omitempty"`
+		Amount        float64 `json:"amount,string,omitempty"`
+		Price         float64 `json:"price,string,omitempty"`
+		Delta         float64 `json:"delta,string,omitempty"`
+		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
+		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
+	}{
+		ID:            o.ID,
+		GID:           o.GID,
+		Amount:        o.Amount,
+		Price:         o.Price,
+		Delta:         o.Delta,
+		PriceAuxLimit: o.PriceAuxLimit,
+		PriceTrailing: o.PriceTrailing,
+	}
+
+	body := []interface{}{0, "ou", nil, aux}
+	return json.Marshal(&body)
+}
+
 // OrderCancelRequest represents an order cancel request.
 // An order can be cancelled using the internal ID or a
 // combination of Client ID (CID) and the daten for the given
