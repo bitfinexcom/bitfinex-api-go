@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -90,6 +91,9 @@ func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
 	return newWs(w.parameters.URL, w.parameters.LogTransport)
 }
 
+// ClientCallback provides a specified callback type for handling API objects
+type ClientCallback func(interface{})
+
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
 type Client struct {
 	asyncFactory AsynchronousFactory // for re-creating transport during reconnects
@@ -117,7 +121,10 @@ type Client struct {
 	shutdown chan bool
 
 	// downstream listener channel to deliver API objects
-	listener chan interface{}
+	listenerChan chan interface{}
+
+	// callback function handlers to deliver API objects
+	callbacks map[reflect.Type][]ClientCallback
 }
 
 // Credentials assigns authentication credentials to a connection request.
@@ -131,6 +138,18 @@ func (c *Client) Credentials(key string, secret string) *Client {
 func (c *Client) CancelOnDisconnect(cxl bool) *Client {
 	c.cancelOnDisconnect = cxl
 	return c
+}
+
+func (c *Client) deliverMsg(msg interface{}) {
+	if c.callbacks != nil {
+		msgType := reflect.ValueOf(msg).Elem().Type()
+		if val, ok := c.callbacks[msgType]; ok {
+			for _, callback := range val {
+				go callback(msg)
+			}
+		}
+	}
+	c.listenerChan <- msg
 }
 
 func (c *Client) sign(msg string) string {
@@ -183,7 +202,7 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 		nonce:          nonce,
 		isConnected:    false,
 		parameters:     params,
-		listener:       make(chan interface{}),
+		listenerChan:   make(chan interface{}),
 		terminal:       false,
 	}
 	c.registerPublicFactories()
@@ -210,6 +229,15 @@ func (c *Client) registerPublicFactories() {
 	c.registerFactory(ChanTrades, newTradeFactory(c.subscriptions))
 	c.registerFactory(ChanBook, newBookFactory(c.subscriptions))
 	c.registerFactory(ChanCandles, newCandlesFactory(c.subscriptions))
+}
+
+// RegisterCallback attaches a provided callback handler for a specified object type
+func (c *Client) RegisterCallback(objectForType interface{}, callback ClientCallback) {
+	if c.callbacks == nil {
+		c.callbacks = make(map[reflect.Type][]ClientCallback)
+	}
+	typeOfObject := reflect.TypeOf(objectForType)
+	c.callbacks[typeOfObject] = append(c.callbacks[typeOfObject], callback)
 }
 
 // IsConnected returns true if the underlying asynchronous transport is connected to an endpoint.
@@ -335,11 +363,11 @@ func (c *Client) listenUpstream() {
 
 // terminal, unrecoverable state. called after async is closed.
 func (c *Client) close(e error) {
-	if c.listener != nil {
+	if c.listenerChan != nil {
 		if e != nil {
-			c.listener <- e
+			c.listenerChan <- e
 		}
-		close(c.listener)
+		close(c.listenerChan)
 	}
 	// shutdowns goroutines
 	close(c.shutdown)
@@ -372,7 +400,7 @@ func (c *Client) closeAsyncAndWait(t time.Duration) {
 // Listen provides an atomic interface for receiving API messages.
 // When a websocket connection is terminated, the publisher channel will close.
 func (c *Client) Listen() <-chan interface{} {
-	return c.listener
+	return c.listenerChan
 }
 
 // Close provides an interface for a user initiated shutdown.

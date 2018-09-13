@@ -115,7 +115,7 @@ func (c *Client) handleEvent(msg []byte) error {
 			return err
 		}
 		c.handleOpen()
-		c.listener <- &i
+		c.deliverMsg(&i)
 	case "auth":
 		a := AuthEvent{}
 		err = json.Unmarshal(msg, &a)
@@ -128,7 +128,7 @@ func (c *Client) handleEvent(msg []byte) error {
 			c.Authentication = RejectedAuthentication
 		}
 		c.handleAuthAck(&a)
-		c.listener <- &a
+		c.deliverMsg(&a)
 		return nil
 	case "subscribed":
 		s := SubscribeEvent{}
@@ -140,7 +140,7 @@ func (c *Client) handleEvent(msg []byte) error {
 		if err != nil {
 			return err
 		}
-		c.listener <- &s
+		c.deliverMsg(&s)
 		return nil
 	case "unsubscribed":
 		s := UnsubscribeEvent{}
@@ -149,21 +149,21 @@ func (c *Client) handleEvent(msg []byte) error {
 			return err
 		}
 		c.subscriptions.removeByChannelID(s.ChanID)
-		c.listener <- &s
+		c.deliverMsg(&s)
 	case "error":
 		er := ErrorEvent{}
 		err = json.Unmarshal(msg, &er)
 		if err != nil {
 			return err
 		}
-		c.listener <- &er
+		c.deliverMsg(&er)
 	case "conf":
 		ec := ConfEvent{}
 		err = json.Unmarshal(msg, &ec)
 		if err != nil {
 			return err
 		}
-		c.listener <- &ec
+		c.deliverMsg(&ec)
 	default:
 		return fmt.Errorf("unknown event: %s", msg) // TODO: or just log?
 	}
