@@ -248,6 +248,76 @@ func TestPublicBooks(t *testing.T) {
 	}
 }
 
+func TestPublicCallbacks(t *testing.T) {
+	c := websocket.New()
+	wg := sync.WaitGroup{}
+	wg.Add(3) // 1. Info with version, 2. Subscription event, 3. data message
+
+	err := c.Connect()
+	if err != nil {
+		t.Fatal("Error connecting to web socket : ", err)
+	}
+	defer c.Close()
+
+	unSubs := make(chan interface{}, 10)
+	bookSnaps := make(chan interface{}, 10)
+	bookUps1 := make(chan interface{}, 10)
+	bookUps2 := make(chan interface{}, 10)
+
+	//Register callbacks for above interfaces
+	c.RegisterCallback(websocket.UnsubscribeEvent{}, func(m interface{}) { unSubs <- m })
+	c.RegisterCallback(bitfinex.BookUpdate{}, func(m interface{}) { bookUps1 <- m })
+	c.RegisterCallback(bitfinex.BookUpdate{}, func(m interface{}) { bookUps2 <- m })
+	c.RegisterCallback(bitfinex.BookUpdateSnapshot{}, func(m interface{}) { bookSnaps <- m })
+
+	errch := make(chan error)
+	go func() {
+		for {
+			select {
+			case msg := <-c.Listen():
+				if msg == nil {
+					return
+				}
+				log.Printf("recv msg: %#v", msg)
+				switch msg.(type) {
+				case error:
+					errch <- msg.(error)
+				default:
+					t.Logf("test recv: %#v", msg)
+				}
+			}
+		}
+	}()
+
+	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
+	defer cxl()
+	id, err := c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := wait2(bookSnaps, 1, errch, 5*time.Second); err != nil {
+		t.Fatalf("failed to receive book snapshot message from websocket: %s", err)
+	}
+
+	if err := wait2(bookUps1, 1, errch, 5*time.Second); err != nil {
+		t.Fatalf("failed to receive book update message to 1/2 channels from websocket: %s", err)
+	}
+
+	if err := wait2(bookUps2, 1, errch, 5*time.Second); err != nil {
+		t.Fatalf("failed to receive book update message to 2/2 channels from websocket: %s", err)
+	}
+
+	err = c.Unsubscribe(ctx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := wait2(unSubs, 1, errch, 5*time.Second); err != nil {
+		t.Errorf("failed to receive unsubscribe message from websocket: %s", err)
+	}
+}
+
 func TestPublicCandles(t *testing.T) {
 	c := websocket.New()
 	wg := sync.WaitGroup{}
