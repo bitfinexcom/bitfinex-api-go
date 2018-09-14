@@ -33,3 +33,11 @@ func (c *Client) OnPositionUpdate(callback ClientCallback) {
 func (c *Client) OnPositionCancel(callback ClientCallback) {
 	c.RegisterCallback(bitfinex.PositionCancel{}, callback)
 }
+
+func (c *Client) OnTradeExecution(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.TradeExecution{}, callback)
+}
+
+func (c *Client) OnTradeExecutionUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.TradeExecutionUpdate{}, callback)
+}
