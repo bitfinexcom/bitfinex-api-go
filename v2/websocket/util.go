@@ -101,3 +101,103 @@ func (c *Client) OnFundingLoanUpdate(callback ClientCallback) {
 func (c *Client) OnFundingLoanCancel(callback ClientCallback) {
 	c.RegisterCallback(bitfinex.FundingLoanCancel{}, callback)
 }
+
+//Misc Funding Callback Convenience Methods
+
+func (c *Client) OnFundingInfo(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.FundingInfo{}, callback)
+}
+
+func (c *Client) OnFundingTrade(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.FundingTrade{}, callback)
+}
+
+func (c *Client) OnFundingTradeSnapshot(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.FundingTradeSnapshot{}, callback)
+}
+
+func (c *Client) OnFundingTradeExecution(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.FundingTradeExecution{}, callback)
+}
+
+func (c *Client) OnFundingTradeUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.FundingTradeUpdate{}, callback)
+}
+
+//Balance Callback Convenience Methods
+
+func (c *Client) OnBalanceInfo(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.BalanceInfo{}, callback)
+}
+
+func (c *Client) OnBalanceUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.BalanceUpdate{}, callback)
+}
+
+//Margin Callback Convenience Methods
+
+func (c *Client) OnMarginInfoBase(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.MarginInfoBase{}, callback)
+}
+
+func (c *Client) OnMarginInfoUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.MarginInfoUpdate{}, callback)
+}
+
+func (c *Client) OnNotification(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.Notification{}, callback)
+}
+
+//Wallet Callback Convenience Methods
+
+func (c *Client) OnWalletSnapshot(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.WalletSnapshot{}, callback)
+}
+
+func (c *Client) OnWalletUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.WalletUpdate{}, callback)
+}
+
+//Public Book Callback Convenience Methods
+
+func (c *Client) OnBookUpdateSnapshot(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.BookUpdateSnapshot{}, callback)
+}
+
+func (c *Client) OnBookUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.BookUpdate{}, callback)
+}
+
+//Public Candle Callback Convenience Methods
+
+func (c *Client) OnCandleSnapshot(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.CandleSnapshot{}, callback)
+}
+
+func (c *Client) OnCandle(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.Candle{}, callback)
+}
+
+//Public Trade Callback Convenience Methods
+
+func (c *Client) OnTradeSnapshot(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.TradeSnapshot{}, callback)
+}
+
+func (c *Client) OnTrade(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.Trade{}, callback)
+}
+
+//Public Ticker Callback Convenience Methods
+
+func (c *Client) OnTicker(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.Ticker{}, callback)
+}
+
+func (c *Client) OnTickerSnapshot(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.TickerSnapshot{}, callback)
+}
+
+func (c *Client) OnTickerUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.TickerUpdate{}, callback)
+}
