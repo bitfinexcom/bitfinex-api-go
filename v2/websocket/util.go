@@ -17,3 +17,19 @@ func (c *Client) OnOrderUpdate(callback ClientCallback) {
 func (c *Client) OnOrderCancel(callback ClientCallback) {
 	c.RegisterCallback(bitfinex.OrderCancel{}, callback)
 }
+
+func (c *Client) OnPositionSnapshot(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.PositionSnapshot{}, callback)
+}
+
+func (c *Client) OnPositionNew(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.PositionNew{}, callback)
+}
+
+func (c *Client) OnPositionUpdate(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.PositionUpdate{}, callback)
+}
+
+func (c *Client) OnPositionCancel(callback ClientCallback) {
+	c.RegisterCallback(bitfinex.PositionCancel{}, callback)
+}
