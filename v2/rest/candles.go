@@ -1,11 +1,11 @@
 package rest
 
 import (
+	"fmt"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"net/url"
 	"path"
 	"strings"
-	"net/url"
-	"fmt"
 )
 
 // CandleService manages the Candles endpoint.
@@ -19,9 +19,9 @@ func (c *CandleService) Last(symbol string, resolution bitfinex.CandleResolution
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
 
-	segments := []string{ "trade", string(resolution), symbol }
+	segments := []string{"trade", string(resolution), symbol}
 
-	req := NewRequestWithMethod(path.Join("candles", strings.Join(segments,":"), "LAST"), "GET")
+	req := NewRequestWithMethod(path.Join("candles", strings.Join(segments, ":"), "LAST"), "GET")
 	req.Params = make(url.Values)
 	raw, err := c.Request(req)
 
@@ -44,9 +44,9 @@ func (c *CandleService) History(symbol string, resolution bitfinex.CandleResolut
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
 
-	segments := []string{ "trade", string(resolution), symbol }
+	segments := []string{"trade", string(resolution), symbol}
 
-	req := NewRequestWithMethod(path.Join("candles", strings.Join(segments,":"), "HIST"), "GET")
+	req := NewRequestWithMethod(path.Join("candles", strings.Join(segments, ":"), "HIST"), "GET")
 
 	raw, err := c.Request(req)
 
@@ -76,7 +76,6 @@ func (c *CandleService) History(symbol string, resolution bitfinex.CandleResolut
 	return cs, nil
 }
 
-
 // Return Candles for the public account.
 func (c *CandleService) HistoryWithQuery(
 	symbol string,
@@ -85,15 +84,15 @@ func (c *CandleService) HistoryWithQuery(
 	end bitfinex.Mts,
 	limit bitfinex.QueryLimit,
 	sort bitfinex.SortOrder,
-	) (*bitfinex.CandleSnapshot, error) {
+) (*bitfinex.CandleSnapshot, error) {
 
-		if symbol == "" {
+	if symbol == "" {
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
 
-	segments := []string{ "trade", string(resolution), symbol }
+	segments := []string{"trade", string(resolution), symbol}
 
-	req := NewRequestWithMethod(path.Join("candles", strings.Join(segments,":"), "HIST"), "GET")
+	req := NewRequestWithMethod(path.Join("candles", strings.Join(segments, ":"), "HIST"), "GET")
 	req.Params = make(url.Values)
 
 	//req.Params.Add("end", strconv.FormatInt(start, 10))
