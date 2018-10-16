@@ -1214,6 +1214,7 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 
 type Ticker struct {
 	Symbol          string
+	FRR             float64
 	Bid             float64
 	BidPeriod       int64
 	BidSize         float64
