@@ -7,11 +7,28 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
+type FlagRequest struct {
+	Event string `json:"event"`
+	Flags int `json:"flags"`
+}
+
 // API for end-users to interact with Bitfinex.
 
 // Send publishes a generic message to the Bitfinex API.
 func (c *Client) Send(ctx context.Context, msg interface{}) error {
 	return c.asynchronous.Send(ctx, msg)
+}
+
+func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error) {
+	req := &FlagRequest{
+		Event: "conf",
+		Flags: flag,
+	}
+	err := c.asynchronous.Send(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	return "", nil
 }
 
 // Subscribe sends a subscription request to the Bitfinex API and tracks the subscription status by ID.

@@ -68,11 +68,13 @@ func (f *TradeFactory) BuildSnapshot(chanID int64, raw [][]float64) (interface{}
 
 type BookFactory struct {
 	*subscriptions
+	orderbooks    map[string]*Orderbook
 }
 
-func newBookFactory(subs *subscriptions) *BookFactory {
+func newBookFactory(subs *subscriptions, obs map[string]*Orderbook) *BookFactory {
 	return &BookFactory{
 		subscriptions: subs,
+		orderbooks: obs,
 	}
 }
 
@@ -80,6 +82,9 @@ func (f *BookFactory) Build(chanID int64, objType string, raw []interface{}) (in
 	sub, err := f.subscriptions.lookupByChannelID(chanID)
 	if err == nil {
 		update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
+		if orderbook, ok := f.orderbooks[sub.Request.Symbol]; ok {
+			orderbook.UpdateWith(update)
+		}
 		return update, err
 	}
 	return nil, err
@@ -87,8 +92,19 @@ func (f *BookFactory) Build(chanID int64, objType string, raw []interface{}) (in
 
 func (f *BookFactory) BuildSnapshot(chanID int64, raw [][]float64) (interface{}, error) {
 	sub, err := f.subscriptions.lookupByChannelID(chanID)
+	update, err2 := bitfinex.NewBookUpdateSnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
+	if err2 != nil {
+		return nil, err2
+	}
 	if err == nil {
-		return bitfinex.NewBookUpdateSnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
+		// create new orderbook
+		f.orderbooks[sub.Request.Symbol] = &Orderbook{
+			symbol: sub.Request.Symbol,
+			bids:   make([]*bitfinex.BookUpdate, 0),
+			asks:   make([]*bitfinex.BookUpdate, 0),
+		}
+		f.orderbooks[sub.Request.Symbol].SetWithSnapshot(update)
+		return update, err
 	}
 	return nil, err
 }
