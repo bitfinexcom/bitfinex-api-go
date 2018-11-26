@@ -85,6 +85,16 @@ const (
 	Ask OrderSide = 2
 )
 
+// Settings flags
+
+const (
+	Dec_s int = 9
+  Time_s int = 32
+  Timestamp int = 32768
+  Seq_all int = 65536
+  Checksum int = 131072
+)
+
 type orderSide byte
 
 // OrderSide provides a typed set of order sides.
