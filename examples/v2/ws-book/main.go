@@ -10,7 +10,10 @@ import (
 )
 
 func main() {
-	c := websocket.New()
+	p := websocket.NewDefaultParameters()
+	// Enable orderbook checksum verification
+	p.ManageOrderbook = true
+	c := websocket.NewWithParams(p)
 
 	err := c.Connect()
 	if err != nil {
@@ -18,16 +21,16 @@ func main() {
 	}
 
 	// subscribe to BTCUSD book
-	ctx, cxl1 := context.WithTimeout(context.Background(), time.Second*5)
-	defer cxl1()
+	ctx, cxl2 := context.WithTimeout(context.Background(), time.Second*5)
+	defer cxl2()
 	_, err = c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// subscribe to BTCUSD trades
-	ctx, cxl2 := context.WithTimeout(context.Background(), time.Second*5)
-	defer cxl2()
+	ctx, cxl3 := context.WithTimeout(context.Background(), time.Second*5)
+	defer cxl3()
 	_, err = c.SubscribeTrades(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
 		log.Fatal(err)
