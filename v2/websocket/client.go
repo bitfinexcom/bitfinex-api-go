@@ -250,7 +250,7 @@ func (c *Client) dumpParams() {
 	log.Printf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
 	log.Printf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
 	log.Printf("URL=%s", c.parameters.URL)
-	log.Printf("ManageOrderbook=%s", c.parameters.ManageOrderbook)
+	log.Printf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
 }
 
 // Connect to the Bitfinex API, this should only be called once.
