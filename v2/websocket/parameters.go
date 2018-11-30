@@ -18,6 +18,7 @@ type Parameters struct {
 	LogTransport     bool
 
 	URL string
+	ManageOrderbook  bool
 }
 
 func NewDefaultParameters() *Parameters {
@@ -27,9 +28,10 @@ func NewDefaultParameters() *Parameters {
 		reconnectTry:           0,
 		ReconnectAttempts:      5,
 		URL:                    productionBaseURL,
+		ManageOrderbook:        false,
 		ShutdownTimeout:        time.Second * 5,
 		ResubscribeOnReconnect: true,
 		HeartbeatTimeout:       time.Second * 10, // HB = 5s
-		LogTransport:           false,            // log transport send/recv
+		LogTransport:           false,           // log transport send/recv
 	}
 }

@@ -112,6 +112,7 @@ type Client struct {
 	// subscription manager
 	subscriptions *subscriptions
 	factories     map[string]messageFactory
+	orderbooks    map[string]*Orderbook
 
 	// close signal sent to user on shutdown
 	shutdown chan bool
@@ -180,6 +181,7 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 		Authentication: NoAuthentication,
 		factories:      make(map[string]messageFactory),
 		subscriptions:  newSubscriptions(params.HeartbeatTimeout),
+		orderbooks:     make(map[string]*Orderbook),
 		nonce:          nonce,
 		isConnected:    false,
 		parameters:     params,
@@ -208,7 +210,7 @@ func extractSymbolResolutionFromKey(subscription string) (symbol string, resolut
 func (c *Client) registerPublicFactories() {
 	c.registerFactory(ChanTicker, newTickerFactory(c.subscriptions))
 	c.registerFactory(ChanTrades, newTradeFactory(c.subscriptions))
-	c.registerFactory(ChanBook, newBookFactory(c.subscriptions))
+	c.registerFactory(ChanBook, newBookFactory(c.subscriptions, c.orderbooks))
 	c.registerFactory(ChanCandles, newCandlesFactory(c.subscriptions))
 }
 
@@ -248,6 +250,7 @@ func (c *Client) dumpParams() {
 	log.Printf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
 	log.Printf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
 	log.Printf("URL=%s", c.parameters.URL)
+	log.Printf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
 }
 
 // Connect to the Bitfinex API, this should only be called once.
@@ -276,6 +279,11 @@ func (c *Client) connect() error {
 	err := c.asynchronous.Connect()
 	if err == nil {
 		c.isConnected = true
+	}
+	// enable flag
+	if c.parameters.ManageOrderbook {
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+		c.EnableFlag(ctx, bitfinex.Checksum)
 	}
 	return err
 }
@@ -324,6 +332,7 @@ func (c *Client) listenUpstream() {
 		case msg := <-c.asynchronous.Listen():
 			if msg != nil {
 				// Errors here should be non critical so we just log them.
+				log.Printf("[DEBUG]: %s\n", msg)
 				err := c.handleMessage(msg)
 				if err != nil {
 					log.Printf("[WARN]: %s\n", err)
