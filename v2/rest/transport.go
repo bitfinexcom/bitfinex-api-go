@@ -47,9 +47,9 @@ func (h HttpTransport) Request(req Request) ([]interface{}, error) {
 	resp, err := h.do(httpReq, &raw)
 	if err != nil {
 		if resp != nil {
-			return nil, fmt.Errorf("%v", err)
-		} else {
 			return nil, fmt.Errorf("could not parse response: %s", resp.Response.Status)
+		} else {
+			return nil, fmt.Errorf("%v", err)
 		}
 
 	}
