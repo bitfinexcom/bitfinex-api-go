@@ -86,8 +86,8 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
 
 	payload := map[string]interface{}{
 		"symbol":   symbol,
-		"amount":   strconv.FormatFloat(amount, 'f', -1, 32),
-		"price":    strconv.FormatFloat(price, 'f', -1, 32),
+		"amount":   strconv.FormatFloat(amount, 'g', 5, 32),
+		"price":    strconv.FormatFloat(price, 'g', 5, 32),
 		"side":     side,
 		"type":     orderType,
 		"exchange": "bitfinex",
