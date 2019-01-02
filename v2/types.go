@@ -1310,12 +1310,13 @@ func NewBookUpdateSnapshotFromRaw(symbol, precision string, raw [][]float64) (*B
 	if len(raw) <= 0 {
 		return nil, fmt.Errorf("data slice too short for book snapshot: %#v", raw)
 	}
-	snap := make([]*BookUpdate, 0)
-	for _, f := range raw {
+	snap := make([]*BookUpdate, len(raw))
+	for i, f := range raw {
 		b, err := NewBookUpdateFromRaw(symbol, precision, ToInterface(f))
-		if err == nil {
-			snap = append(snap, b)
+		if err != nil {
+			return nil, err
 		}
+		snap[i] = b
 	}
 	return &BookUpdateSnapshot{Snapshot: snap}, nil
 }
