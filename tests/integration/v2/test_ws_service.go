@@ -167,6 +167,7 @@ func (s *TestWsService) Stop() {
 	}
 }
 
+//nolint
 func (s *TestWsService) Start() error {
 	go s.loop()
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", s.port))
@@ -178,6 +179,7 @@ func (s *TestWsService) Start() error {
 	return nil
 }
 
+//nolint
 func (s *TestWsService) serveWs(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

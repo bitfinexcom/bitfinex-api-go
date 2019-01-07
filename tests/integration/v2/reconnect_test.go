@@ -181,6 +181,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// nolint:megacheck
 	diff := time.Now().Sub(now)
 	t.Logf("client disconnect detected in %s", diff.String())
 
