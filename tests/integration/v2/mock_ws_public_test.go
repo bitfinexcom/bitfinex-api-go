@@ -22,7 +22,10 @@ func TestTicker(t *testing.T) {
 	listener.run(ws.Listen())
 
 	// set ws options
-	ws.Connect()
+	err_ws := ws.Connect()
+	if err_ws != nil {
+		t.Fatal(err_ws)
+	}
 	defer ws.Close()
 
 	// info welcome msg
@@ -74,7 +77,10 @@ func TestTicker(t *testing.T) {
 	}, tick)
 
 	// unsubscribe
-	ws.Unsubscribe(context.Background(), id)
+	err_unsub := ws.Unsubscribe(context.Background(), id)
+	if err_unsub != nil {
+		t.Fatal(err_unsub)
+	}
 	async.Publish(`{"event":"unsubscribed","chanId":5,"status":"OK"}`)
 	unsub, err := listener.nextUnsubscriptionEvent()
 	if err != nil {
