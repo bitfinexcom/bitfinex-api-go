@@ -17,12 +17,6 @@ type RawEvent struct {
 	Data interface{}
 }
 
-func newPingEvent() *eventType {
-	return &eventType{
-		Event: EventPing,
-	}
-}
-
 type AuthEvent struct {
 	Event   string       `json:"event"`
 	Status  string       `json:"status"`
@@ -51,15 +45,15 @@ type Capabilities struct {
 
 // error codes pulled from v2 docs & API usage
 const (
-	ErrorCodeUnknownEvent         int = 10000
-	ErrorCodeUnknownPair              = 10001
-	ErrorCodeUnknownBookPrecision     = 10011
-	ErrorCodeUnknownBookLength        = 10012
-	ErrorCodeSubscriptionFailed       = 10300
-	ErrorCodeAlreadySubscribed        = 10301
-	ErrorCodeUnknownChannel           = 10302
-	ErrorCodeUnsubscribeFailed        = 10400
-	ErrorCodeNotSubscribed            = 10401
+	ErrorCodeUnknownEvent           int = 10000
+	ErrorCodeUnknownPair            int = 10001
+	ErrorCodeUnknownBookPrecision   int = 10011
+	ErrorCodeUnknownBookLength      int = 10012
+	ErrorCodeSubscriptionFailed     int = 10300
+	ErrorCodeAlreadySubscribed      int = 10301
+	ErrorCodeUnknownChannel         int = 10302
+	ErrorCodeUnsubscribeFailed      int = 10400
+	ErrorCodeNotSubscribed          int = 10401
 )
 
 type ErrorEvent struct {

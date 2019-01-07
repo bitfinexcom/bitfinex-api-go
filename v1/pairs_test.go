@@ -92,7 +92,7 @@ func TestPairsAllDetailed(t *testing.T) {
 		t.Error("Actual", pairs[0].Expiration)
 	}
 
-	if pairs[0].Margin != true {
+	if !pairs[0].Margin {
 		t.Error("Expected", true)
 		t.Error("Actual", pairs[0].Margin)
 	}

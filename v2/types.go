@@ -132,10 +132,10 @@ type bookFrequency string
 type BookFrequency bookFrequency
 
 const (
-	OrderFlagHidden   int = 64
-	OrderFlagClose        = 512
-	OrderFlagPostOnly     = 4096
-	OrderFlagOCO          = 16384
+	OrderFlagHidden     int = 64
+	OrderFlagClose      int = 512
+	OrderFlagPostOnly   int = 4096
+	OrderFlagOCO        int = 16384
 )
 
 // OrderNewRequest represents an order to be posted to the bitfinex websocket

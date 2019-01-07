@@ -52,6 +52,7 @@ const (
 
 // WebSocketService allow to connect and receive stream data
 // from bitfinex.com ws service.
+// nolint:megacheck,structcheck
 type WebSocketService struct {
 	// http client
 	client *Client
@@ -161,7 +162,7 @@ func (w *WebSocketService) Subscribe() error {
 			w.handleDataMessage(p)
 		}
 	}
-
+	// nolint
 	return nil
 }
 
