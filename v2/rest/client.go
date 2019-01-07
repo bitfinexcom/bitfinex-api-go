@@ -119,10 +119,13 @@ type Response struct {
 	Body     []byte
 }
 
-func (c *Client) sign(msg string) string {
+func (c *Client) sign(msg string) (string, error) {
 	sig := hmac.New(sha512.New384, []byte(c.apiSecret))
-	sig.Write([]byte(msg))
-	return hex.EncodeToString(sig.Sum(nil))
+	_, err := sig.Write([]byte(msg))
+	if err != nil {
+		return "", nil
+	}
+	return hex.EncodeToString(sig.Sum(nil)), nil
 }
 
 func (c *Client) NewAuthenticatedRequest(refURL string) (Request, error) {
@@ -143,10 +146,14 @@ func (c *Client) NewAuthenticatedRequestWithData(refURL string, data map[string]
 	} else {
 		msg += "{}"
 	}
+	sig, err := c.sign(msg)
+	if err != nil {
+		return Request{}, err
+	}
 	req.Headers["Content-Type"] = "application/json"
 	req.Headers["Accept"] = "application/json"
 	req.Headers["bfx-nonce"] = nonce
-	req.Headers["bfx-signature"] = c.sign(msg)
+	req.Headers["bfx-signature"] = sig
 	req.Headers["bfx-apikey"] = c.apiKey
 	return req, nil
 }

@@ -279,10 +279,14 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 
 	nonce := utils.GetNonce()
 	payload := "AUTH" + nonce
+	sig, err_sig := w.client.signPayload(payload)
+	if err_sig != nil {
+		return
+	}
 	connectMsg, _ := json.Marshal(&privateConnect{
 		Event:       "auth",
 		APIKey:      w.client.APIKey,
-		AuthSig:     w.client.signPayload(payload),
+		AuthSig:     sig,
 		AuthPayload: payload,
 	})
 

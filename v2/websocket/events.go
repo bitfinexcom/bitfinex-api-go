@@ -114,7 +114,10 @@ func (c *Client) handleEvent(msg []byte) error {
 		if err != nil {
 			return err
 		}
-		c.handleOpen()
+		err_open := c.handleOpen()
+		if err_open != nil {
+			return err_open
+		}
 		c.listener <- &i
 	case "auth":
 		a := AuthEvent{}
@@ -148,7 +151,10 @@ func (c *Client) handleEvent(msg []byte) error {
 		if err != nil {
 			return err
 		}
-		c.subscriptions.removeByChannelID(s.ChanID)
+		err_rem := c.subscriptions.removeByChannelID(s.ChanID)
+		if err_rem != nil {
+			return err_rem
+		}
 		c.listener <- &s
 	case "error":
 		er := ErrorEvent{}
