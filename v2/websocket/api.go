@@ -34,7 +34,7 @@ func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error) {
 // Subscribe sends a subscription request to the Bitfinex API and tracks the subscription status by ID.
 func (c *Client) Subscribe(ctx context.Context, req *SubscriptionRequest) (string, error) {
 	c.subscriptions.add(req)
-	err := c.asynchronous.Send(ctx, req)
+	err := c.Send(ctx, req)
 	if err != nil {
 		// propagate send error
 		return "", err
@@ -97,12 +97,12 @@ func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution
 
 // SubmitOrder sends an order request.
 func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewRequest) error {
-	return c.asynchronous.Send(ctx, order)
+	return c.Send(ctx, order)
 }
 
 // SubmitCancel sends a cancel request.
 func (c *Client) SubmitCancel(ctx context.Context, cancel *bitfinex.OrderCancelRequest) error {
-	return c.asynchronous.Send(ctx, cancel)
+	return c.Send(ctx, cancel)
 }
 
 // LookupSubscription looks up a subscription request by ID

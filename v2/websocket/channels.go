@@ -107,7 +107,7 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 				return err
 			}
 			if msg != nil {
-				c.listener <- msg
+				c.deliverMsg(msg)
 			}
 		} else if len(flt) > 1 {
 			msg, err := factory.BuildSnapshot(chanID, flt)
@@ -115,7 +115,7 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 				return err
 			}
 			if msg != nil {
-				c.listener <- msg
+				c.deliverMsg(msg)
 			}
 		}
 	} else {
@@ -145,7 +145,7 @@ func (c *Client) handlePrivateChannel(raw []interface{}) error {
 				}
 				// private data is returned as strongly typed data, publish directly
 				if obj != nil {
-					c.listener <- obj
+					c.deliverMsg(obj)
 				}
 			}
 		}
