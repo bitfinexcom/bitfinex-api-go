@@ -55,6 +55,9 @@ func (ob *Orderbook) UpdateWith(bu *bitfinex.BookUpdate) {
 	*side = append(*side, bu)
 	// add to the orderbook and sort lowest to highest
 	sort.Slice(*side, func(i, j int) bool {
+		if (i >= len(*(side)) || j >= len(*(side))) {
+			return false
+		}
 		if bu.Side == bitfinex.Ask {
 			return (*side)[i].Price < (*side)[j].Price
 		} else {
