@@ -439,3 +439,99 @@ func TestCancel(t *testing.T) {
 	}
 	assert(t, &bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179520203, Type: "LIMIT", Status: "CANCELED", Price: 900.0, Amount: 1, AmountOrig: 1}, oc)
 }
+
+func TestUpdateOrder(t *testing.T) {
+	// create transport & nonce mocks
+	async := newTestAsync()
+	nonce := &IncrementingNonceGenerator{}
+
+	// create client
+	ws := websocket.NewWithAsyncFactoryNonce(newTestAsyncFactory(async), nonce).Credentials("apiKeyABC", "apiSecretXYZ")
+
+	// setup listener
+	listener := newListener()
+	listener.run(ws.Listen())
+
+	// set ws options
+	//ws.SetReadTimeout(time.Second * 2)
+	ws.Connect()
+	defer ws.Close()
+
+	// begin test
+	async.Publish(`{"event":"info","version":2}`)
+	_, err := listener.nextInfoEvent()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// initial logon info--Authentication & WalletUpdate assertions in prior tests
+	async.Publish(`{"event":"auth","status":"OK","chanId":0,"userId":1,"subId":"nonce1","auth_id":"valid-auth-guid","caps":{"orders":{"read":1,"write":0},"account":{"read":1,"write":0},"funding":{"read":1,"write":0},"history":{"read":1,"write":0},"wallets":{"read":1,"write":0},"withdraw":{"read":0,"write":0},"positions":{"read":1,"write":0}}}`)
+	async.Publish(`[0,"ps",[["tBTCUSD","ACTIVE",7,916.52002351,0,0,null,null,null,null]]]`)
+	async.Publish(`[0,"ws",[["exchange","BTC",30,0,null],["exchange","USD",80000,0,null],["exchange","ETH",100,0,null],["margin","BTC",10,0,null],["margin","USD",9987.16871968,0,null],["funding","BTC",10,0,null],["funding","USD",10000,0,null]]]`)
+	// consume & assert snapshots
+	listener.nextPositionSnapshot()
+	listener.nextWalletSnapshot()
+
+	// submit order
+	err = ws.SubmitOrder(context.Background(), &bitfinex.OrderNewRequest{
+		Symbol: "tBTCUSD",
+		CID:    123,
+		Amount: -0.456,
+		Type:   "LIMIT",
+		Price:  900.0,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// assert outgoing order request
+	if len(async.Sent) <= 1 {
+		t.Fatalf("expected >1 sent messages, got %d", len(async.Sent))
+	}
+	assert(t, &bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}, async.Sent[1].(*bitfinex.OrderNewRequest))
+
+	// order pending new
+	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"LIMIT",null,null,null,null,null,null,null,900,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitting limit buy order for 1.0 BTC."]]`)
+	// order working--limit order
+	async.Publish(`[0,"on",[1234567,0,123,"tBTCUSD",1515179518260,1515179518315,1,1,"LIMIT",null,null,null,0,"ACTIVE",null,null,900,0,null,null,null,null,null,0,0,0]]`)
+
+	// eat order ack notification
+	listener.nextNotification()
+
+	on, err := listener.nextOrderNew()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// assert order new update
+	assert(t, &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}, on)
+
+	// publish update request
+	req := &bitfinex.OrderUpdateRequest{
+		ID: on.ID,
+		Amount: 0.04,
+		Price: 1200,
+	}
+	pre := async.SentCount()
+	err = ws.SubmitUpdateOrder(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := async.waitForMessage(pre); err != nil {
+		t.Fatal(err.Error())
+	}
+	// assert sent message
+	assert(t, req, async.Sent[pre].(*bitfinex.OrderUpdateRequest))
+
+	// cancel ack notify
+	async.Publish(`[0,"n",[1547469854094,"ou-req",null,null,[1234567,0,123,"tBTCUSD",1547469854025,1547469854042,0.04,0.04,"LIMIT",null,null,null,0,"ACTIVE",null,null,1200,0,0,0,null,null,null,0,0,null,null,null,"API>BFX",null,null,null],null,"SUCCESS","Submitting update to exchange limit buy order for 0.04 BTC."]]`)
+	// cancel confirm
+	async.Publish(`[0,"ou",[1234567,0,123,"tBTCUSD",1547469854025,1547469854121,0.04,0.04,"LIMIT",null,null,null,0,"ACTIVE",null,null,1200,0,0,0,null,null,null,0,0,null,null,null,"API>BFX",null,null,null]]`)
+
+	// assert cancel ack
+	ou, err := listener.nextOrderUpdate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert(t, &bitfinex.OrderUpdate{ID:1234567, GID:0, CID:123, Symbol:"tBTCUSD", MTSCreated:1547469854025, MTSUpdated:1547469854121, Amount:0.04, AmountOrig:0.04, Type:"LIMIT", TypePrev:"", Flags:0, Status:"ACTIVE", Price:1200, PriceAvg:0, PriceTrailing:0, PriceAuxLimit:0, Notify:false, Hidden:false, PlacedID:0}, ou)
+}
