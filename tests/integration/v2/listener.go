@@ -28,6 +28,7 @@ type listener struct {
 	marginUpdate         chan *bitfinex.MarginInfoUpdate
 	funding              chan *bitfinex.FundingInfo
 	orderNew             chan *bitfinex.OrderNew
+	orderUpdate          chan *bitfinex.OrderUpdate
 	errors               chan error
 }
 
@@ -51,6 +52,7 @@ func newListener() *listener {
 		marginBase:           make(chan *bitfinex.MarginInfoBase, 10),
 		marginUpdate:         make(chan *bitfinex.MarginInfoUpdate, 10),
 		orderNew:             make(chan *bitfinex.OrderNew, 10),
+		orderUpdate:          make(chan *bitfinex.OrderUpdate, 10),
 		funding:              make(chan *bitfinex.FundingInfo, 10),
 	}
 }
@@ -307,6 +309,20 @@ func (l *listener) nextOrderNew() (*bitfinex.OrderNew, error) {
 	}
 }
 
+func (l *listener) nextOrderUpdate() (*bitfinex.OrderUpdate, error) {
+	timeout := make(chan bool)
+	go func() {
+		time.Sleep(time.Second * 2)
+		close(timeout)
+	}()
+	select {
+	case ev := <-l.orderUpdate:
+		return ev, nil
+	case <-timeout:
+		return nil, errors.New("timed out waiting for OrderUpdate")
+	}
+}
+
 // strongly types messages and places them into a channel
 func (l *listener) run(ch <-chan interface{}) {
 	go func() {
@@ -351,6 +367,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.marginUpdate <- msg.(*bitfinex.MarginInfoUpdate)
 				case *bitfinex.OrderNew:
 					l.orderNew <- msg.(*bitfinex.OrderNew)
+				case *bitfinex.OrderUpdate:
+					l.orderUpdate <- msg.(*bitfinex.OrderUpdate)
 				case *bitfinex.FundingInfo:
 					l.funding <- msg.(*bitfinex.FundingInfo)
 				case *bitfinex.PositionSnapshot:

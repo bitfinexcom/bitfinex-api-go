@@ -210,7 +210,7 @@ func extractSymbolResolutionFromKey(subscription string) (symbol string, resolut
 func (c *Client) registerPublicFactories() {
 	c.registerFactory(ChanTicker, newTickerFactory(c.subscriptions))
 	c.registerFactory(ChanTrades, newTradeFactory(c.subscriptions))
-	c.registerFactory(ChanBook, newBookFactory(c.subscriptions, c.orderbooks))
+	c.registerFactory(ChanBook, newBookFactory(c.subscriptions, c.orderbooks, c.parameters.ManageOrderbook))
 	c.registerFactory(ChanCandles, newCandlesFactory(c.subscriptions))
 }
 
