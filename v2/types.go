@@ -209,7 +209,7 @@ type OrderUpdateRequest struct {
 	GID           int64   `json:"gid,omitempty"`
 	Price         float64 `json:"price,string,omitempty"`
 	Amount        float64 `json:"amount,string,omitempty"`
-	Delta         float64 `json:"price,string,omitempty"`
+	Delta         float64 `json:"delta,string,omitempty"`
 	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 	Hidden        bool    `json:"hidden,omitempty"`
@@ -224,7 +224,7 @@ func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
 		GID           int64   `json:"gid,omitempty"`
 		Price         float64 `json:"price,string,omitempty"`
 		Amount        float64 `json:"amount,string,omitempty"`
-		Delta         float64 `json:"price,string,omitempty"`
+		Delta         float64 `json:"delta,string,omitempty"`
 		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 		Hidden        bool    `json:"hidden,omitempty"`
