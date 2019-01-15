@@ -57,31 +57,36 @@ func (c *Client) handleChannel(msg []byte) error {
 }
 
 func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
-	sub, _ := c.subscriptions.lookupByChannelID(chanId)
+	sub, err := c.subscriptions.lookupByChannelID(chanId)
+	if err != nil {
+		return err
+	}
 	symbol := sub.Request.Symbol
 	// force to signed integer
 	bChecksum := uint32(checksum)
-	oChecksum := c.orderbooks[symbol].Checksum()
-	// compare bitfinex checksum with local checksum
-	if bChecksum == oChecksum {
-		log.Printf("Orderbook '%s' checksum verification successful.", symbol)
-	} else {
-		fmt.Printf("Orderbook '%s' checksum is invalid. Data Out of sync, reconnecting.", symbol)
-		err := c.sendUnsubscribeMessage(context.Background(), chanId)
-		if err != nil {
-			return err
+	if orderbook, ok := c.orderbooks[symbol]; ok {
+		oChecksum := orderbook.Checksum()
+		// compare bitfinex checksum with local checksum
+		if bChecksum == oChecksum {
+			log.Printf("Orderbook '%s' checksum verification successful.", symbol)
+		} else {
+			fmt.Printf("Orderbook '%s' checksum is invalid got %d bot got %d. Data Out of sync, reconnecting.",
+				symbol, bChecksum, oChecksum)
+			err := c.sendUnsubscribeMessage(context.Background(), chanId)
+			if err != nil {
+				return err
+			}
+			newSub := &SubscriptionRequest{
+				SubID:   c.nonce.GetNonce(), // generate new subID
+				Event:   sub.Request.Event,
+				Channel: sub.Request.Channel,
+				Symbol:  sub.Request.Symbol,
+			}
+			_, err_sub := c.Subscribe(context.Background(), newSub)
+			if err_sub != nil {
+				log.Printf("could not resubscribe: %s", err_sub.Error())
+			}
 		}
-		sub, err := c.subscriptions.lookupByChannelID(chanId)
-		if err != nil {
-			return err
-		}
-		newSub := &SubscriptionRequest{
-			SubID:   c.nonce.GetNonce(), // generate new subID
-			Event:   sub.Request.Event,
-			Channel: sub.Request.Channel,
-			Symbol:  sub.Request.Symbol,
-		}
-		c.Subscribe(context.Background(), newSub)
 	}
 	return nil
 }
