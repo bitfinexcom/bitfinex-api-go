@@ -4,18 +4,24 @@ import (
 	"fmt"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"sort"
+	"sync"
 	"strings"
 	"hash/crc32"
 	"strconv"
 )
 
 type Orderbook struct {
+	lock sync.Mutex
+
 	symbol string
 	bids   []*bitfinex.BookUpdate
 	asks   []*bitfinex.BookUpdate
 }
 
 func (ob *Orderbook) SetWithSnapshot(bs *bitfinex.BookUpdateSnapshot) {
+	ob.lock.Lock()
+	defer ob.lock.Unlock()
+
 	ob.bids = make([]*bitfinex.BookUpdate, 0)
 	ob.asks = make([]*bitfinex.BookUpdate, 0)
 	for _, order := range bs.Snapshot {
@@ -28,6 +34,9 @@ func (ob *Orderbook) SetWithSnapshot(bs *bitfinex.BookUpdateSnapshot) {
 }
 
 func (ob *Orderbook) UpdateWith(bu *bitfinex.BookUpdate) {
+	ob.lock.Lock()
+	defer ob.lock.Unlock()
+
 	side := &ob.asks
 	if (bu.Side == bitfinex.Bid) {
 		side = &ob.bids
