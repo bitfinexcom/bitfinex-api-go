@@ -149,8 +149,12 @@ type OrderNewRequest struct {
 	Price         float64 `json:"price,string"`
 	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
+	PriceOcoStop  float64 `json:"price_oco_stop,string,omitempty"`
 	Hidden        bool    `json:"hidden,omitempty"`
 	PostOnly      bool    `json:"postonly,omitempty"`
+	Close         bool    `json:"close,omitempty"`
+	OcoOrder      bool    `json:"oco_order,omitempty"`
+	TimeInForce   string  `json:"tif,omitempty"`
 }
 
 // MarshalJSON converts the order object into the format required by the bitfinex
@@ -165,6 +169,8 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 		Price         float64 `json:"price,string"`
 		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
+		PriceOcoStop  float64 `json:"price_oco_stop,string,omitempty"`
+		TimeInForce   string  `json:"tif,omitempty"`
 		Flags         int     `json:"flags,omitempty"`
 	}{
 		GID:           o.GID,
@@ -175,6 +181,7 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 		Price:         o.Price,
 		PriceTrailing: o.PriceTrailing,
 		PriceAuxLimit: o.PriceAuxLimit,
+		PriceOcoStop:  o.PriceOcoStop,
 	}
 
 	if o.Hidden {
@@ -183,6 +190,14 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 
 	if o.PostOnly {
 		aux.Flags = aux.Flags + OrderFlagPostOnly
+	}
+
+	if o.OcoOrder {
+		aux.Flags = aux.Flags + OrderFlagOCO
+	}
+
+	if o.Close {
+		aux.Flags = aux.Flags + OrderFlagClose
 	}
 
 	body := []interface{}{0, "on", nil, aux}
