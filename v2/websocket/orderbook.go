@@ -51,6 +51,9 @@ func (ob *Orderbook) UpdateWith(bu *bitfinex.BookUpdate) {
 	// match price level
 	for index, sOrder := range *side {
 		if (sOrder.Price == bu.Price) {
+			if (index+1 > len(*(side))) {
+				return
+			}
 			if (bu.Count <= 0) {
 				// delete if count is equal to zero
 				*side = append((*side)[:index], (*side)[index+1:]...)
@@ -76,6 +79,8 @@ func (ob *Orderbook) UpdateWith(bu *bitfinex.BookUpdate) {
 }
 
 func (ob *Orderbook) Checksum() (uint32) {
+	ob.lock.Lock()
+	defer ob.lock.Unlock()
 	var checksumItems []string
 	for i := 0; i < 25; i++ {
 		if len(ob.bids) > i {
