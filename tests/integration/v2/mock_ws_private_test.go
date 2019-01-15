@@ -482,9 +482,10 @@ func TestUpdateOrder(t *testing.T) {
 	listener := newListener()
 	listener.run(ws.Listen())
 
-	// set ws options
-	//ws.SetReadTimeout(time.Second * 2)
-	ws.Connect()
+	err_ws := ws.Connect()
+	if err_ws != nil {
+		t.Fatal(err_ws)
+	}
 	defer ws.Close()
 
 	// begin test
@@ -499,8 +500,14 @@ func TestUpdateOrder(t *testing.T) {
 	async.Publish(`[0,"ps",[["tBTCUSD","ACTIVE",7,916.52002351,0,0,null,null,null,null]]]`)
 	async.Publish(`[0,"ws",[["exchange","BTC",30,0,null],["exchange","USD",80000,0,null],["exchange","ETH",100,0,null],["margin","BTC",10,0,null],["margin","USD",9987.16871968,0,null],["funding","BTC",10,0,null],["funding","USD",10000,0,null]]]`)
 	// consume & assert snapshots
-	listener.nextPositionSnapshot()
-	listener.nextWalletSnapshot()
+	_, errps := listener.nextPositionSnapshot()
+	if errps != nil {
+		t.Fatal(errps)
+	}
+	_, errws := listener.nextWalletSnapshot()
+	if errws != nil {
+		t.Fatal(errws)
+	}
 
 	// submit order
 	err = ws.SubmitOrder(context.Background(), &bitfinex.OrderNewRequest{
@@ -526,7 +533,10 @@ func TestUpdateOrder(t *testing.T) {
 	async.Publish(`[0,"on",[1234567,0,123,"tBTCUSD",1515179518260,1515179518315,1,1,"LIMIT",null,null,null,0,"ACTIVE",null,null,900,0,null,null,null,null,null,0,0,0]]`)
 
 	// eat order ack notification
-	listener.nextNotification()
+	_, errn := listener.nextNotification()
+	if errn != nil {
+		t.Fatal(errn)
+	}
 
 	on, err := listener.nextOrderNew()
 	if err != nil {
