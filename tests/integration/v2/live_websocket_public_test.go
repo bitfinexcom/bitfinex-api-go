@@ -27,7 +27,6 @@ func wait2(ch <-chan interface{}, count int, bc <-chan error, t time.Duration) e
 	case <-time.After(t):
 		return fmt.Errorf("timed out waiting")
 	}
-	return nil
 }
 
 func wait(wg *sync.WaitGroup, bc <-chan error, to time.Duration) error {
@@ -62,6 +61,7 @@ func TestPublicTicker(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		// nolint:megacheck
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -128,6 +128,7 @@ func TestPublicTrades(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		// nolint:megacheck
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -200,6 +201,7 @@ func TestPublicBooks(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		// nolint:megacheck
 		for {
 			select {
 			case msg := <-c.Listen():
@@ -266,6 +268,7 @@ func TestPublicCandles(t *testing.T) {
 
 	errch := make(chan error)
 	go func() {
+		// nolint:megacheck
 		for {
 			select {
 			case msg := <-c.Listen():

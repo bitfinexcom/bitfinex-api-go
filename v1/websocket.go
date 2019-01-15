@@ -52,6 +52,7 @@ const (
 
 // WebSocketService allow to connect and receive stream data
 // from bitfinex.com ws service.
+// nolint:megacheck,structcheck
 type WebSocketService struct {
 	// http client
 	client *Client
@@ -161,7 +162,7 @@ func (w *WebSocketService) Subscribe() error {
 			w.handleDataMessage(p)
 		}
 	}
-
+	// nolint
 	return nil
 }
 
@@ -279,10 +280,14 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 
 	nonce := utils.GetNonce()
 	payload := "AUTH" + nonce
+	sig, err_sig := w.client.signPayload(payload)
+	if err_sig != nil {
+		return
+	}
 	connectMsg, _ := json.Marshal(&privateConnect{
 		Event:       "auth",
 		APIKey:      w.client.APIKey,
-		AuthSig:     w.client.signPayload(payload),
+		AuthSig:     sig,
 		AuthPayload: payload,
 	})
 

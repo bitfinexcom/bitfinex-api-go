@@ -103,6 +103,7 @@ func newSubscriptions(heartbeatTimeout time.Duration) *subscriptions {
 	return subs
 }
 
+// nolint
 type heartbeat struct {
 	ChanID int64
 	*time.Time
@@ -231,6 +232,7 @@ func (s *subscriptions) removeByChannelID(chanID int64) error {
 	return nil
 }
 
+// nolint:megacheck
 func (s *subscriptions) removeBySubscriptionID(subID string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()

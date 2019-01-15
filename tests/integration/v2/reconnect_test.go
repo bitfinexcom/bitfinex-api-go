@@ -75,7 +75,10 @@ func setup(t *testing.T, hbTimeout time.Duration, autoReconnect, auth bool) {
 	apiRecv.run(apiClient.Listen())
 
 	// set ws options
-	apiClient.Connect()
+	err_con := apiClient.Connect()
+	if err_con != nil {
+		t.Fatal(err_con)
+	}
 
 	if err := wsService.WaitForClientCount(1); err != nil {
 		t.Fatal(err)
@@ -178,6 +181,7 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// nolint:megacheck
 	diff := time.Now().Sub(now)
 	t.Logf("client disconnect detected in %s", diff.String())
 
@@ -187,7 +191,10 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 	if wsService.TotalClientCount() != 0 {
 		t.Fatalf("total client count %d, expected non-zero", wsService.TotalClientCount())
 	}
-	wsService.Start()
+	err_ws := wsService.Start()
+	if err_ws != nil {
+		t.Fatal(err_ws)
+	}
 	if err := wsService.WaitForClientCount(1); err != nil {
 		t.Fatal(err)
 	}

@@ -132,10 +132,10 @@ type bookFrequency string
 type BookFrequency bookFrequency
 
 const (
-	OrderFlagHidden   int = 64
-	OrderFlagClose        = 512
-	OrderFlagPostOnly     = 4096
-	OrderFlagOCO          = 16384
+	OrderFlagHidden     int = 64
+	OrderFlagClose      int = 512
+	OrderFlagPostOnly   int = 4096
+	OrderFlagOCO        int = 16384
 )
 
 // OrderNewRequest represents an order to be posted to the bitfinex websocket
@@ -209,7 +209,7 @@ type OrderUpdateRequest struct {
 	GID           int64   `json:"gid,omitempty"`
 	Price         float64 `json:"price,string,omitempty"`
 	Amount        float64 `json:"amount,string,omitempty"`
-	Delta         float64 `json:"price,string,omitempty"`
+	Delta         float64 `json:"delta,string,omitempty"`
 	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 	Hidden        bool    `json:"hidden,omitempty"`
@@ -224,7 +224,7 @@ func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
 		GID           int64   `json:"gid,omitempty"`
 		Price         float64 `json:"price,string,omitempty"`
 		Amount        float64 `json:"amount,string,omitempty"`
-		Delta         float64 `json:"price,string,omitempty"`
+		Delta         float64 `json:"delta,string,omitempty"`
 		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 		Hidden        bool    `json:"hidden,omitempty"`

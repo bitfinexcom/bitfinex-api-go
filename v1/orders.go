@@ -189,7 +189,7 @@ func (s *OrderService) CancelMulti(orderIDS []int64) (string, error) {
 		return "", err
 	}
 
-	response := make(map[string]string, 0)
+	response := make(map[string]string)
 	_, err = s.client.do(req, &response)
 
 	return response["result"], err

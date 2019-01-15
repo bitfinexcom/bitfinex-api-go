@@ -91,6 +91,7 @@ func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
+// nolint:megacheck,structcheck
 type Client struct {
 	asyncFactory AsynchronousFactory // for re-creating transport during reconnects
 
@@ -134,10 +135,13 @@ func (c *Client) CancelOnDisconnect(cxl bool) *Client {
 	return c
 }
 
-func (c *Client) sign(msg string) string {
+func (c *Client) sign(msg string) (string, error) {
 	sig := hmac.New(sha512.New384, []byte(c.apiSecret))
-	sig.Write([]byte(msg))
-	return hex.EncodeToString(sig.Sum(nil))
+	_, err := sig.Write([]byte(msg))
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(sig.Sum(nil)), nil
 }
 
 func (c *Client) registerFactory(channel string, factory messageFactory) {
@@ -226,7 +230,10 @@ func (c *Client) listenDisconnect() {
 			log.Printf("socket disconnect: %s", e.Error())
 		}
 		c.isConnected = false
-		c.reconnect(e)
+		err := c.reconnect(e)
+		if err != nil {
+			log.Printf("socket disconnect: %s", err.Error())
+		}
 	case e := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 		if e != nil {
 			log.Printf("heartbeat disconnect: %s", e.Error())
@@ -234,7 +241,10 @@ func (c *Client) listenDisconnect() {
 		c.isConnected = false
 		if e != nil {
 			c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
-			c.reconnect(e)
+			err := c.reconnect(e)
+			if err != nil {
+				log.Printf("socket disconnect: %s", err.Error())
+			}
 		}
 	case <-c.shutdown: // normal shutdown
 		c.isConnected = false
@@ -282,20 +292,30 @@ func (c *Client) connect() error {
 	}
 	// enable flag
 	if c.parameters.ManageOrderbook {
-		ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-		c.EnableFlag(ctx, bitfinex.Checksum)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		_, err_flag := c.EnableFlag(ctx, bitfinex.Checksum)
+		if err_flag != nil {
+			return err_flag
+		}
 	}
 	return err
 }
 
 func (c *Client) reconnect(err error) error {
 	if c.terminal {
-		c.exit(err)
+		err_exit := c.exit(err)
+		if err_exit != nil {
+			return err_exit
+		}
 		return err
 	}
 	if !c.parameters.AutoReconnect {
 		err := fmt.Errorf("AutoReconnect setting is disabled, do not reconnect: %s", err.Error())
-		c.exit(err)
+		err_exit := c.exit(err)
+		if err_exit != nil {
+			return err_exit
+		}
 		return err
 	}
 	for ; c.parameters.reconnectTry < c.parameters.ReconnectAttempts; c.parameters.reconnectTry++ {
@@ -442,12 +462,16 @@ func (c *Client) checkResubscription() {
 }
 
 // called when an info event is received
-func (c *Client) handleOpen() {
+func (c *Client) handleOpen() (error) {
 	if c.hasCredentials() {
-		c.authenticate(context.Background())
+		err_auth := c.authenticate(context.Background())
+		if err_auth != nil {
+			return err_auth
+		}
 	} else {
 		c.checkResubscription()
 	}
+	return nil
 }
 
 // called when an auth event is received
@@ -482,12 +506,15 @@ func (c *Client) Unsubscribe(ctx context.Context, id string) error {
 // only subscribe to the filtered messages.
 func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 	nonce := c.nonce.GetNonce()
-
 	payload := "AUTH" + nonce
+	sig, err := c.sign(payload)
+	if err != nil {
+		return err
+	}
 	s := &SubscriptionRequest{
 		Event:       "auth",
 		APIKey:      c.apiKey,
-		AuthSig:     c.sign(payload),
+		AuthSig:     sig,
 		AuthPayload: payload,
 		AuthNonce:   nonce,
 		Filter:      filter,

@@ -326,6 +326,7 @@ func (l *listener) nextOrderUpdate() (*bitfinex.OrderUpdate, error) {
 // strongly types messages and places them into a channel
 func (l *listener) run(ch <-chan interface{}) {
 	go func() {
+		// nolint:megacheck
 		for {
 			select {
 			case msg := <-ch:

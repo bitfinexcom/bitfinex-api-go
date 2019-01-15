@@ -85,6 +85,7 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 			_, err_sub := c.Subscribe(context.Background(), newSub)
 			if err_sub != nil {
 				log.Printf("could not resubscribe: %s", err_sub.Error())
+				return err_sub
 			}
 		}
 	}
