@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"sync"
 )
 
 type messageFactory interface {
@@ -70,6 +71,7 @@ type BookFactory struct {
 	*subscriptions
 	orderbooks     map[string]*Orderbook
 	manageBooks    bool
+	lock           sync.Mutex
 }
 
 func newBookFactory(subs *subscriptions, obs map[string]*Orderbook, manageBooks bool) *BookFactory {
@@ -94,6 +96,7 @@ func (f *BookFactory) Build(chanID int64, objType string, raw []interface{}) (in
 	return nil, err
 }
 
+
 func (f *BookFactory) BuildSnapshot(chanID int64, raw [][]float64) (interface{}, error) {
 	sub, err := f.subscriptions.lookupByChannelID(chanID)
 	update, err2 := bitfinex.NewBookUpdateSnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
@@ -102,6 +105,8 @@ func (f *BookFactory) BuildSnapshot(chanID int64, raw [][]float64) (interface{},
 	}
 	if err == nil {
 		if f.manageBooks {
+			f.lock.Lock()
+			defer f.lock.Unlock()
 			// create new orderbook
 			f.orderbooks[sub.Request.Symbol] = &Orderbook{
 				symbol: sub.Request.Symbol,
