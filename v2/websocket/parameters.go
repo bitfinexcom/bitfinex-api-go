@@ -31,7 +31,7 @@ func NewDefaultParameters() *Parameters {
 		ManageOrderbook:        false,
 		ShutdownTimeout:        time.Second * 5,
 		ResubscribeOnReconnect: true,
-		HeartbeatTimeout:       time.Second * 10, // HB = 5s
+		HeartbeatTimeout:       time.Second * 15, // HB = 5s
 		LogTransport:           false,           // log transport send/recv
 	}
 }
