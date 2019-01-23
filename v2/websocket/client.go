@@ -108,18 +108,22 @@ type Client struct {
 	init               bool
 
 	// connection & operational behavior
-	parameters *Parameters
+	parameters         *Parameters
 
 	// subscription manager
-	subscriptions *subscriptions
-	factories     map[string]messageFactory
-	orderbooks    map[string]*Orderbook
+	subscriptions      *subscriptions
+	factories          map[string]messageFactory
+	orderbooks         map[string]*Orderbook
 
 	// close signal sent to user on shutdown
-	shutdown chan bool
+	shutdown           chan bool
 
 	// downstream listener channel to deliver API objects
-	listener chan interface{}
+	listener           chan interface{}
+
+	// race management
+	lock						   sync.Mutex
+	waitGroup          sync.WaitGroup
 }
 
 // Credentials assigns authentication credentials to a connection request.
@@ -191,6 +195,8 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 		parameters:     params,
 		listener:       make(chan interface{}),
 		terminal:       false,
+		shutdown:       nil,
+		asynchronous:   nil,
 	}
 	c.registerPublicFactories()
 	return c
@@ -248,6 +254,7 @@ func (c *Client) listenDisconnect() {
 		}
 	case <-c.shutdown: // normal shutdown
 		c.isConnected = false
+		return // exit routine
 	}
 }
 
@@ -273,12 +280,18 @@ func (c *Client) Connect() error {
 // reset assumes transport has already died or been closed
 func (c *Client) reset() {
 	subs := c.subscriptions.Reset()
+	// shutown if existing websocket connected
+	if c.shutdown != nil {
+		close(c.shutdown)
+	}
+
 	if subs != nil {
 		c.resetSubscriptions = subs
 	}
-	c.shutdown = make(chan bool)
 	c.init = true
 	c.asynchronous = c.asyncFactory.Create()
+	c.shutdown = make(chan bool)
+
 	// wait for shutdown signals from child & caller
 	go c.listenDisconnect()
 	// listen to data from async
@@ -318,15 +331,16 @@ func (c *Client) reconnect(err error) error {
 		}
 		return err
 	}
-	for ; c.parameters.reconnectTry < c.parameters.ReconnectAttempts; c.parameters.reconnectTry++ {
+	reconnectTry := 0
+	for ; reconnectTry < c.parameters.ReconnectAttempts; reconnectTry++ {
 		log.Printf("waiting %s until reconnect...", c.parameters.ReconnectInterval)
 		time.Sleep(c.parameters.ReconnectInterval)
-		log.Printf("reconnect attempt %d/%d", c.parameters.reconnectTry+1, c.parameters.ReconnectAttempts)
+		log.Printf("reconnect attempt %d/%d", reconnectTry+1, c.parameters.ReconnectAttempts)
 		c.reset()
 		err = c.connect()
 		if err == nil {
 			log.Print("reconnect OK")
-			c.parameters.reconnectTry = 0
+			reconnectTry = 0
 			return nil
 		}
 		log.Printf("reconnect failed: %s", err.Error())
@@ -379,15 +393,13 @@ func (c *Client) closeAsyncAndWait(t time.Duration) {
 		return
 	}
 	timeout := make(chan bool)
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	c.waitGroup.Add(1)
 	go func() {
 		select {
-		case <-c.asynchronous.Done(): // will this work?
-			wg.Done()
+		case <-c.asynchronous.Done():
+			c.waitGroup.Done()
 		case <-timeout:
-			log.Print("blocking async shutdown timed out")
-			wg.Done()
+			c.waitGroup.Done()
 		}
 	}()
 	c.asynchronous.Close()
@@ -395,7 +407,7 @@ func (c *Client) closeAsyncAndWait(t time.Duration) {
 		time.Sleep(t)
 		close(timeout)
 	}()
-	wg.Wait()
+	c.waitGroup.Wait()
 }
 
 // Listen provides an atomic interface for receiving API messages.

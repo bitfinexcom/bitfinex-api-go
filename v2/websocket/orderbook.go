@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"fmt"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"sort"
 	"sync"
@@ -85,15 +84,15 @@ func (ob *Orderbook) Checksum() (uint32) {
 	for i := 0; i < 25; i++ {
 		if len(ob.bids) > i {
 			// append bid
-			price := preparePrice((ob.bids)[i].Price)
-			amount := fmt.Sprint((ob.bids)[i].Amount)
+			price := prepareNumber((ob.bids)[i].Price)
+			amount := prepareNumber((ob.bids)[i].Amount)
 			checksumItems = append(checksumItems, price)
 			checksumItems = append(checksumItems, amount)
 		}
 		if len(ob.asks) > i {
 			// append ask
-			price := preparePrice((ob.asks)[i].Price)
-			amount := fmt.Sprint(-(ob.asks)[i].Amount)
+			price := prepareNumber((ob.asks)[i].Price)
+			amount := prepareNumber(-(ob.asks)[i].Amount)
 			checksumItems = append(checksumItems, price)
 			checksumItems = append(checksumItems, amount)
 		}
@@ -102,13 +101,8 @@ func (ob *Orderbook) Checksum() (uint32) {
 	return crc32.ChecksumIEEE([]byte(checksumStrings))
 }
 
-func preparePrice(x float64) (string) {
-	// convert so string with 4 significant numbers
-	// i.e 2.1322998 -> 2.1323
-	str := strconv.FormatFloat(x, 'f', 4, 64)
-	// parse back to float
-	f, _:= strconv.ParseFloat(str, 64)
-	// use Sprint (this will remove empty zeros)
-	// i.e 2.0000 -> 2
-	return fmt.Sprint(f)
+func prepareNumber(x float64) (string) {
+	// convert scientific float notation to string
+	// i.e 1e-7 -> 0.0000001
+	return strconv.FormatFloat(x, 'f', -1, 64)
 }

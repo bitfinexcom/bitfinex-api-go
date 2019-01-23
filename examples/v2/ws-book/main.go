@@ -40,7 +40,6 @@ func main() {
 		switch obj.(type) {
 		case error:
 			log.Printf("channel closed: %s", obj)
-			break
 		default:
 		}
 		log.Printf("MSG RECV: %#v", obj)
