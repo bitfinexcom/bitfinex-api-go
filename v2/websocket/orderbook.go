@@ -6,7 +6,6 @@ import (
 	"sync"
 	"strings"
 	"hash/crc32"
-	"strconv"
 )
 
 type Orderbook struct {
@@ -84,25 +83,16 @@ func (ob *Orderbook) Checksum() (uint32) {
 	for i := 0; i < 25; i++ {
 		if len(ob.bids) > i {
 			// append bid
-			price := prepareNumber((ob.bids)[i].Price)
-			amount := prepareNumber((ob.bids)[i].Amount)
-			checksumItems = append(checksumItems, price)
-			checksumItems = append(checksumItems, amount)
+			checksumItems = append(checksumItems, (ob.bids)[i].PriceJsNum.String())
+			checksumItems = append(checksumItems, (ob.bids)[i].AmountJsNum.String())
 		}
 		if len(ob.asks) > i {
 			// append ask
-			price := prepareNumber((ob.asks)[i].Price)
-			amount := prepareNumber(-(ob.asks)[i].Amount)
-			checksumItems = append(checksumItems, price)
-			checksumItems = append(checksumItems, amount)
+			checksumItems = append(checksumItems, (ob.asks)[i].PriceJsNum.String())
+			checksumItems = append(checksumItems, (ob.asks)[i].AmountJsNum.String())
 		}
 	}
 	checksumStrings := strings.Join(checksumItems, ":")
 	return crc32.ChecksumIEEE([]byte(checksumStrings))
 }
 
-func prepareNumber(x float64) (string) {
-	// convert scientific float notation to string
-	// i.e 1e-7 -> 0.0000001
-	return strconv.FormatFloat(x, 'f', -1, 64)
-}
