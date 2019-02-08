@@ -182,6 +182,7 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 		PriceTrailing: o.PriceTrailing,
 		PriceAuxLimit: o.PriceAuxLimit,
 		PriceOcoStop:  o.PriceOcoStop,
+		TimeInForce:   o.TimeInForce,
 	}
 
 	if o.Hidden {
