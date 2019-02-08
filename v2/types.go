@@ -326,6 +326,7 @@ type Order struct {
 	AmountOrig    float64
 	Type          string
 	TypePrev      string
+	MTSTif        int64
 	Flags         int64
 	Status        OrderStatus
 	Price         float64
@@ -368,6 +369,7 @@ func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
 			AmountOrig:    f64ValOrZero(raw[7]),
 			Type:          sValOrEmpty(raw[8]),
 			TypePrev:      sValOrEmpty(raw[9]),
+			MTSTif:        int64(f64ValOrZero(raw[10])),
 			Flags:         i64ValOrZero(raw[12]),
 			Status:        OrderStatus(sValOrEmpty(raw[13])),
 			Price:         f64ValOrZero(raw[16]),
