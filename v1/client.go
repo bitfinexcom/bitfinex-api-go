@@ -130,15 +130,22 @@ func (c *Client) newAuthenticatedRequest(m string, refURL string, data map[strin
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-BFX-APIKEY", c.APIKey)
 	req.Header.Add("X-BFX-PAYLOAD", encoded)
-	req.Header.Add("X-BFX-SIGNATURE", c.signPayload(encoded))
+	sig, err := c.signPayload(encoded)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("X-BFX-SIGNATURE", sig)
 
 	return req, nil
 }
 
-func (c *Client) signPayload(payload string) string {
+func (c *Client) signPayload(payload string) (string, error) {
 	sig := hmac.New(sha512.New384, []byte(c.APISecret))
-	sig.Write([]byte(payload))
-	return hex.EncodeToString(sig.Sum(nil))
+	_, err := sig.Write([]byte(payload))
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(sig.Sum(nil)), nil
 }
 
 // SignPayload :

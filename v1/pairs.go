@@ -23,13 +23,14 @@ func (p *PairsService) All() ([]string, error) {
 
 // Detailed Pair
 type Pair struct {
-	Pair         string
-	Precision    int     `json:"price_precision,int"`
-	InitMargin   float64 `json:"initial_margin,string"`
-	MinMargin    float64 `json:"minimum_margin,string"`
-	MaxOrderSize float64 `json:"maximum_order_size,string"`
-	MinOrderSize float64 `json:"minimum_order_size,string"`
-	Espiration   string
+	Pair             string
+	PricePrecision   int     `json:"price_precision,int"`
+	InitialMargin    float64 `json:"initial_margin,string"`
+	MinimumMargin    float64 `json:"minimum_margin,string"`
+	MaximumOrderSize float64 `json:"maximum_order_size,string"`
+	MinimumOrderSize float64 `json:"minimum_order_size,string"`
+	Expiration       string
+	Margin           bool
 }
 
 // Return a list of detailed pairs

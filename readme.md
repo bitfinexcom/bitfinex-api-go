@@ -46,7 +46,7 @@ func main() {
 ### Order create
 
 ``` go
-order, err := client.Orders.Create(bitfinex.BTCUSD, -0.01, 260.99, bitfinex.ORDER_TYPE_EXCHANGE_LIMIT)
+order, err := client.Orders.Create(bitfinex.BTCUSD, -0.01, 260.99, bitfinex.OrderTypeExchangeLimit)
 
 if err != nil {
     return err

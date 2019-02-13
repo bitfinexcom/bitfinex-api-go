@@ -62,6 +62,7 @@ type BfChanData struct {
 
 // WebSocketService allow to connect and receive stream data
 // from bitfinex.com ws service.
+// nolint:megacheck,structcheck
 type WebSocketService struct {
 	lock     sync.Mutex
 	runtimes int
@@ -225,6 +226,7 @@ func (w *WebSocketService) Run() error {
 		}
 	}
 	log.Printf("WebSocketService.Run exit @ times %d/%d", tmpTimes, w.runtimes)
+	// nolint
 	return nil
 }
 
@@ -334,10 +336,14 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 
 	nonce := utils.GetNonce()
 	payload := "AUTH" + nonce
+	sig, err_sig := w.client.signPayload(payload)
+	if err_sig != nil {
+		return
+	}
 	connectMsg, _ := json.Marshal(&privateConnect{
 		Event:       "auth",
 		APIKey:      w.client.APIKey,
-		AuthSig:     w.client.signPayload(payload),
+		AuthSig:     sig,
 		AuthPayload: payload,
 	})
 

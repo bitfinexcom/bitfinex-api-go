@@ -45,7 +45,8 @@ func TestPairsAllDetailed(t *testing.T) {
             "minimum_margin":"15.0",
             "maximum_order_size":"2000.0",
             "minimum_order_size":"0.01",
-            "expiration":"NA"
+            "expiration":"NA",
+            "margin":true
         },{
             "pair":"ltcusd",
             "price_precision":5,
@@ -53,7 +54,8 @@ func TestPairsAllDetailed(t *testing.T) {
             "minimum_margin":"15.0",
             "maximum_order_size":"5000.0",
             "minimum_order_size":"0.1",
-            "expiration":"NA"
+            "expiration":"NA",
+            "margin":false
         }]`
 		resp := http.Response{
 			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
@@ -70,14 +72,28 @@ func TestPairsAllDetailed(t *testing.T) {
 
 	if len(pairs) != 2 {
 		t.Error("Expected", 2)
-		t.Error("Actual ", len(pairs))
+		t.Error("Actual", len(pairs))
 	}
 
 	pairMargin := pairs[0].InitialMargin
 	expectedMargin := 30.0
 	if (pairMargin-expectedMargin) > 0.1 || (expectedMargin-pairMargin) > 0.1 {
 		t.Error("Expected", expectedMargin)
-		t.Error("Actual ", pairMargin)
+		t.Error("Actual", pairMargin)
 	}
 
+	if pairs[0].Pair != "btcusd" {
+		t.Error("Expected", "btcusd")
+		t.Error("Actual", pairs[0].Pair)
+	}
+
+	if pairs[0].Expiration != "NA" {
+		t.Error("Expected", "NA")
+		t.Error("Actual", pairs[0].Expiration)
+	}
+
+	if !pairs[0].Margin {
+		t.Error("Expected", true)
+		t.Error("Actual", pairs[0].Margin)
+	}
 }
