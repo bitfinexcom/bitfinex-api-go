@@ -45,10 +45,10 @@ func (c *Client) handleChannel(msg []byte) error {
 				}
 			default:
 				body := raw[2].([]interface{})
-				return c.handlePublicChannel(chanID, sub.Request.Channel, data, body)
+				return c.handlePublicChannel(chanID, sub.Request.Channel, data, body, msg)
 			}
 		case []interface{}:
-			return c.handlePublicChannel(chanID, sub.Request.Channel, "", data)
+			return c.handlePublicChannel(chanID, sub.Request.Channel, "", data, msg)
 		}
 	} else {
 		return c.handlePrivateChannel(raw)
@@ -92,7 +92,7 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 	return nil
 }
 
-func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data []interface{}) error {
+func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data []interface{}, raw_msg []byte) error {
 	// unauthenticated data slice
 	// returns interface{} (which is really [][]float64)
 	obj, err := c.processDataSlice(data)
@@ -108,7 +108,7 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 			for i, ft := range flt[0] {
 				arr[i] = ft
 			}
-			msg, err := factory.Build(chanID, objType, arr)
+			msg, err := factory.Build(chanID, objType, arr, raw_msg)
 			if err != nil {
 				return err
 			}
@@ -116,7 +116,7 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 				c.listener <- msg
 			}
 		} else if len(flt) > 1 {
-			msg, err := factory.BuildSnapshot(chanID, flt)
+			msg, err := factory.BuildSnapshot(chanID, flt, raw_msg)
 			if err != nil {
 				return err
 			}
