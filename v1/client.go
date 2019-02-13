@@ -149,7 +149,7 @@ func (c *Client) signPayload(payload string) (string, error) {
 }
 
 // SignPayload :
-func (c *Client) SignPayload(payload string) string {
+func (c *Client) SignPayload(payload string) (string, error) {
 	return c.signPayload(payload)
 }
 
