@@ -215,6 +215,7 @@ type OrderUpdateRequest struct {
 	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 	Hidden        bool    `json:"hidden,omitempty"`
 	PostOnly      bool    `json:"postonly,omitempty"`
+	TimeInForce   string  `json:"tif,omitempty"`
 }
 
 // MarshalJSON converts the order object into the format required by the bitfinex
@@ -230,6 +231,7 @@ func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
 		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 		Hidden        bool    `json:"hidden,omitempty"`
 		PostOnly      bool    `json:"postonly,omitempty"`
+		TimeInForce   string  `json:"tif,omitempty"`
 		Flags         int     `json:"flags,omitempty"`
 	}{
 		ID:            o.ID,
@@ -239,6 +241,7 @@ func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
 		PriceTrailing: o.PriceTrailing,
 		PriceAuxLimit: o.PriceAuxLimit,
 		Delta:         o.Delta,
+		TimeInForce:   o.TimeInForce,
 	}
 
 	if o.Hidden {
