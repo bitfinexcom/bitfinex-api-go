@@ -366,7 +366,7 @@ func (c *Client) listenUpstream() {
 		case msg := <-c.asynchronous.Listen():
 			if msg != nil {
 				// Errors here should be non critical so we just log them.
-				log.Printf("[DEBUG]: %s\n", msg)
+				// log.Printf("[DEBUG]: %s\n", msg)
 				err := c.handleMessage(msg)
 				if err != nil {
 					log.Printf("[WARN]: %s\n", err)
@@ -470,11 +470,12 @@ func (c *Client) checkResubscription() {
 				log.Printf("could not resubscribe: %s", err.Error())
 			}
 		}
+		c.resetSubscriptions = nil
 	}
 }
 
 // called when an info event is received
-func (c *Client) handleOpen() (error) {
+func (c *Client) handleOpen() error {
 	if c.hasCredentials() {
 		err_auth := c.authenticate(context.Background())
 		if err_auth != nil {
