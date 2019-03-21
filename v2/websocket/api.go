@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 	"fmt"
+	"errors"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
@@ -100,7 +101,7 @@ func (c *Client) GetOrderbook(symbol string) (*Orderbook, error) {
 		// take dereferenced copy of orderbook
 		return val, nil
 	}
-	return nil, fmt.Errorf("Orderbook %s does not exist", symbol)
+	return nil, errors.New(fmt.Sprintf("Orderbook %s does not exist", symbol))
 }
 
 // SubmitOrder sends an order request.
