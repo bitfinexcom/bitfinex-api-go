@@ -95,6 +95,14 @@ func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution
 	return c.Subscribe(ctx, req)
 }
 
+func (c *Client) GetOrderbook(symbol string) (*Orderbook, error) {
+	if val, ok := c.orderbooks[symbol]; ok {
+		// take dereferenced copy of orderbook
+		return val, nil
+	}
+	return nil, fmt.Errorf("Orderbook %s does not exist", symbol)
+}
+
 // SubmitOrder sends an order request.
 func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewRequest) error {
 	return c.asynchronous.Send(ctx, order)
