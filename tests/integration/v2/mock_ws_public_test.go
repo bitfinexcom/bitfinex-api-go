@@ -133,12 +133,32 @@ func TestOrderbook(t *testing.T) {
 	// publish new trade update
 	async.Publish(`[81757,[0.0000011,12,266122.94]]`)
 
+	// test that we can retrieve the orderbook
+	ob, err_ob := ws.GetOrderbook("tXRPBTC")
+	if err_ob != nil {
+		t.Fatal(err_ob)
+	}
+
+	// test that changing the orderbook values will not invalidate the checksum
+	// since they have been dereferenced
+	ob.Bids()[0].Amount = 9999999
+
 	// publish new checksum
 	pre := async.SentCount()
 	async.Publish(`[81757,"cs",-1175357890]`)
 
+	// test that the new trade has been added to the orderbook
+	newTrade := ob.Bids()[0]
+	// check that it has overwritten the original trade in the book at that price
+	if newTrade.PriceJsNum.String() != "0.0000011" {
+		t.Fatal("Newly submitted trade did not update into orderbook")
+	}
+	if newTrade.AmountJsNum.String() != "266122.94" {
+		t.Fatal("Newly submitted trade did not update into orderbook")
+	}
+
 	// check that we did not send an unsubscribe message
-	// because that woul mean the checksum was incorrect
+	// because that would mean the checksum was incorrect
 	if err_unsub := async.waitForMessage(pre); err_unsub != nil {
 		// no message sent
 		return

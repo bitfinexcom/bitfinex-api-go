@@ -43,5 +43,12 @@ func main() {
 		default:
 		}
 		log.Printf("MSG RECV: %#v", obj)
+
+		// Load the latest orderbook
+		ob, _ := c.GetOrderbook(bitfinex.TradingPrefix+bitfinex.BTCUSD)
+		if ob != nil {
+			log.Printf("Orderbook asks: %v", ob.Asks())
+			log.Printf("Orderbook asks: %v", ob.Bids())
+		}
 	}
 }
