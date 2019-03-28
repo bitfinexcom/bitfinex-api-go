@@ -23,16 +23,10 @@ func (s *LedgerService) All(symbol string) (*bitfinex.LedgerSnapshot, error) {
 		return nil, err
 	}
 
-	dat := make([][]float64, 0)
-	for _, r := range raw {
-		if f, ok := r.([]float64); ok {
-			dat = append(dat, f)
-		}
-	}
-
-	os, err := bitfinex.NewLedgerSnapshotFromRaw(symbol, dat)
+	os, err := bitfinex.NewLedgerSnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
+	
 	return os, nil
 }
