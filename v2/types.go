@@ -765,16 +765,21 @@ type BalanceUpdate BalanceInfo
 
 //returns ledgers
 type LedgerSnapshot struct {
-	Snapshot []*Ledger
+	ID                 int64
+	CURRENCY           string
+	TIMESTAMP_MILLI    date
+	AMOUNT             float64
+	BALANCE            float64
+	DESCRIPTION        string
 }
 
-func NewLedgerSnapshotFromRaw(pair string, raw [][]float64) (*LedgerSnapshot, error) {
+func NewLedgerSnapshotFromRaw(currency string, raw [][]float64) (*LedgerSnapshot, error) {
 	if len(raw) <= 0 {
 		return nil, fmt.Errorf("data slice is too short for ledger snapshot: %#v", raw)
 	}
 	snapshot := make([]*Ledger, 0)
 	for _, flt := range raw {
-		t, err := NewLedgerFromRaw(pair, ToInterface(flt))
+		t, err := NewLedgerFromRaw(currency, ToInterface(flt))
 		if err == nil {
 			snapshot = append(snapshot, t)
 		}
