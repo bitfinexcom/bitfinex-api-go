@@ -763,31 +763,6 @@ func NewBalanceInfoFromRaw(raw []interface{}) (o *BalanceInfo, err error) {
 
 type BalanceUpdate BalanceInfo
 
-//returns ledgers
-type LedgerSnapshot struct {
-	ID                 int64
-	CURRENCY           string
-	TIMESTAMP_MILLI    date
-	AMOUNT             float64
-	BALANCE            float64
-	DESCRIPTION        string
-}
-
-func NewLedgerSnapshotFromRaw(currency string, raw [][]float64) (*LedgerSnapshot, error) {
-	if len(raw) <= 0 {
-		return nil, fmt.Errorf("data slice is too short for ledger snapshot: %#v", raw)
-	}
-	snapshot := make([]*Ledger, 0)
-	for _, flt := range raw {
-		t, err := NewLedgerFromRaw(currency, ToInterface(flt))
-		if err == nil {
-			snapshot = append(snapshot, t)
-		}
-	}
-
-	return &LedgerSnapshot{Snapshot: snapshot}, nil
-}
-
 // marginInfoFromRaw returns either a MarginInfoBase or MarginInfoUpdate, since
 // the Margin Info is split up into a base and per symbol parts.
 func NewMarginInfoFromRaw(raw []interface{}) (o interface{}, err error) {
