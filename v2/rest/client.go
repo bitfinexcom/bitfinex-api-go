@@ -6,11 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/utils"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/blockcapital/bitfinex-api-go/utils"
 )
 
 var productionBaseURL = "https://api.bitfinex.com/v2/"
