@@ -12,8 +12,8 @@ type LedgerService struct {
 }
 
 // Ledgers returns ledgers for the selected currency and authenticated account.
-func (s *LedgerService) Ledgers(symbol string) (*bitfinex.LedgerSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequestWithData(path.Join("ledgers", symbol, "hist"), map[string]interface{}{"start": nil, "end": nil, "limit": nil})
+func (s *LedgerService) Ledgers(currency string) (*bitfinex.LedgerSnapshot, error) {
+	req, err := s.requestFactory.NewAuthenticatedRequestWithData(path.Join("ledgers", currency, "hist"), map[string]interface{}{"start": nil, "end": nil, "limit": nil})
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (s *LedgerService) Ledgers(symbol string) (*bitfinex.LedgerSnapshot, error)
 		}
 	}
 
-	os, err := bitfinex.NewLedgerSnapshotFromRaw(symbol, dat)
+	os, err := bitfinex.NewLedgerSnapshotFromRaw(currency, dat)
 	if err != nil {
 		return nil, err
 	}
