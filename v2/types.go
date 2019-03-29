@@ -1545,7 +1545,7 @@ func NewLedgerFromRaw(currency string, raw []interface{}) (o *Ledger, err error)
 		MTS:         i64ValOrZero(raw[2]),
 		Amount:      math.Abs(amt),
 		Balance:     math.Abs(bal),
-		Description: sValOrEmpty(raw[5],
+		Description: sValOrEmpty(raw[5]),
 	}
 
 	return
