@@ -1520,3 +1520,52 @@ func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interfac
 
 	return
 }
+
+// Ledger structure
+type Ledger struct {
+	ID		int64
+	Currency	string
+	MTS		int64
+	Amount		float64
+	Balance		float64
+	Description	string
+}
+
+func NewLedgerFromRaw(currency string, raw []interface{}) (o *Ledger, err error) {
+	if len(raw) < 4 {
+		return o, fmt.Errorf("data slice too short for ledger: %#v", raw)
+	}
+
+	amt := f64ValOrZero(raw[3])
+	bal := f64ValOrZero(raw[4])
+
+	o = &Ledger{
+		ID:          i64ValOrZero(raw[0]),
+		Currency:    currency,
+		MTS:         i64ValOrZero(raw[2]),
+		Amount:      math.Abs(amt),
+		Balance:     math.Abs(bal),
+		Description: sValOrEmpty(raw[5],
+	}
+
+	return
+}
+
+type LedgerSnapshot struct {
+	Snapshot []*Ledger
+}
+
+func NewLedgerSnapshotFromRaw(currency string, raw [][]float64) (*LedgerSnapshot, error) {
+	if len(raw) <= 0 {
+		return nil, fmt.Errorf("data slice is too short for trade snapshot: %#v", raw)
+	}
+	snapshot := make([]*Ledger, 0)
+	for _, flt := range raw {
+		t, err := NewLedgerFromRaw(currency, ToInterface(flt))
+		if err == nil {
+			snapshot = append(snapshot, t)
+		}
+	}
+
+	return &LedgerSnapshot{Snapshot: snapshot}, nil
+}
