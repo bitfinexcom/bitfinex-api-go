@@ -17,8 +17,7 @@ func newWs(baseURL string, logTransport bool) *ws {
 	return &ws{
 		BaseURL:      baseURL,
 		downstream:   make(chan []byte),
-		shutdown:     make(chan struct{}),
-		finished:     make(chan error),
+		quit:         make(chan error),
 		logTransport: logTransport,
 	}
 }
@@ -29,11 +28,9 @@ type ws struct {
 	BaseURL       string
 	TLSSkipVerify bool
 	downstream    chan []byte
-	userShutdown  bool
 	logTransport  bool
 
-	shutdown chan struct{} // signal to kill looping goroutines
-	finished chan error    // signal to parent with error, if applicable
+	quit chan error    // signal to parent with error, if applicable
 }
 
 func (w *ws) Connect() error {
@@ -42,7 +39,6 @@ func (w *ws) Connect() error {
 	}
 	w.wsLock.Lock()
 	defer w.wsLock.Unlock()
-	w.userShutdown = false
 	var d = websocket.Dialer{
 		Subprotocols:    []string{"p1", "p2"},
 		ReadBufferSize:  1024,
@@ -79,9 +75,9 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	}
 
 	select {
-	case <-ctx.Done():
+	case <- ctx.Done():
 		return ctx.Err()
-	case <-w.shutdown: // abrupt ws shutdown
+	case <- w.quit: // ws closed
 		return fmt.Errorf("websocket connection closed")
 	default:
 	}
@@ -93,15 +89,13 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	}
 	err = w.ws.WriteMessage(websocket.TextMessage, bs)
 	if err != nil {
-		w.cleanup(err)
 		return err
 	}
-
 	return nil
 }
 
 func (w *ws) Done() <-chan error {
-	return w.finished
+	return w.quit
 }
 
 // listen on ws & fwd to listen()
@@ -112,29 +106,27 @@ func (w *ws) listenWs() {
 		}
 
 		select {
-		case <-w.shutdown: // external shutdown request
+		case <-w.quit: // ws connection ended
 			return
 		default:
-		}
-
-		_, msg, err := w.ws.ReadMessage()
-		if err != nil {
-			if cl, ok := err.(*websocket.CloseError); ok {
-				log.Printf("close error code: %d", cl.Code)
-			}
-			// a read during normal shutdown results in an OpError: op on closed connection
-			if _, ok := err.(*net.OpError); ok {
-				// general read error on a closed network connection, OK
-				w.cleanup(nil)
+			_, msg, err := w.ws.ReadMessage()
+			if err != nil {
+				if cl, ok := err.(*websocket.CloseError); ok {
+					log.Printf("close error code: %d", cl.Code)
+				}
+				// a read during normal shutdown results in an OpError: op on closed connection
+				if _, ok := err.(*net.OpError); ok {
+					// general read error on a closed network connection, OK
+					return
+				}
+				w.cleanup(err)
 				return
 			}
-			w.cleanup(err)
-			return
+			if w.logTransport {
+				log.Printf("srv->ws: %s", string(msg))
+			}
+			w.downstream <- msg
 		}
-		if w.logTransport {
-			log.Printf("srv->ws: %s", string(msg))
-		}
-		w.downstream <- msg
 	}
 }
 
@@ -143,18 +135,14 @@ func (w *ws) Listen() <-chan []byte {
 }
 
 func (w *ws) cleanup(err error) {
+	w.stop()
+	w.quit <- err	// pass error back
+	close(w.quit) // signal to parent listeners
 	close(w.downstream) // shut down caller's listen channel
-	close(w.shutdown)   // signal to kill goroutines
-	if err != nil && !w.userShutdown {
-		w.finished <- err
-	}
-	close(w.finished) // signal to parent listeners
 }
 
-// Close the websocket connection
-func (w *ws) Close() {
+func (w *ws) stop() {
 	w.wsLock.Lock()
-	w.userShutdown = true
 	if w.ws != nil {
 		if err := w.ws.Close(); err != nil { // will trigger cleanup()
 			log.Printf("[INFO]: error closing websocket: %s", err)
@@ -162,4 +150,9 @@ func (w *ws) Close() {
 		w.ws = nil
 	}
 	w.wsLock.Unlock()
+}
+
+// Close the websocket connection
+func (w *ws) Close() {
+	w.stop()
 }
