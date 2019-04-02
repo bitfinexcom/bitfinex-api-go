@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type eventType struct {
@@ -175,7 +174,7 @@ func (c *Client) handleEvent(msg []byte) error {
 		}
 		c.listener <- &ec
 	default:
-		return fmt.Errorf("unknown event: %s", msg) // TODO: or just log?
+		c.log.Warningf("unknown event: %s", msg)
 	}
 
 	//err = json.Unmarshal(msg, &e)

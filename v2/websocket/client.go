@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
+	"github.com/op/go-logging"
 	"strings"
 	"sync"
 	"time"
@@ -87,7 +87,7 @@ func NewWebsocketAsynchronousFactory(parameters *Parameters) AsynchronousFactory
 
 // Create returns a new websocket transport.
 func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
-	return newWs(w.parameters.URL, w.parameters.LogTransport)
+	return newWs(w.parameters.URL, w.parameters.LogTransport, w.parameters.Logger)
 }
 
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
@@ -106,6 +106,7 @@ type Client struct {
 	terminal           bool
 	resetSubscriptions []*subscription
 	init               bool
+	log                *logging.Logger
 
 	// connection & operational behavior
 	parameters         *Parameters
@@ -189,7 +190,7 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 		asyncFactory:   async,
 		Authentication: NoAuthentication,
 		factories:      make(map[string]messageFactory),
-		subscriptions:  newSubscriptions(params.HeartbeatTimeout),
+		subscriptions:  newSubscriptions(params.HeartbeatTimeout, params.Logger),
 		orderbooks:     make(map[string]*Orderbook),
 		nonce:          nonce,
 		isConnected:    false,
@@ -199,6 +200,7 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 		resetWebsocket: make(chan bool),
 		shutdown:       make(chan bool),
 		asynchronous:   async.Create(),
+		log:            params.Logger,
 	}
 	c.registerPublicFactories()
 	return c
@@ -240,7 +242,7 @@ func (c *Client) listenDisconnect() {
 			err := c.reconnect(fmt.Errorf("reconnecting"))
 			if err != nil {
 				c.killListener(err)
-				log.Printf("socket disconnect: %s", err.Error())
+				c.log.Warningf("socket disconnect: %s", err.Error())
 				// exit routine if failed to reconnect
 				return
 			}
@@ -249,14 +251,14 @@ func (c *Client) listenDisconnect() {
 			return
 		case e := <- c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 			if e != nil {
-				log.Printf("heartbeat disconnect: %s", e.Error())
+				c.log.Warningf("heartbeat disconnect: %s", e.Error())
 			}
 			c.isConnected = false
 			if e != nil {
 				c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
 				err := c.reconnect(e)
 				if err != nil {
-					log.Printf("socket disconnect: %s", err.Error())
+					c.log.Warningf("socket disconnect: %s", err.Error())
 					// exit routine if failed to reconnect
 					return
 				}
@@ -266,15 +268,15 @@ func (c *Client) listenDisconnect() {
 }
 
 func (c *Client) dumpParams() {
-	log.Print("----Bitfinex Client Parameters----")
-	log.Printf("AutoReconnect=%t", c.parameters.AutoReconnect)
-	log.Printf("ReconnectInterval=%s", c.parameters.ReconnectInterval)
-	log.Printf("ReconnectAttempts=%d", c.parameters.ReconnectAttempts)
-	log.Printf("ShutdownTimeout=%s", c.parameters.ShutdownTimeout)
-	log.Printf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
-	log.Printf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
-	log.Printf("URL=%s", c.parameters.URL)
-	log.Printf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
+	c.log.Debug("----Bitfinex Client Parameters----")
+	c.log.Debugf("AutoReconnect=%t", c.parameters.AutoReconnect)
+	c.log.Debugf("ReconnectInterval=%s", c.parameters.ReconnectInterval)
+	c.log.Debugf("ReconnectAttempts=%d", c.parameters.ReconnectAttempts)
+	c.log.Debugf("ShutdownTimeout=%s", c.parameters.ShutdownTimeout)
+	c.log.Debugf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
+	c.log.Debugf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
+	c.log.Debugf("URL=%s", c.parameters.URL)
+	c.log.Debugf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
 }
 
 // Connect to the Bitfinex API, this should only be called once.
@@ -330,20 +332,20 @@ func (c *Client) reconnect(err error) error {
 	}
 	reconnectTry := 0
 	for ; reconnectTry < c.parameters.ReconnectAttempts; reconnectTry++ {
-		log.Printf("waiting %s until reconnect...", c.parameters.ReconnectInterval)
+		c.log.Debugf("waiting %s until reconnect...", c.parameters.ReconnectInterval)
 		time.Sleep(c.parameters.ReconnectInterval)
-		log.Printf("reconnect attempt %d/%d", reconnectTry+1, c.parameters.ReconnectAttempts)
+		c.log.Infof("reconnect attempt %d/%d", reconnectTry+1, c.parameters.ReconnectAttempts)
 		c.reset()
 		err = c.connect()
 		if err == nil {
-			log.Print("reconnect OK")
+			c.log.Debugf("reconnect OK")
 			reconnectTry = 0
 			return nil
 		}
-		log.Printf("reconnect failed: %s", err.Error())
+		c.log.Warningf("reconnect failed: %s", err.Error())
 	}
 	if err != nil {
-		log.Printf("could not reconnect: %s", err.Error())
+		c.log.Errorf("could not reconnect: %s", err.Error())
 	}
 	return err
 }
@@ -362,7 +364,7 @@ func (c *Client) listenUpstream(ws Asynchronous) {
 				// log.Printf("[DEBUG]: %s\n", msg)
 				err := c.handleMessage(msg)
 				if err != nil {
-					log.Printf("[WARN]: %s\n", err)
+					c.log.Warning(err)
 				}
 			}
 		}
@@ -426,7 +428,7 @@ func (c *Client) Close() {
 		close(c.shutdown) // kill reset socket listener
 		return // successful cleanup
 	case <-timeout:
-		log.Print("shutdown timed out")
+		c.log.Debug("shutdown timed out")
 		return
 	}
 }
@@ -456,10 +458,10 @@ func (c *Client) checkResubscription() {
 				continue
 			}
 			sub.Request.SubID = c.nonce.GetNonce() // new nonce
-			log.Printf("resubscribing to %s with nonce %s", sub.Request.String(), sub.Request.SubID)
+			c.log.Debugf("resubscribing to %s with nonce %s", sub.Request.String(), sub.Request.SubID)
 			_, err := c.Subscribe(context.Background(), sub.Request)
 			if err != nil {
-				log.Printf("could not resubscribe: %s", err.Error())
+				c.log.Errorf("could not resubscribe: %s", err.Error())
 			}
 		}
 		c.resetSubscriptions = nil
@@ -484,11 +486,11 @@ func (c *Client) handleAuthAck(auth *AuthEvent) {
 	if c.Authentication == SuccessfulAuthentication {
 		err := c.subscriptions.activate(auth.SubID, auth.ChanID)
 		if err != nil {
-			log.Printf("could not activate auth subscription: %s", err.Error())
+			c.log.Errorf("could not activate auth subscription: %s", err.Error())
 		}
 		c.checkResubscription()
 	} else {
-		log.Print("authentication failed")
+		c.log.Error("authentication failed")
 	}
 }
 

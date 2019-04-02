@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"fmt"
-	"log"
+	"github.com/op/go-logging"
 	"sort"
 	"strings"
 	"sync"
@@ -90,7 +90,7 @@ func (s subscription) Pending() bool {
 	return s.pending
 }
 
-func newSubscriptions(heartbeatTimeout time.Duration) *subscriptions {
+func newSubscriptions(heartbeatTimeout time.Duration, log *logging.Logger) *subscriptions {
 	subs := &subscriptions{
 		subsBySubID:  make(map[string]*subscription),
 		subsByChanID: make(map[int64]*subscription),
@@ -98,6 +98,7 @@ func newSubscriptions(heartbeatTimeout time.Duration) *subscriptions {
 		hbShutdown:   make(chan struct{}),
 		hbDisconnect: make(chan error),
 		hbSleep:      heartbeatTimeout / time.Duration(4),
+		log:          log,
 	}
 	go subs.control()
 	return subs
@@ -110,7 +111,8 @@ type heartbeat struct {
 }
 
 type subscriptions struct {
-	lock sync.Mutex
+	lock         sync.Mutex
+	log          *logging.Logger
 
 	subsBySubID  map[string]*subscription // subscription map indexed by subscription ID
 	subsByChanID map[int64]*subscription  // subscription map indexed by channel ID
@@ -253,7 +255,7 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 	defer s.lock.Unlock()
 	if sub, ok := s.subsBySubID[subID]; ok {
 		if chanID != 0 {
-			log.Printf("activated subscription %s %s for channel %d", sub.Request.Channel, sub.Request.Symbol, chanID)
+			s.log.Info("activated subscription %s %s for channel %d", sub.Request.Channel, sub.Request.Symbol, chanID)
 		}
 		sub.pending = false
 		sub.ChanID = chanID

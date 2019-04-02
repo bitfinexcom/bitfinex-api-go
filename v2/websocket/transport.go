@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"log"
+	"github.com/op/go-logging"
 	"net"
 	"net/http"
 	"sync"
@@ -13,12 +13,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func newWs(baseURL string, logTransport bool) *ws {
+func newWs(baseURL string, logTransport bool, log *logging.Logger) *ws {
 	return &ws{
 		BaseURL:      baseURL,
 		downstream:   make(chan []byte),
 		quit:         make(chan error),
 		logTransport: logTransport,
+		log:          log,
 	}
 }
 
@@ -29,6 +30,7 @@ type ws struct {
 	TLSSkipVerify bool
 	downstream    chan []byte
 	logTransport  bool
+	log           *logging.Logger
 
 	quit chan error    // signal to parent with error, if applicable
 }
@@ -48,11 +50,11 @@ func (w *ws) Connect() error {
 
 	d.TLSClientConfig = &tls.Config{InsecureSkipVerify: w.TLSSkipVerify}
 
-	log.Printf("connecting ws to %s", w.BaseURL)
+	w.log.Info("connecting ws to %s", w.BaseURL)
 	ws, resp, err := d.Dial(w.BaseURL, nil)
 	if err != nil {
 		if err == websocket.ErrBadHandshake {
-			log.Printf("bad handshake: status code %d", resp.StatusCode)
+			w.log.Errorf("bad handshake: status code %d", resp.StatusCode)
 		}
 		return err
 	}
@@ -84,9 +86,7 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 
 	w.wsLock.Lock()
 	defer w.wsLock.Unlock()
-	if w.logTransport {
-		log.Printf("ws->srv: %s", string(bs))
-	}
+		w.log.Debug("ws->srv: %s", string(bs))
 	err = w.ws.WriteMessage(websocket.TextMessage, bs)
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func (w *ws) listenWs() {
 			_, msg, err := w.ws.ReadMessage()
 			if err != nil {
 				if cl, ok := err.(*websocket.CloseError); ok {
-					log.Printf("close error code: %d", cl.Code)
+					w.log.Errorf("close error code: %d", cl.Code)
 				}
 				// a read during normal shutdown results in an OpError: op on closed connection
 				if _, ok := err.(*net.OpError); ok {
@@ -122,9 +122,7 @@ func (w *ws) listenWs() {
 				w.cleanup(err)
 				return
 			}
-			if w.logTransport {
-				log.Printf("srv->ws: %s", string(msg))
-			}
+			w.log.Debugf("srv->ws: %s", string(msg))
 			w.downstream <- msg
 		}
 	}
@@ -145,7 +143,7 @@ func (w *ws) stop() {
 	w.wsLock.Lock()
 	if w.ws != nil {
 		if err := w.ws.Close(); err != nil { // will trigger cleanup()
-			log.Printf("[INFO]: error closing websocket: %s", err)
+			w.log.Errorf("error closing websocket: %s", err)
 		}
 		w.ws = nil
 	}

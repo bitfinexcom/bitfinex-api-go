@@ -1,10 +1,9 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
-	"context"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
@@ -41,7 +40,7 @@ func (c *Client) handleChannel(msg []byte) error {
 				if checksum, ok := raw[2].(float64); ok {
 					return c.handleChecksumChannel(chanID, int(checksum))
 				} else {
-					log.Fatal("Unable to parse checksum")
+					c.log.Error("Unable to parse checksum")
 				}
 			default:
 				body := raw[2].([]interface{})
@@ -68,7 +67,7 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 		oChecksum := orderbook.Checksum()
 		// compare bitfinex checksum with local checksum
 		if bChecksum == oChecksum {
-			log.Printf("Orderbook '%s' checksum verification successful.", symbol)
+			c.log.Debugf("Orderbook '%s' checksum verification successful.", symbol)
 		} else {
 			fmt.Printf("Orderbook '%s' checksum is invalid got %d bot got %d. Data Out of sync, reconnecting.",
 				symbol, bChecksum, oChecksum)
@@ -84,7 +83,7 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 			}
 			_, err_sub := c.Subscribe(context.Background(), newSub)
 			if err_sub != nil {
-				log.Printf("could not resubscribe: %s", err_sub.Error())
+				c.log.Warningf("could not resubscribe: %s", err_sub.Error())
 				return err_sub
 			}
 		}
@@ -136,7 +135,7 @@ func (c *Client) handlePrivateChannel(raw []interface{}) error {
 	if raw[1].(string) == "hb" {
 		chanID, ok := raw[0].(float64)
 		if !ok {
-			log.Printf("could not find chanID: %#v", raw)
+			c.log.Warningf("could not find chanID: %#v", raw)
 			return nil
 		}
 		c.handleHeartbeat(int64(chanID))
@@ -466,7 +465,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		return o // better than nothing
 	default:
-		log.Printf("unhandled channel data, term: %s", term)
+		c.log.Warningf("unhandled channel data, term: %s", term)
 	}
 
 	return fmt.Errorf("term %q not recognized", term)
