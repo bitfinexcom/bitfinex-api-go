@@ -1521,6 +1521,18 @@ func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interfac
 	return
 }
 
+type Ledger struct {
+	ID		    int64
+	Currency	string
+	Nil1        float64
+	MTS		    int64
+	Nil2        float64
+	Amount	    float64
+	Balance		float64
+	Nil3        float64
+	Description	string
+}
+
 // NewLedgerFromRaw takes the raw list of values as returned from the websocket
 // service and tries to convert it into an Ledger.
 func NewLedgerFromRaw(raw []interface{}) (o *Ledger, err error) {
