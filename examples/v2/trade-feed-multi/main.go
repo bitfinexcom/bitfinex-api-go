@@ -8,6 +8,8 @@ import (
 	_ "net/http/pprof"
 )
 
+var tickers = []string{"tBTCUSD", "tETHUSD", "tBTCUSD", "tVETUSD", "tDGBUSD", "tEOSUSD", "tTRXUSD"}
+
 func main() {
 	client := websocket.New()
 	err := client.Connect()
@@ -25,10 +27,11 @@ func main() {
 			log.Printf("New trade: %s", obj)
 		case *websocket.InfoEvent:
 			// Info event confirms connection to the bfx websocket
-			log.Printf("Subscribing to tBTCUSD")
-			_, err := client.SubscribeTrades(context.Background(), "tBTCUSD")
-			if err != nil {
-				log.Printf("could not subscribe to trades: %s", err.Error())
+			for _, ticker := range tickers {
+				_, err := client.SubscribeTrades(context.Background(), ticker)
+				if err != nil {
+					log.Printf("could not subscribe to trades: %s", err.Error())
+				}
 			}
 		default:
 			log.Printf("MSG RECV: %#v", obj)

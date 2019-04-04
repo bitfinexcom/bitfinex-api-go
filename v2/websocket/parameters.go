@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"github.com/op/go-logging"
 	"time"
 )
 
@@ -11,6 +12,7 @@ type Parameters struct {
 	ReconnectAttempts int
 	reconnectTry      int
 	ShutdownTimeout   time.Duration
+	Logger            *logging.Logger
 
 	ResubscribeOnReconnect bool
 
@@ -33,5 +35,6 @@ func NewDefaultParameters() *Parameters {
 		ResubscribeOnReconnect: true,
 		HeartbeatTimeout:       time.Second * 15, // HB = 5s
 		LogTransport:           false,           // log transport send/recv
+		Logger:                 logging.MustGetLogger("bitfinex-ws"),
 	}
 }
