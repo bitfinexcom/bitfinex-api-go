@@ -238,7 +238,9 @@ func (c *Client) listenDisconnect() {
 		select {
 		case <- c.resetWebsocket:
 			// transport websocket is shutting down
+			c.lock.Lock()
 			c.isConnected = false
+			c.lock.Unlock()
 			err := c.reconnect(fmt.Errorf("reconnecting"))
 			if err != nil {
 				c.killListener(err)
@@ -253,7 +255,9 @@ func (c *Client) listenDisconnect() {
 			if e != nil {
 				c.log.Warningf("heartbeat disconnect: %s", e.Error())
 			}
+			c.lock.Lock()
 			c.isConnected = false
+			c.lock.Unlock()
 			if e != nil {
 				c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
 				err := c.reconnect(e)
@@ -412,6 +416,8 @@ func (c *Client) Listen() <-chan interface{} {
 // Close provides an interface for a user initiated shutdown.
 // Close will close the Done() channel.
 func (c *Client) Close() {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	c.terminal = true
 	c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
 	c.subscriptions.Close()
