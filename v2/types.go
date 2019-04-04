@@ -1520,3 +1520,68 @@ func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interfac
 
 	return
 }
+
+type Ledger struct {
+	ID		    int64
+	Currency	string
+	Nil1        float64
+	MTS		    int64
+	Nil2        float64
+	Amount	    float64
+	Balance		float64
+	Nil3        float64
+	Description	string
+}
+
+// NewLedgerFromRaw takes the raw list of values as returned from the websocket
+// service and tries to convert it into an Ledger.
+func NewLedgerFromRaw(raw []interface{}) (o *Ledger, err error) {
+	if len(raw) == 9 {
+		o = &Ledger{
+			ID:         int64(f64ValOrZero(raw[0])),
+			Currency:     sValOrEmpty(raw[1]),
+			Nil1:    f64ValOrZero(raw[2]),
+			MTS:     i64ValOrZero(raw[3]),
+			Nil2:    f64ValOrZero(raw[4]),
+			Amount:  f64ValOrZero(raw[5]),
+			Balance:       f64ValOrZero(raw[6]),
+			Nil3:			f64ValOrZero(raw[7]),
+			Description:     sValOrEmpty(raw[8]),
+			// API returns 3 Nil values, what do they map to?
+			// API documentation says ID is type integer but api returns a string
+		}
+	} else
+	{return o, fmt.Errorf("data slice too short for ledger: %#v", raw)
+	} 
+	return
+}
+
+type LedgerSnapshot struct {
+	Snapshot []*Ledger
+}
+
+// LedgerSnapshotFromRaw takes a raw list of values as returned from the websocket
+// service and tries to convert it into an LedgerSnapshot.
+func NewLedgerSnapshotFromRaw(raw []interface{}) (s *LedgerSnapshot, err error) {
+	if len(raw) == 0 {
+		return s, fmt.Errorf("data slice too short for ledgers: %#v", raw)
+	}
+
+	os := make([]*Ledger, 0)
+	switch raw[0].(type) {
+	case []interface{}:
+		for _, v := range raw {
+			if l, ok := v.([]interface{}); ok {
+				o, err := NewLedgerFromRaw(l)
+				if err != nil {
+					return s, err
+				}
+				os = append(os, o)
+			}
+		}
+	default:
+		return s, fmt.Errorf("not an ledger snapshot")
+	}
+	s = &LedgerSnapshot{Snapshot: os}
+	return
+}
