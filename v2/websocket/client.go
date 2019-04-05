@@ -368,7 +368,7 @@ func (c *Client) listenUpstream(ws Asynchronous) {
 				// log.Printf("[DEBUG]: %s\n", msg)
 				err := c.handleMessage(msg)
 				if err != nil {
-					c.log.Warning(err)
+					c.log.Warningf("upstream listen error: %s", err.Error())
 				}
 			}
 		}
