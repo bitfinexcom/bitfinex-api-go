@@ -429,7 +429,7 @@ func (c *Client) listenUpstream(socket *Socket) {
 			if msg != nil {
 				err := c.handleMessage(socket.Id, msg)
 				if err != nil {
-					c.log.Warning(err)
+					c.log.Warningf("upstream listen error: %s", err.Error())
 				}
 			}
 		}
