@@ -19,7 +19,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
-var productionBaseURL = "wss://api.bitfinex.com/ws/2"
+var productionBaseURL = "wss://api-pub.bitfinex.com/ws/2"
 
 // ws-specific errors
 var (
