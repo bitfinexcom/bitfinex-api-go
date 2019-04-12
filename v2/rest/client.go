@@ -13,7 +13,7 @@ import (
 	"net/url"
 )
 
-var productionBaseURL = "https://api.bitfinex.com/v2/"
+var productionBaseURL = "https://api-pub.bitfinex.com/v2/"
 
 type requestFactory interface {
 	NewAuthenticatedRequestWithData(refURL string, data map[string]interface{}) (Request, error)

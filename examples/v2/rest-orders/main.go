@@ -12,7 +12,7 @@ import (
 
 var (
 	orderid = flag.String("id", "", "lookup trades for an order ID")
-	api     = flag.String("api", "https://api.bitfinex.com/v2/", "v2 REST API URL")
+	api     = flag.String("api", "https://api-pub.bitfinex.com/v2/", "v2 REST API URL")
 )
 
 // Set BFX_APIKEY and BFX_SECRET as :
