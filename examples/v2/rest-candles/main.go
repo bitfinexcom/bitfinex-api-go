@@ -1,9 +1,9 @@
 package main
 
 import (
-"log"
-bfx "github.com/bitfinexcom/bitfinex-api-go/v2"
-"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+	"log"
+	bfx "github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"time"
 )
 

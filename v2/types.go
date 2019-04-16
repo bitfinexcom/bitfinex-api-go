@@ -1330,7 +1330,26 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 	if len(raw) < 10 {
 		return t, fmt.Errorf("data slice too short for ticker, expected %d got %d: %#v", 10, len(raw), raw)
 	}
+	// funding currency ticker
+	// ignore bid/ask period for now
+	if len(raw) == 13 {
+		t = &Ticker{
+			Symbol:          symbol,
+			Bid:             f64ValOrZero(raw[1]),
+			BidSize:         f64ValOrZero(raw[2]),
+			Ask:             f64ValOrZero(raw[4]),
+			AskSize:         f64ValOrZero(raw[5]),
+			DailyChange:     f64ValOrZero(raw[7]),
+			DailyChangePerc: f64ValOrZero(raw[8]),
+			LastPrice:       f64ValOrZero(raw[9]),
+			Volume:          f64ValOrZero(raw[10]),
+			High:            f64ValOrZero(raw[11]),
+			Low:             f64ValOrZero(raw[12]),
+		}
+		return t, nil
+	}
 
+	// all other tickers
 	t = &Ticker{
 		Symbol:          symbol,
 		Bid:             f64ValOrZero(raw[0]),
@@ -1345,7 +1364,11 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 		Low:             f64ValOrZero(raw[9]),
 	}
 
-	return
+	return t, nil
+}
+
+func NewTickerFromRestRaw(raw []interface{}) (t *Ticker, err error) {
+	return NewTickerFromRaw(raw[0].(string), raw[1:])
 }
 
 type bookAction byte
