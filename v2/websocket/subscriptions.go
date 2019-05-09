@@ -228,9 +228,7 @@ func (s *subscriptions) removeByChannelID(chanID int64) error {
 		return fmt.Errorf("could not find channel ID %d", chanID)
 	}
 	delete(s.subsByChanID, chanID)
-	if _, ok = s.subsBySubID[sub.SubID()]; ok {
-		delete(s.subsBySubID, sub.SubID())
-	}
+	delete(s.subsBySubID, sub.SubID())
 	return nil
 }
 
@@ -244,9 +242,7 @@ func (s *subscriptions) removeBySubscriptionID(subID string) error {
 	}
 	// exists, remove both indices
 	delete(s.subsBySubID, subID)
-	if _, ok = s.subsByChanID[sub.ChanID]; ok {
-		delete(s.subsByChanID, sub.ChanID)
-	}
+	delete(s.subsByChanID, sub.ChanID)
 	return nil
 }
 
