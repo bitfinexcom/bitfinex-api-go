@@ -83,6 +83,8 @@ type CandleResolution candleResolution
 const (
 	Bid OrderSide = 1
 	Ask OrderSide = 2
+	Long OrderSide = 1
+	Short OrderSide = 2
 )
 
 // Settings flags
@@ -1626,11 +1628,14 @@ type ExplorerConf struct {
 }
 
 type CurrencyConfigMapping string
-const CurrencyLabelMap = "pub:map:currency:label"
-const CurrencySymbolMap = "pub:map:currency:sym"
-const CurrencyUnitMap = "pub:map:currency:unit"
-const CurrencyExplorerMap = "pub:map:currency:explorer"
-const CurrencyExchangeMap = "pub:list:pair:exchange"
+
+const (
+	CurrencyLabelMap CurrencyConfigMapping = "pub:map:currency:label"
+	CurrencySymbolMap CurrencyConfigMapping = "pub:map:currency:sym"
+	CurrencyUnitMap CurrencyConfigMapping = "pub:map:currency:unit"
+	CurrencyExplorerMap CurrencyConfigMapping = "pub:map:currency:explorer"
+	CurrencyExchangeMap CurrencyConfigMapping = "pub:list:pair:exchange"
+)
 
 type RawCurrencyConf struct {
 	Mapping string
@@ -1734,9 +1739,9 @@ func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{})
 }
 
 func NewCurrencyConfFromRaw(raw []RawCurrencyConf) ([]CurrencyConf, error) {
-	configMap := make(map[string]CurrencyConf, 0)
+	configMap := make(map[string]CurrencyConf)
 	for _, r := range raw {
-		switch (r.Mapping) {
+		switch (CurrencyConfigMapping(r.Mapping)) {
 		case CurrencyLabelMap:
 			data := r.Data.([]interface{})
 			parseCurrencyLabelMap(configMap, data)
@@ -1760,4 +1765,18 @@ func NewCurrencyConfFromRaw(raw []RawCurrencyConf) ([]CurrencyConf, error) {
 		configs = append(configs, v)
 	}
 	return configs, nil
+}
+
+type StatKey string
+
+const (
+	FundingSizeKey StatKey = "funding.size"
+	CreditSizeKey StatKey = "credits.size"
+	CreditSizeSymKey StatKey = "credits.size.sym"
+	PositionSizeKey StatKey = "pos.size"
+)
+
+type Stat struct {
+	Period int64
+	Volume float64
 }
