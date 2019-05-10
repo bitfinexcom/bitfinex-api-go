@@ -19,7 +19,6 @@ func (ss *StatsService) get(symbol string, key bitfinex.StatKey, extra string, s
 	} else {
 		params = fmt.Sprintf("%s:1m:%s", string(key), symbol)
 	}
-	fmt.Println(path.Join("stats1", params, section))
 	req := NewRequestWithMethod(path.Join("stats1", params, section), "GET")
 	raw, err := ss.Request(req)
 	if err != nil {
