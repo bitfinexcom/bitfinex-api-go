@@ -31,6 +31,8 @@ type SubscriptionRequest struct {
 	Pair      string `json:"pair,omitempty"`
 }
 
+const MaxChannels = 25
+
 func (s *SubscriptionRequest) String() string {
 	if s.Key == "" && s.Channel != "" && s.Symbol != "" {
 		return fmt.Sprintf("%s %s", s.Channel, s.Symbol)
@@ -212,12 +214,15 @@ func (s *subscriptions) ListenDisconnect() <-chan error {
 	return s.hbDisconnect
 }
 
-func (s *subscriptions) add(sub *SubscriptionRequest) *subscription {
+func (s *subscriptions) add(sub *SubscriptionRequest) (*subscription, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	if len(s.subsByChanID) >= MaxChannels {
+		return nil, fmt.Errorf("Max subscription channel count (%v) reached", MaxChannels)
+	}
 	subscription := newSubscription(sub)
 	s.subsBySubID[sub.SubID] = subscription
-	return subscription
+	return subscription, nil
 }
 
 func (s *subscriptions) removeByChannelID(chanID int64) error {
@@ -228,9 +233,7 @@ func (s *subscriptions) removeByChannelID(chanID int64) error {
 		return fmt.Errorf("could not find channel ID %d", chanID)
 	}
 	delete(s.subsByChanID, chanID)
-	if _, ok = s.subsBySubID[sub.SubID()]; ok {
-		delete(s.subsBySubID, sub.SubID())
-	}
+	delete(s.subsBySubID, sub.SubID())
 	return nil
 }
 
@@ -244,9 +247,7 @@ func (s *subscriptions) removeBySubscriptionID(subID string) error {
 	}
 	// exists, remove both indices
 	delete(s.subsBySubID, subID)
-	if _, ok = s.subsByChanID[sub.ChanID]; ok {
-		delete(s.subsByChanID, sub.ChanID)
-	}
+	delete(s.subsByChanID, sub.ChanID)
 	return nil
 }
 
