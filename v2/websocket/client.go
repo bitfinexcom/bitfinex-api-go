@@ -536,9 +536,12 @@ func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 	if c.cancelOnDisconnect {
 		s.DMS = DMSCancelOnDisconnect
 	}
-	c.subscriptions.add(s)
+	_, err = c.subscriptions.add(s)
+	if err != nil {
+		return err
+	}
 
-	if err := c.asynchronous.Send(ctx, s); err != nil {
+	if err = c.asynchronous.Send(ctx, s); err != nil {
 		return err
 	}
 	c.Authentication = PendingAuthentication
