@@ -4,6 +4,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"net/url"
 	"path"
+	"strconv"
 )
 
 // TradeService manages the Trade endpoint.
@@ -42,10 +43,10 @@ func (s *TradeService) AccountHistoryWithQuery(
 		return nil, err
 	}
 	req.Params = make(url.Values)
-	req.Params.Add("end", string(end))
-	req.Params.Add("start", string(start))
-	req.Params.Add("limit", string(limit))
-	req.Params.Add("sort", string(sort))
+	req.Params.Add("end", strconv.FormatInt(int64(end), 10))
+	req.Params.Add("start", strconv.FormatInt(int64(start), 10))
+	req.Params.Add("limit", strconv.FormatInt(int64(limit), 10))
+	req.Params.Add("sort", strconv.FormatInt(int64(sort), 10))
 	raw, err := s.Request(req)
 	if err != nil {
 		return nil, err
@@ -63,10 +64,10 @@ func (s *TradeService) PublicHistoryWithQuery(
 	) (*bitfinex.TradeSnapshot, error) {
 		req := NewRequestWithMethod(path.Join("trades", symbol, "hist"), "GET")
 		req.Params = make(url.Values)
-		req.Params.Add("end", string(end))
-		req.Params.Add("start", string(start))
-		req.Params.Add("limit", string(limit))
-		req.Params.Add("sort", string(sort))
+		req.Params.Add("end", strconv.FormatInt(int64(end), 10))
+		req.Params.Add("start", strconv.FormatInt(int64(start), 10))
+		req.Params.Add("limit", strconv.FormatInt(int64(limit), 10))
+		req.Params.Add("sort", strconv.FormatInt(int64(sort), 10))
 		raw, err := s.Request(req)
 		if err != nil {
 			return nil, err
