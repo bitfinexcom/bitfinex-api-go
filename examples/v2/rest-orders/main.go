@@ -50,7 +50,7 @@ func main() {
 
 		log.Printf("order trades: %#v\n", os)
 	} else {
-		os, err := c.Orders.History(bitfinex.TradingPrefix + bitfinex.BTCUSD)
+		os, err := c.Orders.AllHistory()
 		if err != nil {
 			log.Fatalf("getting orders: %s", err)
 		}
