@@ -3,7 +3,6 @@ package rest
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -44,39 +43,34 @@ func (h HttpTransport) Request(req Request) ([]interface{}, error) {
 		return nil, err
 	}
 
-	resp, err := h.do(httpReq, &raw)
+	err = h.do(httpReq, &raw)
 	if err != nil {
-		if resp != nil {
-			return nil, fmt.Errorf("could not parse response: %s", resp.Response.Status)
-		} else {
-			return nil, fmt.Errorf("%v", err)
-		}
-
+		return nil, err
 	}
 
 	return raw, nil
 }
 
 // Do executes API request created by NewRequest method or custom *http.Request.
-func (h HttpTransport) do(req *http.Request, v interface{}) (*Response, error) {
+func (h HttpTransport) do(req *http.Request, v interface{}) (error) {
 	resp, err := h.httpDo(h.HTTPClient, req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	response := newResponse(resp)
 	err = checkResponse(response)
 	if err != nil {
-		return response, err
+		return err
 	}
 
 	if v != nil {
 		err = json.Unmarshal(response.Body, v)
 		if err != nil {
-			return response, err
+			return err
 		}
 	}
 
-	return response, nil
+	return nil
 }

@@ -209,7 +209,7 @@ func (r *Response) String() string {
 // checkResponse checks response status code and response
 // for errors.
 func checkResponse(r *Response) error {
-	if c := r.Response.StatusCode; 200 <= c && c <= 299 {
+	if c := r.Response.StatusCode; c >= 200 && c <= 299 {
 		return nil
 	}
 
