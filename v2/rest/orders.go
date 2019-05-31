@@ -12,74 +12,60 @@ type OrderService struct {
 	Synchronous
 }
 
-// All returns all orders for the authenticated account.
-func (s *OrderService) All(symbol string) (*bitfinex.OrderSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol))
-	if err != nil {
-		return nil, err
-	}
-	raw, err := s.Request(req)
-	if err != nil {
-		return nil, err
-	}
-
-	os, err := bitfinex.NewOrderSnapshotFromRaw(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	return os, nil
+// Get all active orders
+func (s *OrderService) All() (*bitfinex.OrderSnapshot, error) {
+	// use no symbol, this will get all orders
+	return s.getActiveOrders("")
 }
 
-// Status retrieves the given order from the API. This is just a wrapper around
-// the All() method, since the API does not provide lookup for a single Order.
-func (s *OrderService) Status(orderID int64) (o *bitfinex.Order, err error) {
-	os, err := s.All("")
+// Get all active orders with the given symbol
+func (s *OrderService) GetBySymbol(symbol string) (*bitfinex.OrderSnapshot, error) {
+	// use no symbol, this will get all orders
+	return s.getActiveOrders(symbol)
+}
 
+// Get an active order using its order id
+func (s *OrderService) GetByOrderId(orderID int64) (o *bitfinex.Order, err error) {
+	os, err := s.All()
 	if err != nil {
-		return o, err
+		return nil, err
 	}
-
-	if len(os.Snapshot) == 0 {
-		return o, bitfinex.ErrNotFound
-	}
-
-	for _, e := range os.Snapshot {
-		if e.ID == orderID {
-			return e, nil
+	for _, order := range os.Snapshot {
+		if order.ID == orderID {
+			return order, nil
 		}
 	}
-
-	return o, bitfinex.ErrNotFound
+	return nil, bitfinex.ErrNotFound
 }
 
-// All returns all orders for the authenticated account.
-func (s *OrderService) History(symbol string) (*bitfinex.OrderSnapshot, error) {
-	if symbol == "" {
-		return nil, fmt.Errorf("symbol cannot be empty")
-	}
-	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol, "hist"))
-	if err != nil {
-		return nil, err
-	}
-	raw, err := s.Request(req)
-	if err != nil {
-		return nil, err
-	}
+// Get all historical orders
+func (s *OrderService) AllHistory() (*bitfinex.OrderSnapshot, error) {
+	// use no symbol, this will get all orders
+	return s.getHistoricalOrders("")
+}
 
-	os, err := bitfinex.NewOrderSnapshotFromRaw(raw)
+// Get all historical orders with the given symbol
+func (s *OrderService) GetHistoryBySymbol(symbol string) (*bitfinex.OrderSnapshot, error) {
+	// use no symbol, this will get all orders
+	return s.getHistoricalOrders(symbol)
+}
+
+// Get a historical order using its order id
+func (s *OrderService) GetHistoryByOrderId(orderID int64) (o *bitfinex.Order, err error) {
+	os, err := s.AllHistory()
 	if err != nil {
 		return nil, err
 	}
-
-	return os, nil
+	for _, order := range os.Snapshot {
+		if order.ID == orderID {
+			return order, nil
+		}
+	}
+	return nil, bitfinex.ErrNotFound
 }
 
 // OrderTrades returns a set of executed trades related to an order.
 func (s *OrderService) OrderTrades(symbol string, orderID int64) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
-	if symbol == "" {
-		return nil, fmt.Errorf("symbol cannot be empty")
-	}
 	key := fmt.Sprintf("%s:%d", symbol, orderID)
 	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("order", key, "trades"))
 	if err != nil {
@@ -90,4 +76,42 @@ func (s *OrderService) OrderTrades(symbol string, orderID int64) (*bitfinex.Trad
 		return nil, err
 	}
 	return bitfinex.NewTradeExecutionUpdateSnapshotFromRaw(raw)
+}
+
+func (s *OrderService) getActiveOrders(symbol string) (*bitfinex.OrderSnapshot, error) {
+	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	os, err := bitfinex.NewOrderSnapshotFromRaw(raw)
+	if err != nil {
+		return nil, err
+	}
+	if os == nil {
+		return &bitfinex.OrderSnapshot{}, nil
+	}
+	return os, nil
+}
+
+func (s *OrderService) getHistoricalOrders(symbol string) (*bitfinex.OrderSnapshot, error) {
+	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol, "hist"))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	os, err := bitfinex.NewOrderSnapshotFromRaw(raw)
+	if err != nil {
+		return nil, err
+	}
+	if os == nil {
+		return &bitfinex.OrderSnapshot{}, nil
+	}
+	return os, nil
 }
