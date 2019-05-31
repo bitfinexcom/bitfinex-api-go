@@ -24,7 +24,7 @@ func TestOrdersAll(t *testing.T) {
 		return &resp, nil
 	}
 
-	orders, err := NewClientWithHttpDo(httpDo).Orders.All("")
+	orders, err := NewClientWithHttpDo(httpDo).Orders.All()
 
 	if err != nil {
 		t.Error(err)
@@ -50,7 +50,7 @@ func TestOrdersHistory(t *testing.T) {
 		return &resp, nil
 	}
 
-	orders, err := NewClientWithHttpDo(httpDo).Orders.History(bitfinex.TradingPrefix + bitfinex.IOTBTC)
+	orders, err := NewClientWithHttpDo(httpDo).Orders.GetHistoryBySymbol(bitfinex.TradingPrefix + bitfinex.IOTBTC)
 
 	if err != nil {
 		t.Error(err)
@@ -58,10 +58,5 @@ func TestOrdersHistory(t *testing.T) {
 
 	if len(orders.Snapshot) != 3 {
 		t.Errorf("expected three orders but got %d", len(orders.Snapshot))
-	}
-
-	_, err = NewClient().Orders.History("")
-	if err == nil {
-		t.Errorf("expected error when supplying empty symbol but got none")
 	}
 }

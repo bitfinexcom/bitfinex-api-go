@@ -1,0 +1,7 @@
+2.1.1
+
+- Removes usage of string(int) conversion in v2/rest and uses strconv.FormatInt instead
+- Adds version file
+- Adds changelog file
+- Fix v2/rest response error message to be passed down correctly
+- Rework v2/rest/orders api, change function names and add additionals
