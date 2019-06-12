@@ -15,7 +15,11 @@ type FlagRequest struct {
 
 // Send publishes a generic message to the Bitfinex API.
 func (c *Client) Send(ctx context.Context, msg interface{}) error {
-	return c.asynchronous.Send(ctx, msg)
+	socket, err := c.getSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, msg)
 }
 
 func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error) {
@@ -23,20 +27,46 @@ func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error) {
 		Event: "conf",
 		Flags: flag,
 	}
-	err := c.asynchronous.Send(ctx, req)
-	if err != nil {
-		return "", err
+	// TODO enable flag on reconnect?
+	// send to all sockets
+	for _, socket := range c.sockets {
+		err := socket.Asynchronous.Send(ctx, req)
+		if err != nil {
+			return "", err
+		}
 	}
 	return "", nil
 }
 
+// returns the count of websocket connections that are currently active
+func (c *Client) ConnectionCount() int {
+	return len(c.sockets)
+}
+
+// starts a new websocket connection. This function is only exposed in case you want to
+// implicitly add new connections otherwise connection management is already handled for you.
+func (c *Client) StartNewConnection() error {
+	return c.connectSocket(SocketId(len(c.sockets)))
+}
+
 // Subscribe sends a subscription request to the Bitfinex API and tracks the subscription status by ID.
 func (c *Client) Subscribe(ctx context.Context, req *SubscriptionRequest) (string, error) {
-	_, err := c.subscriptions.add(req)
+	if c.getAvailableSocketCapacity() <= 1 {
+		err := c.StartNewConnection()
+		if err != nil {
+			return "", err
+		}
+	}
+	// get socket with lowest capacity
+	socket, err := c.getLowestCapacitySocket()
 	if err != nil {
 		return "", err
 	}
-	err = c.asynchronous.Send(ctx, req)
+	c.subscriptions.add(socket.Id, req)
+	if err != nil {
+		return "", err
+	}
+	err = socket.Asynchronous.Send(ctx, req)
 	if err != nil {
 		// propagate send error
 		return "", err
@@ -107,16 +137,28 @@ func (c *Client) GetOrderbook(symbol string) (*Orderbook, error) {
 
 // SubmitOrder sends an order request.
 func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewRequest) error {
-	return c.asynchronous.Send(ctx, order)
+	socket, err := c.getAuthenticatedSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, order)
 }
 
 func (c *Client) SubmitUpdateOrder(ctx context.Context, orderUpdate *bitfinex.OrderUpdateRequest) error {
-	return c.asynchronous.Send(ctx, orderUpdate)
+	socket, err := c.getAuthenticatedSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, orderUpdate)
 }
 
 // SubmitCancel sends a cancel request.
 func (c *Client) SubmitCancel(ctx context.Context, cancel *bitfinex.OrderCancelRequest) error {
-	return c.asynchronous.Send(ctx, cancel)
+	socket, err := c.getAuthenticatedSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, cancel)
 }
 
 // LookupSubscription looks up a subscription request by ID

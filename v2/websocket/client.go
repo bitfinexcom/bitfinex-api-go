@@ -68,6 +68,15 @@ type Asynchronous interface {
 	Done() <-chan error
 }
 
+type SocketId int
+type Socket struct {
+	Id                 SocketId
+	Asynchronous
+	IsConnected        bool
+	ResetSubscriptions []*subscription
+	IsAuthenticated    bool
+}
+
 // AsynchronousFactory provides an interface to re-create asynchronous transports during reconnect events.
 type AsynchronousFactory interface {
 	Create() Asynchronous
@@ -100,11 +109,9 @@ type Client struct {
 	apiSecret          string
 	cancelOnDisconnect bool
 	Authentication     AuthState
-	asynchronous       Asynchronous
+	sockets            map[SocketId]*Socket
 	nonce              utils.NonceGenerator
-	isConnected        bool
 	terminal           bool
-	resetSubscriptions []*subscription
 	init               bool
 	log                *logging.Logger
 
@@ -118,13 +125,13 @@ type Client struct {
 
 	// close signal sent to user on shutdown
 	shutdown           chan bool
-	resetWebsocket     chan bool
+	resetWebsocket     chan SocketId
 
 	// downstream listener channel to deliver API objects
 	listener           chan interface{}
 
 	// race management
-	lock               sync.Mutex
+	mtx                *sync.RWMutex
 	waitGroup          sync.WaitGroup
 }
 
@@ -193,17 +200,111 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 		subscriptions:  newSubscriptions(params.HeartbeatTimeout, params.Logger),
 		orderbooks:     make(map[string]*Orderbook),
 		nonce:          nonce,
-		isConnected:    false,
 		parameters:     params,
 		listener:       make(chan interface{}),
 		terminal:       false,
-		resetWebsocket: make(chan bool),
-		shutdown:       make(chan bool),
-		asynchronous:   async.Create(),
+		resetWebsocket: make(chan SocketId),
+		shutdown:       nil,
+		sockets:        make(map[SocketId]*Socket),
+		mtx:            &sync.RWMutex{},
 		log:            params.Logger,
 	}
 	c.registerPublicFactories()
 	return c
+}
+
+// Connect to the Bitfinex API, this should only be called once.
+func (c *Client) Connect() error {
+	c.dumpParams()
+	c.terminal = false
+	go c.listenDisconnect()
+	return c.connectSocket(SocketId(len(c.sockets)))
+}
+
+
+// IsConnected returns true if the underlying asynchronous transport is connected to an endpoint.
+func (c *Client) IsConnected() bool {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
+	for _, socket := range c.sockets {
+		if socket.IsConnected {
+			return true
+		}
+	}
+	return false
+}
+
+// Listen provides an atomic interface for receiving API messages.
+// When a websocket connection is terminated, the publisher channel will close.
+func (c *Client) Listen() <-chan interface{} {
+	return c.listener
+}
+
+// Close provides an interface for a user initiated shutdown.
+// Close will close the Done() channel.
+func (c *Client) Close() {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.terminal = true
+	var tmpWaitGroup sync.WaitGroup
+	socketCount := len(c.sockets)
+	if socketCount > 0 {
+		tmpWaitGroup.Add(socketCount)
+		for _, socket := range c.sockets {
+			go func(s *Socket) {
+				c.closeAsyncAndWait(s, c.parameters.ShutdownTimeout)
+				tmpWaitGroup.Done()
+			}(socket)
+		}
+		tmpWaitGroup.Wait()
+	}
+	c.subscriptions.Close()
+}
+
+// Unsubscribe looks up an existing subscription by ID and sends an unsubscribe request.
+func (c *Client) Unsubscribe(ctx context.Context, id string) error {
+	sub, err := c.subscriptions.lookupBySubscriptionID(id)
+	if err != nil {
+		return err
+	}
+	// sub is removed from manager on ack from API
+	return c.sendUnsubscribeMessage(ctx, sub.ChanID)
+}
+
+func (c *Client) listenDisconnect() {
+	for {
+		select {
+		case socketId := <- c.resetWebsocket:
+			if socket, ok := c.sockets[socketId]; ok {
+				c.mtx.Lock()
+				socket.IsConnected = false
+				c.mtx.Unlock()
+				err := c.reconnect(socket, fmt.Errorf("reconnecting"))
+				if err != nil {
+					c.killListener(err)
+					c.log.Warningf("socket disconnect: %s", err.Error())
+					// exit routine if failed to reconnect
+					return
+				}
+			}
+		case <- c.shutdown:
+			return
+		case hbErr := <- c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
+			c.log.Warningf("heartbeat disconnect: %s", hbErr.Error.Error())
+			if socket, ok := c.sockets[hbErr.Subscription.SocketId]; ok {
+				c.mtx.Lock()
+				socket.IsConnected = false
+				c.mtx.Unlock()
+				// reconnect to the socket
+				c.closeAsyncAndWait(socket, c.parameters.ShutdownTimeout)
+				err := c.reconnect(socket, hbErr.Error)
+				if err != nil {
+					c.log.Warningf("socket disconnect: %s", err.Error())
+					return
+				}
+			}
+		}
+	}
 }
 
 func extractSymbolResolutionFromKey(subscription string) (symbol string, resolution bitfinex.CandleResolution, err error) {
@@ -228,104 +329,7 @@ func (c *Client) registerPublicFactories() {
 	c.registerFactory(ChanCandles, newCandlesFactory(c.subscriptions))
 }
 
-// IsConnected returns true if the underlying asynchronous transport is connected to an endpoint.
-func (c *Client) IsConnected() bool {
-	return c.isConnected
-}
-
-func (c *Client) listenDisconnect() {
-	for {
-		select {
-		case <- c.resetWebsocket:
-			// transport websocket is shutting down
-			c.lock.Lock()
-			c.isConnected = false
-			c.lock.Unlock()
-			err := c.reconnect(fmt.Errorf("reconnecting"))
-			if err != nil {
-				c.killListener(err)
-				c.log.Warningf("socket disconnect: %s", err.Error())
-				// exit routine if failed to reconnect
-				return
-			}
-		case <- c.shutdown:
-			// websocket client killed completely
-			return
-		case e := <- c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
-			if e != nil {
-				c.log.Warningf("heartbeat disconnect: %s", e.Error())
-			}
-			c.lock.Lock()
-			c.isConnected = false
-			c.lock.Unlock()
-			if e != nil {
-				c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
-				err := c.reconnect(e)
-				if err != nil {
-					c.log.Warningf("socket disconnect: %s", err.Error())
-					// exit routine if failed to reconnect
-					return
-				}
-			}
-		}
-	}
-}
-
-func (c *Client) dumpParams() {
-	c.log.Debug("----Bitfinex Client Parameters----")
-	c.log.Debugf("AutoReconnect=%t", c.parameters.AutoReconnect)
-	c.log.Debugf("ReconnectInterval=%s", c.parameters.ReconnectInterval)
-	c.log.Debugf("ReconnectAttempts=%d", c.parameters.ReconnectAttempts)
-	c.log.Debugf("ShutdownTimeout=%s", c.parameters.ShutdownTimeout)
-	c.log.Debugf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
-	c.log.Debugf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
-	c.log.Debugf("URL=%s", c.parameters.URL)
-	c.log.Debugf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
-}
-
-// Connect to the Bitfinex API, this should only be called once.
-func (c *Client) Connect() error {
-	c.dumpParams()
-	c.terminal = false
-	// wait for reset websocket signals
-	go c.listenDisconnect()
-	c.reset()
-	return c.connect()
-}
-
-// reset assumes transport has already died or been closed
-func (c *Client) reset() {
-	subs := c.subscriptions.Reset()
-	if subs != nil {
-		c.resetSubscriptions = subs
-	}
-	c.init = true
-	ws := c.asyncFactory.Create()
-	c.asynchronous = ws
-
-	// listen to data from async
-	go c.listenUpstream(ws)
-}
-
-func (c *Client) connect() error {
-	err := c.asynchronous.Connect()
-	if err != nil {
-		return err
-	}
-	c.isConnected = true
-	// enable flag
-	if c.parameters.ManageOrderbook {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		_, err_flag := c.EnableFlag(ctx, bitfinex.Checksum)
-		if err_flag != nil {
-			return err_flag
-		}
-	}
-	return nil
-}
-
-func (c *Client) reconnect(err error) error {
+func (c *Client) reconnect(socket *Socket, err error) error {
 	if c.terminal {
 		// dont attempt to reconnect if terminal
 		return err
@@ -339,8 +343,7 @@ func (c *Client) reconnect(err error) error {
 		c.log.Debugf("waiting %s until reconnect...", c.parameters.ReconnectInterval)
 		time.Sleep(c.parameters.ReconnectInterval)
 		c.log.Infof("reconnect attempt %d/%d", reconnectTry+1, c.parameters.ReconnectAttempts)
-		c.reset()
-		err = c.connect()
+		err := c.reconnectSocket(socket)
 		if err == nil {
 			c.log.Debugf("reconnect OK")
 			reconnectTry = 0
@@ -354,19 +357,84 @@ func (c *Client) reconnect(err error) error {
 	return err
 }
 
+func (c *Client) dumpParams() {
+	c.log.Debug("----Bitfinex Client Parameters----")
+	c.log.Debugf("AutoReconnect=%t", c.parameters.AutoReconnect)
+	c.log.Debugf("CapacityPerConnection=%t", c.parameters.CapacityPerConnection)
+	c.log.Debugf("ReconnectInterval=%s", c.parameters.ReconnectInterval)
+	c.log.Debugf("ReconnectAttempts=%d", c.parameters.ReconnectAttempts)
+	c.log.Debugf("ShutdownTimeout=%s", c.parameters.ShutdownTimeout)
+	c.log.Debugf("ResubscribeOnReconnect=%t", c.parameters.ResubscribeOnReconnect)
+	c.log.Debugf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
+	c.log.Debugf("URL=%s", c.parameters.URL)
+	c.log.Debugf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
+}
+
+func (c *Client) connectSocket(socketId SocketId) error {
+	async := c.asyncFactory.Create()
+	// connect socket
+	err := async.Connect()
+	if err != nil {
+		// unable to establish connection
+		return err
+	}
+	socket := &Socket{
+		Id: socketId,
+		Asynchronous: async,
+		IsConnected: true,
+		ResetSubscriptions: make([]*subscription, 0),
+		IsAuthenticated: false,
+	}
+	c.mtx.Lock()
+	// add socket to managed map
+	c.sockets[socket.Id] = socket
+	c.mtx.Unlock()
+	// enable orderbook flag if set in params
+	// TODO - find better way to enable flags on websocket creation
+	// TODO!!
+	if c.parameters.ManageOrderbook {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		_, err_flag := c.EnableFlag(ctx, bitfinex.Checksum)
+		if err_flag != nil {
+			return err_flag
+		}
+	}
+	go c.listenUpstream(socket)
+	return nil
+}
+
+func (c *Client) reconnectSocket(socket *Socket) error {
+	// make sure the socket is closed
+	socket.Close()
+	// remove subscriptions from manager but keep a copy so we can resubscribe once
+	// a new connection is established
+	oldSubscriptions := c.subscriptions.ResetSocketSubscriptions(socket.Id)
+	// establish a new connection
+	err := c.connectSocket(socket.Id)
+	if err != nil {
+		return err
+	}
+	// check re-subscription on reconnect is true in the client params
+	if !c.parameters.ResubscribeOnReconnect  {
+		return nil
+	}
+	// set the resubscriptions of the socket. This will be used later on when the auth/info
+	// event is passed i
+	socket.ResetSubscriptions = oldSubscriptions
+	return nil
+}
 
 // start this goroutine before connecting, but this should die during a connection failure
-func (c *Client) listenUpstream(ws Asynchronous) {
+func (c *Client) listenUpstream(socket *Socket) {
 	for {
 		select {
-		case <- ws.Done(): // transport shutdown
-			c.resetWebsocket <- true
+		case <- socket.Asynchronous.Done(): // transport shutdown
+			c.resetWebsocket <- socket.Id
 			return
-		case msg := <- ws.Listen():
+		case msg := <- socket.Asynchronous.Listen():
 			if msg != nil {
-				// Errors here should be non critical so we just log them.
-				// log.Printf("[DEBUG]: %s\n", msg)
-				err := c.handleMessage(msg)
+				err := c.handleMessage(socket.Id, msg)
 				if err != nil {
 					c.log.Warning(err)
 				}
@@ -385,7 +453,7 @@ func (c *Client) killListener(e error) {
 	}
 }
 
-func (c *Client) closeAsyncAndWait(t time.Duration) {
+func (c *Client) closeAsyncAndWait(socket *Socket, t time.Duration) {
 	if !c.init {
 		return
 	}
@@ -393,13 +461,13 @@ func (c *Client) closeAsyncAndWait(t time.Duration) {
 	c.waitGroup.Add(1)
 	go func() {
 		select {
-		case <-c.asynchronous.Done():
+		case <-socket.Asynchronous.Done():
 			c.waitGroup.Done()
 		case <-timeout:
 			c.waitGroup.Done()
 		}
 	}()
-	c.asynchronous.Close()
+	socket.Asynchronous.Close()
 	go func() {
 		time.Sleep(t)
 		close(timeout)
@@ -407,59 +475,40 @@ func (c *Client) closeAsyncAndWait(t time.Duration) {
 	c.waitGroup.Wait()
 }
 
-// Listen provides an atomic interface for receiving API messages.
-// When a websocket connection is terminated, the publisher channel will close.
-func (c *Client) Listen() <-chan interface{} {
-	return c.listener
-}
-
-// Close provides an interface for a user initiated shutdown.
-// Close will close the Done() channel.
-func (c *Client) Close() {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	c.terminal = true
-	c.closeAsyncAndWait(c.parameters.ShutdownTimeout)
-	c.subscriptions.Close()
-
-	// clean shutdown waits on shutdown channel, which is triggered by cascading resource
-	// cleanups after a closed asynchronous transport
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(c.parameters.ShutdownTimeout)
-		close(timeout)
-	}()
-	select {
-	case <-c.asynchronous.Done():
-		close(c.shutdown) // kill reset socket listener
-		return // successful cleanup
-	case <-timeout:
-		c.log.Debug("shutdown timed out")
-		return
-	}
-}
-
-func (c *Client) handleMessage(msg []byte) error {
+func (c *Client) handleMessage(socketId SocketId, msg []byte) error {
 	t := bytes.TrimLeftFunc(msg, unicode.IsSpace)
 	err := error(nil)
 	// either a channel data array or an event object, raw json encoding
 	if bytes.HasPrefix(t, []byte("[")) {
-		err = c.handleChannel(msg)
+		err = c.handleChannel(socketId, msg)
 	} else if bytes.HasPrefix(t, []byte("{")) {
-		err = c.handleEvent(msg)
+		err = c.handleEvent(socketId, msg)
 	} else {
-		return fmt.Errorf("unexpected message: %s", msg)
+		return fmt.Errorf("unexpected message in socket (id=%d): %s", socketId, msg)
 	}
 	return err
 }
 
 func (c *Client) sendUnsubscribeMessage(ctx context.Context, chanID int64) error {
-	return c.asynchronous.Send(ctx, unsubscribeMsg{Event: "unsubscribe", ChanID: chanID})
+	// get the socket that the channel is assigned to
+	sub, err := c.subscriptions.lookupByChannelID(chanID)
+	if err != nil {
+		return err
+	}
+	socket, err := c.socketById(sub.SocketId)
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, unsubscribeMsg{Event: "unsubscribe", ChanID: chanID})
 }
 
-func (c *Client) checkResubscription() {
-	if c.parameters.ResubscribeOnReconnect && c.resetSubscriptions != nil {
-		for _, sub := range c.resetSubscriptions {
+func (c *Client) checkResubscription(socketId SocketId) {
+	socket, err := c.socketById(socketId)
+	if err != nil {
+		panic(err)
+	}
+	if c.parameters.ResubscribeOnReconnect && socket.ResetSubscriptions != nil {
+		for _, sub := range socket.ResetSubscriptions {
 			if sub.Request.Event == "auth" {
 				continue
 			}
@@ -470,31 +519,40 @@ func (c *Client) checkResubscription() {
 				c.log.Errorf("could not resubscribe: %s", err.Error())
 			}
 		}
-		c.resetSubscriptions = nil
+		socket.ResetSubscriptions = nil
 	}
 }
 
 // called when an info event is received
-func (c *Client) handleOpen() error {
-	if c.hasCredentials() {
-		err_auth := c.authenticate(context.Background())
+func (c *Client) handleOpen(socketId SocketId) error {
+	autSocket, _ := c.getAuthenticatedSocket()
+	// if we have auth credentials and there is currently no authenticated
+	// sockets (we are only allowed one)
+	if c.hasCredentials() && autSocket == nil {
+		err_auth := c.authenticate(context.Background(), socketId)
 		if err_auth != nil {
 			return err_auth
 		}
 	} else {
-		c.checkResubscription()
+		c.checkResubscription(socketId)
 	}
 	return nil
 }
 
 // called when an auth event is received
-func (c *Client) handleAuthAck(auth *AuthEvent) {
+func (c *Client) handleAuthAck(socketId SocketId, auth *AuthEvent) {
 	if c.Authentication == SuccessfulAuthentication {
-		err := c.subscriptions.activate(auth.SubID, auth.ChanID)
+		// set socket to authenticated
+		socket, err := c.socketById(socketId)
+		if err != nil {
+			panic(err)
+		}
+		socket.IsAuthenticated = true
+		err = c.subscriptions.activate(auth.SubID, auth.ChanID)
 		if err != nil {
 			c.log.Errorf("could not activate auth subscription: %s", err.Error())
 		}
-		c.checkResubscription()
+		c.checkResubscription(socketId)
 	} else {
 		c.log.Error("authentication failed")
 	}
@@ -504,20 +562,10 @@ func (c *Client) hasCredentials() bool {
 	return c.apiKey != "" && c.apiSecret != ""
 }
 
-// Unsubscribe looks up an existing subscription by ID and sends an unsubscribe request.
-func (c *Client) Unsubscribe(ctx context.Context, id string) error {
-	sub, err := c.subscriptions.lookupBySubscriptionID(id)
-	if err != nil {
-		return err
-	}
-	// sub is removed from manager on ack from API
-	return c.sendUnsubscribeMessage(ctx, sub.ChanID)
-}
-
 // Authenticate creates the payload for the authentication request and sends it
 // to the API. The filters will be applied to the authenticated channel, i.e.
 // only subscribe to the filtered messages.
-func (c *Client) authenticate(ctx context.Context, filter ...string) error {
+func (c *Client) authenticate(ctx context.Context, socketId SocketId, filter ...string) error {
 	nonce := c.nonce.GetNonce()
 	payload := "AUTH" + nonce
 	sig, err := c.sign(payload)
@@ -536,15 +584,79 @@ func (c *Client) authenticate(ctx context.Context, filter ...string) error {
 	if c.cancelOnDisconnect {
 		s.DMS = DMSCancelOnDisconnect
 	}
-	_, err = c.subscriptions.add(s)
+	c.subscriptions.add(socketId, s)
+	socket, err := c.socketById(socketId)
 	if err != nil {
 		return err
 	}
-
-	if err = c.asynchronous.Send(ctx, s); err != nil {
+	if err = socket.Asynchronous.Send(ctx, s); err != nil {
 		return err
 	}
 	c.Authentication = PendingAuthentication
-
 	return nil
+}
+
+// get a random socket
+func (c *Client) getSocket() (*Socket, error) {
+	if len(c.sockets) <= 0 {
+		return nil, fmt.Errorf("no socket found")
+	}
+	return c.sockets[0], nil
+}
+
+func (c *Client) getLowestCapacitySocket() (*Socket, error) {
+	var lowestSocket *Socket
+	lowestCapacity := -1
+	for _, socket := range c.sockets {
+		capac := c.getSocketCapacity(socket.Id)
+		if lowestSocket == nil {
+			lowestSocket = socket
+			lowestCapacity = capac
+			continue
+		}
+		if capac < lowestCapacity {
+			lowestSocket = socket
+			lowestCapacity = capac
+		}
+	}
+	if lowestSocket == nil {
+		return nil, fmt.Errorf("no socket found")
+	}
+	return lowestSocket, nil
+}
+
+// lookup the socket with the given Id, throw error if not found
+func (c *Client) socketById(socketId SocketId) (*Socket, error) {
+	if socket, ok := c.sockets[socketId]; ok {
+		return socket, nil
+	}
+	return nil, fmt.Errorf("could not find socket with ID %d", socketId)
+}
+
+// calculates how many free channels are available across all of the sockets
+func (c *Client) getAvailableSocketCapacity() int {
+	freeCapacity := 0
+	for _, socket := range c.sockets {
+		freeCapacity += c.getSocketCapacity(socket.Id)
+	}
+	return freeCapacity
+}
+
+// calculates how many free channels are available on the given socket
+func (c *Client) getSocketCapacity(socketId SocketId) int {
+	subs, err := c.subscriptions.lookupBySocketId(socketId)
+	if err == nil {
+		return c.parameters.CapacityPerConnection - subs.Len()
+	}
+	return 0
+}
+
+// get the authenticated socket
+func (c *Client) getAuthenticatedSocket() (*Socket, error) {
+	for _, socket := range c.sockets {
+		if socket.IsAuthenticated {
+			return socket, nil
+		}
+	}
+	return nil, fmt.Errorf("no authenticated socket found")
 }

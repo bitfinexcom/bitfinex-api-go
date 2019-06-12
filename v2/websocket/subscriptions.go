@@ -3,7 +3,6 @@ package websocket
 import (
 	"fmt"
 	"github.com/op/go-logging"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -46,17 +45,23 @@ func (s *SubscriptionRequest) String() string {
 	return ""
 }
 
+type HeartbeatDisconnect struct {
+	Subscription *subscription
+	Error        error
+}
+
 type UnsubscribeRequest struct {
 	Event  string `json:"event"`
 	ChanID int64  `json:"chanId"`
 }
 
 type subscription struct {
-	ChanID  int64
-	pending bool
-	Public  bool
+	ChanID     int64
+	SocketId   SocketId
+	pending    bool
+	Public     bool
 
-	Request *SubscriptionRequest
+	Request    *SubscriptionRequest
 
 	hbDeadline time.Time
 }
@@ -75,9 +80,10 @@ func isPublic(request *SubscriptionRequest) bool {
 	return false
 }
 
-func newSubscription(request *SubscriptionRequest) *subscription {
+func newSubscription(socketId SocketId, request *SubscriptionRequest) *subscription {
 	return &subscription{
 		ChanID:  -1,
+		SocketId: socketId,
 		Request: request,
 		pending: true,
 		Public:  isPublic(request),
@@ -96,9 +102,10 @@ func newSubscriptions(heartbeatTimeout time.Duration, log *logging.Logger) *subs
 	subs := &subscriptions{
 		subsBySubID:  make(map[string]*subscription),
 		subsByChanID: make(map[int64]*subscription),
+		subsBySocketId: make(map[SocketId]SubscriptionSet),
 		hbTimeout:    heartbeatTimeout,
 		hbShutdown:   make(chan struct{}),
-		hbDisconnect: make(chan error),
+		hbDisconnect: make(chan HeartbeatDisconnect),
 		hbSleep:      heartbeatTimeout / time.Duration(4),
 		log:          log,
 	}
@@ -116,11 +123,12 @@ type subscriptions struct {
 	lock         sync.Mutex
 	log          *logging.Logger
 
+	subsBySocketId map[SocketId]SubscriptionSet // subscripts map indexed by socket id
 	subsBySubID  map[string]*subscription // subscription map indexed by subscription ID
 	subsByChanID map[int64]*subscription  // subscription map indexed by channel ID
 
 	hbActive     bool
-	hbDisconnect chan error // disconnect parent due to heartbeat timeout
+	hbDisconnect chan HeartbeatDisconnect // disconnect parent due to heartbeat timeout
 	hbTimeout    time.Duration
 	hbSleep      time.Duration
 	hbShutdown   chan struct{}
@@ -139,6 +147,33 @@ func (s SubscriptionSet) Less(i, j int) bool {
 func (s SubscriptionSet) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
+func (s SubscriptionSet) RemoveByChannelId(chanId int64) SubscriptionSet {
+	rIndex := -1
+	for i, sub := range s {
+		if sub.ChanID == chanId {
+			rIndex = i
+			break
+		}
+	}
+	if rIndex >= 0 {
+		return append(s[:rIndex], s[rIndex+1:]...)
+	}
+	return s
+}
+
+func (s SubscriptionSet) RemoveBySubscriptionId(subID string) SubscriptionSet {
+	rIndex := -1
+	for i, sub := range s {
+		if sub.SubID() == subID {
+			rIndex = i
+			break
+		}
+	}
+	if rIndex >= 0 {
+		return append(s[:rIndex], s[rIndex+1:]...)
+	}
+	return s
+}
 
 func (s *subscriptions) heartbeat(chanID int64) {
 	s.lock.Lock()
@@ -148,7 +183,7 @@ func (s *subscriptions) heartbeat(chanID int64) {
 	}
 }
 
-func (s *subscriptions) sweep(exp time.Time) error {
+func (s *subscriptions) sweep(exp time.Time) *HeartbeatDisconnect {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if !s.hbActive {
@@ -157,7 +192,11 @@ func (s *subscriptions) sweep(exp time.Time) error {
 	for _, sub := range s.subsByChanID {
 		if exp.After(sub.hbDeadline) {
 			s.hbActive = false
-			return fmt.Errorf("heartbeat disconnect on channel %d expired at %s (%s timeout)", sub.ChanID, sub.hbDeadline, s.hbTimeout)
+			hbErr := HeartbeatDisconnect{
+				Subscription: sub,
+				Error: fmt.Errorf("heartbeat disconnect on channel %d expired at %s (%s timeout)", sub.ChanID, sub.hbDeadline, s.hbTimeout),
+			}
+			return &hbErr
 		}
 	}
 	return nil
@@ -171,7 +210,7 @@ func (s *subscriptions) control() {
 		default:
 		}
 		if err := s.sweep(time.Now()); err != nil {
-			s.hbDisconnect <- err
+			s.hbDisconnect <- *err
 		}
 		time.Sleep(s.hbSleep)
 	}
@@ -179,61 +218,71 @@ func (s *subscriptions) control() {
 
 // Close is terminal. Do not call heartbeat after close.
 func (s *subscriptions) Close() {
-	s.reset()
+	s.ResetAll()
 	close(s.hbShutdown)
 }
 
-func (s *subscriptions) reset() []*subscription {
+
+// Reset clears all subscriptions assigned to the given socket ID, and returns
+// a slice of the existing subscriptions prior to reset
+func (s *subscriptions) ResetSocketSubscriptions(socketId SocketId) []*subscription {
 	s.lock.Lock()
-	var subs []*subscription
-	if len(s.subsBySubID) > 0 {
-		subs = make([]*subscription, 0, len(s.subsBySubID))
-		for _, sub := range s.subsBySubID {
-			subs = append(subs, sub)
+	var retSubs []*subscription
+	if set, ok := s.subsBySocketId[socketId]; ok {
+		for _, sub := range set {
+			retSubs = append(retSubs, sub)
+			// remove from chanId array
+			delete(s.subsByChanID, sub.ChanID)
+			// remove from subId array
+			delete(s.subsBySubID, sub.SubID())
 		}
-		sort.Sort(SubscriptionSet(subs))
+		// remove from socket collection
+		delete(s.subsBySocketId, socketId)
 	}
-	s.lock.Unlock()
-	return subs
+	return retSubs
 }
 
-// Reset clears all subscriptions from the currently managed list, and returns
-// a slice of the existing subscriptions prior to reset.  Returns nil if no subscriptions exist.
-func (s *subscriptions) Reset() []*subscription {
-	subs := s.reset()
+// Removes all tracked subscriptions
+func (s *subscriptions) ResetAll() {
 	s.lock.Lock()
 	s.hbActive = false
 	s.subsBySubID = make(map[string]*subscription)
 	s.subsByChanID = make(map[int64]*subscription)
+	s.subsBySocketId = make(map[SocketId]SubscriptionSet)
 	s.lock.Unlock()
-	return subs
 }
 
 // ListenDisconnect returns an error channel which receives a message when a heartbeat has expired a channel.
-func (s *subscriptions) ListenDisconnect() <-chan error {
+func (s *subscriptions) ListenDisconnect() <-chan HeartbeatDisconnect {
 	return s.hbDisconnect
 }
 
-func (s *subscriptions) add(sub *SubscriptionRequest) (*subscription, error) {
+func (s *subscriptions) add(socketId SocketId, sub *SubscriptionRequest) *subscription {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	if len(s.subsByChanID) >= MaxChannels {
-		return nil, fmt.Errorf("Max subscription channel count (%v) reached", MaxChannels)
-	}
-	subscription := newSubscription(sub)
+	subscription := newSubscription(socketId, sub)
 	s.subsBySubID[sub.SubID] = subscription
-	return subscription, nil
+	if _, ok := s.subsBySocketId[socketId]; !ok {
+		s.subsBySocketId[socketId] = make(SubscriptionSet, 0)
+	}
+	s.subsBySocketId[socketId] = append(s.subsBySocketId[socketId], subscription)
+	return subscription
 }
 
 func (s *subscriptions) removeByChannelID(chanID int64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	// remove from socketId map
 	sub, ok := s.subsByChanID[chanID]
 	if !ok {
 		return fmt.Errorf("could not find channel ID %d", chanID)
 	}
 	delete(s.subsByChanID, chanID)
 	delete(s.subsBySubID, sub.SubID())
+	// remove from socket map
+	if _, ok := s.subsBySocketId[sub.SocketId]; ok {
+		s.subsBySocketId[sub.SocketId] = s.subsBySocketId[sub.SocketId].RemoveByChannelId(chanID)
+	}
 	return nil
 }
 
@@ -248,6 +297,10 @@ func (s *subscriptions) removeBySubscriptionID(subID string) error {
 	// exists, remove both indices
 	delete(s.subsBySubID, subID)
 	delete(s.subsByChanID, sub.ChanID)
+	// remove from socket map
+	if _, ok := s.subsBySocketId[sub.SocketId]; ok {
+		s.subsBySocketId[sub.SocketId] = s.subsBySocketId[sub.SocketId].RemoveBySubscriptionId(subID)
+	}
 	return nil
 }
 
@@ -284,4 +337,13 @@ func (s *subscriptions) lookupBySubscriptionID(subID string) (*subscription, err
 		return sub, nil
 	}
 	return nil, fmt.Errorf("could not find subscription ID %s", subID)
+}
+
+func (s *subscriptions) lookupBySocketId(socketId SocketId) (*SubscriptionSet, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if set, ok := s.subsBySocketId[socketId]; ok {
+		return &set, nil
+	}
+	return nil, fmt.Errorf("could not find subscription with socketId %d", socketId)
 }
