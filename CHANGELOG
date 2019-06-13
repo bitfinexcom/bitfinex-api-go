@@ -1,3 +1,8 @@
+2.2.0
+
+- Adds v2/ws connection multiplexer
+- Adds v2/ws api functions ConnectionCount and StartNewConnection
+
 2.1.1
 
 - Removes usage of string(int) conversion in v2/rest and uses strconv.FormatInt instead
