@@ -9,4 +9,4 @@ install:
 
 script:
   - golangci-lint run
-  - go test -v ./...
+  - go test ./... -timeout 60s
