@@ -33,10 +33,11 @@ func assertDisconnect(maxWait time.Duration, client *websocket.Client) error {
 // convienence
 func newTestParams(wsPort int) *websocket.Parameters {
 	p := websocket.NewDefaultParameters()
-	p.HeartbeatTimeout = time.Second * 4
 	p.ShutdownTimeout = time.Second * 4
 	p.URL = fmt.Sprintf("ws://localhost:%d", wsPort)
 	p.AutoReconnect = true
+	p.CapacityPerConnection = 2000
+	p.HeartbeatTimeout = time.Millisecond * 10
 	p.ReconnectInterval = time.Millisecond * 500 // first reconnect is instant, won't need to wait on this
 	return p
 }
@@ -85,7 +86,7 @@ func setup(t *testing.T, hbTimeout time.Duration, autoReconnect, auth bool) {
 	}
 }
 
-func TestReconnectResubscribeWithAuth(t *testing.T) {
+func TestReconnectResubscribeWithAuthBlah(t *testing.T) {
 	// create transport & nonce mocks
 	setup(t, time.Second*10, true, true)
 
@@ -171,20 +172,18 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		Precision: string(bitfinex.Precision0),
 	}
 	assert(t, &expBookSub, bookSub)
-
 	// abrupt disconnect
 	wsService.Stop()
 
 	now := time.Now()
 	// wait for client disconnect to start reconnect looping
-	err = assertDisconnect(time.Second*10, apiClient)
+	err = assertDisconnect(time.Second*20, apiClient)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// nolint:megacheck
 	diff := time.Now().Sub(now)
 	t.Logf("client disconnect detected in %s", diff.String())
-
 	// recreate service
 	wsService = NewTestWsService(wsPort)
 	// fresh service, no clients
@@ -268,14 +267,13 @@ func TestReconnectResubscribeWithAuth(t *testing.T) {
 		Len:       "25",
 	}
 	assert(t, &expBookSub, bookSub)
-
 	// API client thinks it's connected
 	if !apiClient.IsConnected() {
 		t.Fatal("not reconnected to websocket")
 	}
 }
 
-func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
+func TestHeartbeatTimeoutNoReconnectBlah(t *testing.T) {
 	// create transport & nonce mocks
 	setup(t, time.Second, false, false)
 
@@ -304,7 +302,7 @@ func TestHeartbeatTimeoutNoReconnect(t *testing.T) {
 }
 
 // also tests resubscribes
-func TestHeartbeatTimeoutReconnect(t *testing.T) {
+func TestHeartbeatTimeoutReconnectBlah(t *testing.T) {
 	// create transport & nonce mocks
 	setup(t, time.Second, true, false)
 
@@ -342,9 +340,16 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 		Channel: "ticker",
 	}
 	assert(t, &expTickerSub, tickerSub)
-
 	// expect timeout channel heartbeat
 	time.Sleep(time.Second * 2)
+	wsService.Broadcast(`{"event":"info","version":2}`)
+
+	// begin test
+	// info msg automatically sends
+	_, err = apiRecv.nextInfoEvent()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// check reconnect subscriptions
 	m, err = wsService.WaitForMessage(0, 0)
@@ -367,7 +372,7 @@ func TestHeartbeatTimeoutReconnect(t *testing.T) {
 	assert(t, &expTickerSub, tickerSub)
 }
 
-func TestHeartbeatNoTimeoutData(t *testing.T) {
+func TestHeartbeatNoTimeoutDataBlah(t *testing.T) {
 	// create transport & nonce mocks
 	setup(t, time.Second, true, false)
 

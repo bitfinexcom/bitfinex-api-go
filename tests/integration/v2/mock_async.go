@@ -13,15 +13,22 @@ import (
 
 // does not work for reconnect tests
 type TestAsyncFactory struct {
+	Count int
 	Async websocket.Asynchronous
 }
 
 func (t *TestAsyncFactory) Create() websocket.Asynchronous {
-	return t.Async
+	t.Count += 1
+	// if first creation then send given async
+	if t.Count == 1 {
+		return t.Async
+	}
+	// otherwise create a new async for each new creation
+	return newTestAsync()
 }
 
 func newTestAsyncFactory(async websocket.Asynchronous) websocket.AsynchronousFactory {
-	return &TestAsyncFactory{Async: async}
+	return &TestAsyncFactory{Async: async, Count: 0}
 }
 
 type TestAsync struct {

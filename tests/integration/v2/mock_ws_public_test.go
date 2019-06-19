@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
@@ -156,7 +156,6 @@ func TestOrderbook(t *testing.T) {
 	if newTrade.AmountJsNum.String() != "266122.94" {
 		t.Fatal("Newly submitted trade did not update into orderbook")
 	}
-
 	// check that we did not send an unsubscribe message
 	// because that would mean the checksum was incorrect
 	if err_unsub := async.waitForMessage(pre); err_unsub != nil {
@@ -164,5 +163,66 @@ func TestOrderbook(t *testing.T) {
 		return
 	} else {
 		t.Fatal("A new unsubscribe message was sent")
+	}
+}
+
+func TestCreateNewSocket(t *testing.T) {
+	// create transport & nonce mocks
+	async := newTestAsync()
+
+	// create client
+	p := websocket.NewDefaultParameters()
+	// lock the capacity to 10
+	p.CapacityPerConnection = 10
+	p.ManageOrderbook = true
+	ws := websocket.NewWithParamsAsyncFactory(p, newTestAsyncFactory(async))
+
+	// setup listener
+	listener := newListener()
+	listener.run(ws.Listen())
+
+	// set ws options
+	err_ws := ws.Connect()
+	if err_ws != nil {
+		t.Fatal(err_ws)
+	}
+	defer ws.Close()
+
+	// info welcome msg
+	async.Publish(`{"event":"info","version":2}`)
+	ev, err := listener.nextInfoEvent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert(t, &websocket.InfoEvent{Version: 2}, ev)
+
+	tickers := []string{"tBTCUSD", "tETHUSD", "tBTCUSD", "tVETUSD", "tDGBUSD", "tEOSUSD", "tTRXUSD", "tEOSETH", "tBTCETH",
+		"tBTCEOS", "tXRPUSD", "tXRPBTC", "tTRXETH", "tTRXBTC", "tLTCUSD", "tLTCBTC", "tLTCETH"}
+	for i, ticker := range tickers {
+		id := i*10
+		// subscribe to 15m candles
+		id1, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.FifteenMinutes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(id)+`,"key":"trade:15m:`+ticker+`","subId":"`+id1+`"}`)
+		// subscribe to 1hr candles
+		id2, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.OneHour)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// subscribe ack
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(id+1)+`,"key":"trade:1hr:`+ticker+`","subId":"`+id2+`"}`)
+		// subscribe to 30min candles
+		id3, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.OneHour)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// subscribe ack
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(id+2)+`,"key":"trade:30m:`+ticker+`","subId":"`+id3+`"}`)
+	}
+	conCount := ws.ConnectionCount()
+	if conCount != 6 {
+		t.Fatal("Expected socket count to be 6 but got", conCount)
 	}
 }

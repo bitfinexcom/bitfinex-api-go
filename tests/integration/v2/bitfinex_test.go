@@ -12,10 +12,6 @@ var (
 )
 
 func init() {
-
-	if key != "" && secret != "" {
-		auth = true
-	} else {
-		log.Println("No authentication credentials provided so running only public tests.")
-	}
+	log.Println("Authenticated tests disabled.")
+	auth = false
 }

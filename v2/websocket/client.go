@@ -425,16 +425,6 @@ func (c *Client) listenUpstream(socket *Socket) {
 	}
 }
 
-// terminal, unrecoverable state. called after async is closed.
-func (c *Client) killListener(e error) {
-	if c.listener != nil {
-		if e != nil {
-			c.listener <- e
-		}
-		close(c.listener)
-	}
-}
-
 func (c *Client) closeAsyncAndWait(socket *Socket, t time.Duration) {
 	timeout := make(chan bool)
 	wg := sync.WaitGroup{}
