@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// TODO
-
 // TradeService manages the Trade endpoint.
 type CurrenciesService struct {
 	requestFactory

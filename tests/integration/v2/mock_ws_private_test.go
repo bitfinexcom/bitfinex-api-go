@@ -2,9 +2,10 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
-	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
@@ -574,4 +575,51 @@ func TestUpdateOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert(t, &bitfinex.OrderUpdate{ID:1234567, GID:0, CID:123, Symbol:"tBTCUSD", MTSCreated:1547469854025, MTSUpdated:1547469854121, Amount:0.04, AmountOrig:0.04, Type:"LIMIT", TypePrev:"", Flags:0, Status:"ACTIVE", Price:1200, PriceAvg:0, PriceTrailing:0, PriceAuxLimit:0, Notify:false, Hidden:false, PlacedID:0}, ou)
+}
+
+func TestUsesAuthenticatedSocket(t *testing.T) {
+	// create transport & nonce mocks
+	async := newTestAsync()
+	// create client
+	p := websocket.NewDefaultParameters()
+	// lock the capacity to 3
+	p.CapacityPerConnection = 3
+	ws := websocket.NewWithParamsAsyncFactory(p, newTestAsyncFactory(async)).Credentials("apiKeyABC", "apiSecretXYZ")
+
+	// setup listener
+	listener := newListener()
+	listener.run(ws.Listen())
+
+	// set ws options
+	err_ws := ws.Connect()
+	if err_ws != nil {
+		t.Fatal(err_ws)
+	}
+	defer ws.Close()
+
+	// info welcome msg
+	async.Publish(`{"event":"info","version":2}`)
+	ev, err := listener.nextInfoEvent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert(t, &websocket.InfoEvent{Version: 2}, ev)
+	// auth ack
+	async.Publish(`{"event":"auth","status":"OK","chanId":0,"userId":1,"subId":"nonce1","auth_id":"valid-auth-guid","caps":{"orders":{"read":1,"write":0},"account":{"read":1,"write":0},"funding":{"read":1,"write":0},"history":{"read":1,"write":0},"wallets":{"read":1,"write":0},"withdraw":{"read":0,"write":0},"positions":{"read":1,"write":0}}}`)
+	// force websocket to create new connections
+	tickers := []string{"tBTCUSD", "tETHUSD", "tBTCUSD", "tVETUSD", "tDGBUSD", "tEOSUSD", "tTRXUSD", "tEOSETH", "tBTCETH",
+		"tBTCEOS", "tXRPUSD", "tXRPBTC", "tTRXETH", "tTRXBTC", "tLTCUSD", "tLTCBTC", "tLTCETH"}
+	for i, ticker := range tickers {
+		// subscribe to 15m candles
+		id, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.FifteenMinutes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(i)+`,"key":"trade:15m:`+ticker+`","subId":"`+id+`"}`)
+	}
+	authSocket, err := ws.GetAuthenticatedSocket()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(*authSocket)
 }

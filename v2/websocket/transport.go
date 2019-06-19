@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -20,17 +21,20 @@ func newWs(baseURL string, logTransport bool, log *logging.Logger) *ws {
 		quit:         make(chan error),
 		logTransport: logTransport,
 		log:          log,
+		lock:         &sync.RWMutex{},
+		createTime:   time.Now(),
 	}
 }
 
 type ws struct {
 	ws            *websocket.Conn
-	wsLock        sync.Mutex
+	lock          *sync.RWMutex
 	BaseURL       string
 	TLSSkipVerify bool
 	downstream    chan []byte
 	logTransport  bool
 	log           *logging.Logger
+	createTime    time.Time
 
 	quit chan error    // signal to parent with error, if applicable
 }
@@ -39,8 +43,6 @@ func (w *ws) Connect() error {
 	if w.ws != nil {
 		return nil // no op
 	}
-	w.wsLock.Lock()
-	defer w.wsLock.Unlock()
 	var d = websocket.Dialer{
 		Subprotocols:    []string{"p1", "p2"},
 		ReadBufferSize:  1024,
@@ -83,10 +85,7 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 		return fmt.Errorf("websocket connection closed")
 	default:
 	}
-
-	w.wsLock.Lock()
-	defer w.wsLock.Unlock()
-		w.log.Debug("ws->srv: %s", string(bs))
+	w.log.Debug("ws->srv: %s", string(bs))
 	err = w.ws.WriteMessage(websocket.TextMessage, bs)
 	if err != nil {
 		return err
@@ -119,7 +118,7 @@ func (w *ws) listenWs() {
 					// general read error on a closed network connection, OK
 					return
 				}
-				w.cleanup(err)
+				w.stop(err)
 				return
 			}
 			w.log.Debugf("srv->ws: %s", string(msg))
@@ -132,25 +131,21 @@ func (w *ws) Listen() <-chan []byte {
 	return w.downstream
 }
 
-func (w *ws) cleanup(err error) {
-	w.stop()
-	w.quit <- err	// pass error back
-	close(w.quit) // signal to parent listeners
-	close(w.downstream) // shut down caller's listen channel
-}
-
-func (w *ws) stop() {
-	w.wsLock.Lock()
+func (w *ws) stop(err error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
 	if w.ws != nil {
-		if err := w.ws.Close(); err != nil { // will trigger cleanup()
-			w.log.Errorf("error closing websocket: %s", err)
+		w.quit <- err	// pass error back
+		close(w.quit) // signal to parent listeners
+		close(w.downstream)
+		if err := w.ws.Close(); err != nil {
+			panic(fmt.Errorf("error closing websocket: %s", err))
 		}
 		w.ws = nil
 	}
-	w.wsLock.Unlock()
 }
 
 // Close the websocket connection
 func (w *ws) Close() {
-	w.stop()
+	w.stop(fmt.Errorf("transport connection Close called"))
 }

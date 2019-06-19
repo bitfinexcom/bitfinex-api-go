@@ -101,7 +101,7 @@ type ConfEvent struct {
 }
 
 // onEvent handles all the event messages and connects SubID and ChannelID.
-func (c *Client) handleEvent(msg []byte) error {
+func (c *Client) handleEvent(socketId SocketId, msg []byte) error {
 	event := &eventType{}
 	err := json.Unmarshal(msg, event)
 	if err != nil {
@@ -116,7 +116,7 @@ func (c *Client) handleEvent(msg []byte) error {
 			return err
 		}
 		if i.Code == 0 && i.Version != 0 {
-			err_open := c.handleOpen()
+			err_open := c.handleOpen(socketId)
 			if err_open != nil {
 				return err_open
 			}
@@ -133,7 +133,7 @@ func (c *Client) handleEvent(msg []byte) error {
 		} else {
 			c.Authentication = RejectedAuthentication
 		}
-		c.handleAuthAck(&a)
+		c.handleAuthAck(socketId, &a)
 		c.listener <- &a
 		return nil
 	case "subscribed":

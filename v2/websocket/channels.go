@@ -8,7 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
-func (c *Client) handleChannel(msg []byte) error {
+func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
 	var raw []interface{}
 	err := json.Unmarshal(msg, &raw)
 	if err != nil {
