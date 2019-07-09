@@ -56,7 +56,7 @@ func (c *WalletService) WithdrawCrypto(amount float64, currency, wallet, destina
 		"address":        destinationAddress,
 	}
 
-	req, err := c.client.newAuthenticatedRequest("GET", "withdraw", payload)
+	req, err := c.client.newAuthenticatedRequest("POST", "withdraw", payload)
 
 	if err != nil {
 		return nil, err
