@@ -48,7 +48,7 @@ func main() {
 		ob, _ := c.GetOrderbook(bitfinex.TradingPrefix+bitfinex.BTCUSD)
 		if ob != nil {
 			log.Printf("Orderbook asks: %v", ob.Asks())
-			log.Printf("Orderbook asks: %v", ob.Bids())
+			log.Printf("Orderbook bids: %v", ob.Bids())
 		}
 	}
 }
