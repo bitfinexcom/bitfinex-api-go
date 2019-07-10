@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"fmt"
+	"strings"
 )
 
 // Prefixes for available pairs
@@ -1723,8 +1724,14 @@ func parseCurrencyExplorerMap(config map[string]CurrencyConf, raw []interface{})
 func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{})  {
 	for _, rs := range raw {
 		symbol := rs.(string)
-		base := symbol[3:]
-		quote := symbol[:3]
+		var base, quote string
+		if len(symbol) > 6 {
+			base = strings.Split(symbol, ":")[0]
+			quote = strings.Split(symbol, ":")[1]
+		} else {
+			base = symbol[3:]
+			quote = symbol[:3]
+		}
 		// append if base exists in configs
 		if val, ok := config[base]; ok {
 			val.Pairs = append(val.Pairs, symbol)
