@@ -132,6 +132,16 @@ func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution
 	return c.Subscribe(ctx, req)
 }
 
+func (c *Client) SubscribeStatus(ctx context.Context, symbol string, sType bitfinex.StatusType) (string, error) {
+	req := &SubscriptionRequest{
+		SubID:   c.nonce.GetNonce(),
+		Event:   EventSubscribe,
+		Channel: ChanStatus,
+		Key:     fmt.Sprintf("%s:%s", string(sType), symbol),
+	}
+	return c.Subscribe(ctx, req)
+}
+
 func (c *Client) GetOrderbook(symbol string) (*Orderbook, error) {
 	if val, ok := c.orderbooks[symbol]; ok {
 		// take dereferenced copy of orderbook

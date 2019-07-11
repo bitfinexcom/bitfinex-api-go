@@ -76,6 +76,8 @@ func isPublic(request *SubscriptionRequest) bool {
 		return true
 	case ChanTrades:
 		return true
+	case ChanStatus:
+		return true
 	}
 	return false
 }

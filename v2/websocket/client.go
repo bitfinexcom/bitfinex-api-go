@@ -33,6 +33,7 @@ const (
 	ChanTrades  = "trades"
 	ChanTicker  = "ticker"
 	ChanCandles = "candles"
+	ChanStatus  = "status"
 )
 
 // Events
@@ -318,6 +319,7 @@ func (c *Client) registerPublicFactories() {
 	c.registerFactory(ChanTrades, newTradeFactory(c.subscriptions))
 	c.registerFactory(ChanBook, newBookFactory(c.subscriptions, c.orderbooks, c.parameters.ManageOrderbook))
 	c.registerFactory(ChanCandles, newCandlesFactory(c.subscriptions))
+	c.registerFactory(ChanStatus, newStatsFactory(c.subscriptions))
 }
 
 func (c *Client) reconnect(socket *Socket, err error) error {

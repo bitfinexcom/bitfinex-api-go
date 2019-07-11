@@ -1792,6 +1792,11 @@ type DerivativeStatusSnapshot struct {
 	Snapshot []*DerivativeStatus
 }
 
+type StatusType string
+const (
+	DerivativeStatusType StatusType = "deriv"
+)
+
 type DerivativeStatus struct {
 	Symbol               string
 	MTS                  int64
@@ -1801,6 +1806,29 @@ type DerivativeStatus struct {
 	FundingAccrued       float64
 	FundingStep          float64
 }
+
+func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*DerivativeStatus, error) {
+	if len(raw) == 11 {
+		ds := &DerivativeStatus{
+			Symbol:               symbol,
+			MTS:                  i64ValOrZero(raw[0]),
+			// placeholder
+			Price:                f64ValOrZero(raw[2]),
+			SpotPrice:            f64ValOrZero(raw[3]),
+			// placeholder
+			InsuranceFundBalance: f64ValOrZero(raw[5]),
+			// placeholder
+			// placeholder
+			FundingAccrued:       f64ValOrZero(raw[8]),
+			FundingStep:          f64ValOrZero(raw[9]),
+			// placeholder
+		}
+		return ds, nil
+	} else {
+		return nil, fmt.Errorf("data slice too short for derivative status: %#v", raw)
+	}
+}
+
 
 func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
 	if len(raw) == 12 {
@@ -1823,7 +1851,6 @@ func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
 		return nil, fmt.Errorf("data slice too short for derivative status: %#v", raw)
 	}
 }
-
 
 func NewDerivativeSnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
 	snapshot := make([]*DerivativeStatus, len(raw))
