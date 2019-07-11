@@ -1564,15 +1564,15 @@ type Ledger struct {
 func NewLedgerFromRaw(raw []interface{}) (o *Ledger, err error) {
 	if len(raw) == 9 {
 		o = &Ledger{
-			ID:         int64(f64ValOrZero(raw[0])),
-			Currency:     sValOrEmpty(raw[1]),
-			Nil1:    f64ValOrZero(raw[2]),
-			MTS:     i64ValOrZero(raw[3]),
-			Nil2:    f64ValOrZero(raw[4]),
-			Amount:  f64ValOrZero(raw[5]),
-			Balance:       f64ValOrZero(raw[6]),
-			Nil3:			f64ValOrZero(raw[7]),
-			Description:     sValOrEmpty(raw[8]),
+			ID:          int64(f64ValOrZero(raw[0])),
+			Currency:    sValOrEmpty(raw[1]),
+			Nil1:        f64ValOrZero(raw[2]),
+			MTS:         i64ValOrZero(raw[3]),
+			Nil2:        f64ValOrZero(raw[4]),
+			Amount:      f64ValOrZero(raw[5]),
+			Balance:     f64ValOrZero(raw[6]),
+			Nil3:		 f64ValOrZero(raw[7]),
+			Description: sValOrEmpty(raw[8]),
 			// API returns 3 Nil values, what do they map to?
 			// API documentation says ID is type integer but api returns a string
 		}
@@ -1786,4 +1786,53 @@ const (
 type Stat struct {
 	Period int64
 	Volume float64
+}
+
+type DerivativeStatusSnapshot struct {
+	Snapshot []*DerivativeStatus
+}
+
+type DerivativeStatus struct {
+	Symbol               string
+	MTS                  int64
+	Price                float64
+	SpotPrice            float64
+	InsuranceFundBalance float64
+	FundingAccrued       float64
+	FundingStep          float64
+}
+
+func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
+	if len(raw) == 12 {
+		ds := &DerivativeStatus{
+			Symbol:               sValOrEmpty(raw[0]),
+			MTS:                  i64ValOrZero(raw[1]),
+			// placeholder
+			Price:                f64ValOrZero(raw[3]),
+			SpotPrice:            f64ValOrZero(raw[4]),
+			// placeholder
+			InsuranceFundBalance: f64ValOrZero(raw[6]),
+			// placeholder
+			// placeholder
+			FundingAccrued:       f64ValOrZero(raw[9]),
+			FundingStep:          f64ValOrZero(raw[10]),
+			// placeholder
+		}
+		return ds, nil
+	} else {
+		return nil, fmt.Errorf("data slice too short for derivative status: %#v", raw)
+	}
+}
+
+
+func NewDerivativeSnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
+	snapshot := make([]*DerivativeStatus, len(raw))
+	for i, rStatus := range raw {
+		pStatus, err := NewDerivativeStatusFromRaw(rStatus)
+		if err != nil {
+			return nil, err
+		}
+		snapshot[i] = pStatus
+	}
+	return &DerivativeStatusSnapshot{Snapshot: snapshot}, nil
 }
