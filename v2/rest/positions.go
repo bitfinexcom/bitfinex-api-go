@@ -12,7 +12,7 @@ type PositionService struct {
 
 // All returns all positions for the authenticated account.
 func (s *PositionService) All() (*bitfinex.PositionSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest("positions")
+	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, "positions")
 	if err != nil {
 		return nil, err
 	}

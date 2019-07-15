@@ -18,7 +18,7 @@ func (s *LedgerService) Ledgers(currency string, start int64, end int64, max int
     	return nil, fmt.Errorf("Max request limit is higher then 500 : %#v", max)
     }
 
-	req, err := s.requestFactory.NewAuthenticatedRequestWithData(path.Join("ledgers", currency, "hist"), map[string]interface{}{"start": start, "end": end, "limit": max})
+	req, err := s.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionRead, path.Join("ledgers", currency, "hist"), map[string]interface{}{"start": start, "end": end, "limit": max})
 	if err != nil {
 		return nil, err
 	}

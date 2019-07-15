@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"fmt"
+	"strings"
 )
 
 // Prefixes for available pairs
@@ -72,6 +73,12 @@ func CandleResolutionFromString(str string) (CandleResolution, error) {
 	}
 	return OneMinute, fmt.Errorf("could not convert string to resolution: %s", str)
 }
+
+type PermissionType string
+const (
+	PermissionRead = "r"
+	PermissionWrite = "w"
+)
 
 // private type--cannot instantiate.
 type candleResolution string
@@ -1563,15 +1570,15 @@ type Ledger struct {
 func NewLedgerFromRaw(raw []interface{}) (o *Ledger, err error) {
 	if len(raw) == 9 {
 		o = &Ledger{
-			ID:         int64(f64ValOrZero(raw[0])),
-			Currency:     sValOrEmpty(raw[1]),
-			Nil1:    f64ValOrZero(raw[2]),
-			MTS:     i64ValOrZero(raw[3]),
-			Nil2:    f64ValOrZero(raw[4]),
-			Amount:  f64ValOrZero(raw[5]),
-			Balance:       f64ValOrZero(raw[6]),
-			Nil3:			f64ValOrZero(raw[7]),
-			Description:     sValOrEmpty(raw[8]),
+			ID:          int64(f64ValOrZero(raw[0])),
+			Currency:    sValOrEmpty(raw[1]),
+			Nil1:        f64ValOrZero(raw[2]),
+			MTS:         i64ValOrZero(raw[3]),
+			Nil2:        f64ValOrZero(raw[4]),
+			Amount:      f64ValOrZero(raw[5]),
+			Balance:     f64ValOrZero(raw[6]),
+			Nil3:		 f64ValOrZero(raw[7]),
+			Description: sValOrEmpty(raw[8]),
 			// API returns 3 Nil values, what do they map to?
 			// API documentation says ID is type integer but api returns a string
 		}
@@ -1723,8 +1730,14 @@ func parseCurrencyExplorerMap(config map[string]CurrencyConf, raw []interface{})
 func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{})  {
 	for _, rs := range raw {
 		symbol := rs.(string)
-		base := symbol[3:]
-		quote := symbol[:3]
+		var base, quote string
+		if len(symbol) > 6 {
+			base = strings.Split(symbol, ":")[0]
+			quote = strings.Split(symbol, ":")[1]
+		} else {
+			base = symbol[3:]
+			quote = symbol[:3]
+		}
 		// append if base exists in configs
 		if val, ok := config[base]; ok {
 			val.Pairs = append(val.Pairs, symbol)
@@ -1779,4 +1792,80 @@ const (
 type Stat struct {
 	Period int64
 	Volume float64
+}
+
+type DerivativeStatusSnapshot struct {
+	Snapshot []*DerivativeStatus
+}
+
+type StatusType string
+const (
+	DerivativeStatusType StatusType = "deriv"
+)
+
+type DerivativeStatus struct {
+	Symbol               string
+	MTS                  int64
+	Price                float64
+	SpotPrice            float64
+	InsuranceFundBalance float64
+	FundingAccrued       float64
+	FundingStep          float64
+}
+
+func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*DerivativeStatus, error) {
+	if len(raw) == 11 {
+		ds := &DerivativeStatus{
+			Symbol:               symbol,
+			MTS:                  i64ValOrZero(raw[0]),
+			// placeholder
+			Price:                f64ValOrZero(raw[2]),
+			SpotPrice:            f64ValOrZero(raw[3]),
+			// placeholder
+			InsuranceFundBalance: f64ValOrZero(raw[5]),
+			// placeholder
+			// placeholder
+			FundingAccrued:       f64ValOrZero(raw[8]),
+			FundingStep:          f64ValOrZero(raw[9]),
+			// placeholder
+		}
+		return ds, nil
+	} else {
+		return nil, fmt.Errorf("data slice too short for derivative status: %#v", raw)
+	}
+}
+
+
+func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
+	if len(raw) == 12 {
+		ds := &DerivativeStatus{
+			Symbol:               sValOrEmpty(raw[0]),
+			MTS:                  i64ValOrZero(raw[1]),
+			// placeholder
+			Price:                f64ValOrZero(raw[3]),
+			SpotPrice:            f64ValOrZero(raw[4]),
+			// placeholder
+			InsuranceFundBalance: f64ValOrZero(raw[6]),
+			// placeholder
+			// placeholder
+			FundingAccrued:       f64ValOrZero(raw[9]),
+			FundingStep:          f64ValOrZero(raw[10]),
+			// placeholder
+		}
+		return ds, nil
+	} else {
+		return nil, fmt.Errorf("data slice too short for derivative status: %#v", raw)
+	}
+}
+
+func NewDerivativeSnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
+	snapshot := make([]*DerivativeStatus, len(raw))
+	for i, rStatus := range raw {
+		pStatus, err := NewDerivativeStatusFromRaw(rStatus)
+		if err != nil {
+			return nil, err
+		}
+		snapshot[i] = pStatus
+	}
+	return &DerivativeStatusSnapshot{Snapshot: snapshot}, nil
 }

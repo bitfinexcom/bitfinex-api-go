@@ -1,15 +1,16 @@
 package websocket
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
-	"sync"
-	"strings"
 	"encoding/json"
+	"fmt"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"strings"
+	"sync"
 )
 
 type messageFactory interface {
 	Build(chanID int64, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
-	BuildSnapshot(chanID int64, raw [][]float64, raw_bytes []byte) (interface{}, error)
+	BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
 }
 
 type TickerFactory struct {
@@ -31,10 +32,14 @@ func (f *TickerFactory) Build(chanID int64, objType string, raw []interface{}, r
 	return nil, err
 }
 
-func (f *TickerFactory) BuildSnapshot(chanID int64, raw [][]float64, raw_bytes []byte) (interface{}, error) {
+func (f *TickerFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
+	converted, err := bitfinex.ToFloat64Array(raw)
+	if err != nil {
+		return nil, err
+	}
 	sub, err := f.subscriptions.lookupByChannelID(chanID)
 	if err == nil {
-		return bitfinex.NewTickerSnapshotFromRaw(sub.Request.Symbol, raw)
+		return bitfinex.NewTickerSnapshotFromRaw(sub.Request.Symbol, converted)
 	}
 	return nil, err
 }
@@ -61,10 +66,14 @@ func (f *TradeFactory) Build(chanID int64, objType string, raw []interface{}, ra
 	return nil, err
 }
 
-func (f *TradeFactory) BuildSnapshot(chanID int64, raw [][]float64, raw_bytes []byte) (interface{}, error) {
+func (f *TradeFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
+	converted, err := bitfinex.ToFloat64Array(raw)
+	if err != nil {
+		return nil, err
+	}
 	sub, err := f.subscriptions.lookupByChannelID(chanID)
 	if err == nil {
-		return bitfinex.NewTradeSnapshotFromRaw(sub.Request.Symbol, raw)
+		return bitfinex.NewTradeSnapshotFromRaw(sub.Request.Symbol, converted)
 	}
 	return nil, err
 }
@@ -118,7 +127,11 @@ func (f *BookFactory) Build(chanID int64, objType string, raw []interface{}, raw
 	return nil, err
 }
 
-func (f *BookFactory) BuildSnapshot(chanID int64, raw [][]float64, raw_bytes []byte) (interface{}, error) {
+func (f *BookFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
+	converted, err := bitfinex.ToFloat64Array(raw)
+	if err != nil {
+		return nil, err
+	}
 	sub, err := f.subscriptions.lookupByChannelID(chanID)
 	// parse the bytes using the json number value to store the exact string value
 	raw_json_number, str_conv_err := ConvertBytesToJsonNumberArray(raw_bytes)
@@ -126,7 +139,7 @@ func (f *BookFactory) BuildSnapshot(chanID int64, raw [][]float64, raw_bytes []b
 		return nil, str_conv_err
 	}
 
-	update, err2 := bitfinex.NewBookUpdateSnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, raw, raw_json_number[1])
+	update, err2 := bitfinex.NewBookUpdateSnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, converted, raw_json_number[1])
 	if err2 != nil {
 		return nil, err2
 	}
@@ -170,7 +183,11 @@ func (f *CandlesFactory) Build(chanID int64, objType string, raw []interface{}, 
 	return candle, err
 }
 
-func (f *CandlesFactory) BuildSnapshot(chanID int64, raw [][]float64, raw_bytes []byte) (interface{}, error) {
+func (f *CandlesFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
+	converted, err := bitfinex.ToFloat64Array(raw)
+	if err != nil {
+		return nil, err
+	}
 	sub, err := f.subscriptions.lookupByChannelID(chanID)
 	if err != nil {
 		return nil, err
@@ -179,6 +196,35 @@ func (f *CandlesFactory) BuildSnapshot(chanID int64, raw [][]float64, raw_bytes 
 	if err != nil {
 		return nil, err
 	}
-	snap, err := bitfinex.NewCandleSnapshotFromRaw(sym, res, raw)
+	snap, err := bitfinex.NewCandleSnapshotFromRaw(sym, res, converted)
 	return snap, err
+}
+
+type StatsFactory struct {
+	*subscriptions
+}
+
+func newStatsFactory(subs *subscriptions) *StatsFactory {
+	return &StatsFactory{
+		subscriptions: subs,
+	}
+}
+
+func (f *StatsFactory) Build(chanID int64, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error) {
+	sub, err := f.subscriptions.lookupByChannelID(chanID)
+	if err != nil {
+		return nil, err
+	}
+	splits := strings.Split(sub.Request.Key, ":")
+	if len(splits) != 3 {
+		return nil, fmt.Errorf("unable to parse key to symbol %s", sub.Request.Key)
+	}
+	symbol := splits[1] + ":" + splits[2]
+	candle, err := bitfinex.NewDerivativeStatusFromWsRaw(symbol, raw)
+	return candle, err
+}
+
+func (f *StatsFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
+	// no snapshots
+	return nil, nil
 }

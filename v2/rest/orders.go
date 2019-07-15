@@ -67,7 +67,7 @@ func (s *OrderService) GetHistoryByOrderId(orderID int64) (o *bitfinex.Order, er
 // OrderTrades returns a set of executed trades related to an order.
 func (s *OrderService) OrderTrades(symbol string, orderID int64) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
 	key := fmt.Sprintf("%s:%d", symbol, orderID)
-	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("order", key, "trades"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("order", key, "trades"))
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (s *OrderService) OrderTrades(symbol string, orderID int64) (*bitfinex.Trad
 }
 
 func (s *OrderService) getActiveOrders(symbol string) (*bitfinex.OrderSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol))
+	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("orders", symbol))
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (s *OrderService) getActiveOrders(symbol string) (*bitfinex.OrderSnapshot, 
 }
 
 func (s *OrderService) getHistoricalOrders(symbol string) (*bitfinex.OrderSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("orders", symbol, "hist"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("orders", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
