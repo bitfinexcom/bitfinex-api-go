@@ -74,6 +74,12 @@ func CandleResolutionFromString(str string) (CandleResolution, error) {
 	return OneMinute, fmt.Errorf("could not convert string to resolution: %s", str)
 }
 
+type PermissionType string
+const (
+	PermissionRead = "r"
+	PermissionWrite = "w"
+)
+
 // private type--cannot instantiate.
 type candleResolution string
 

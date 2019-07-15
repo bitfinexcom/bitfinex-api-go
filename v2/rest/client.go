@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bitfinexcom/bitfinex-api-go/utils"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -16,8 +17,8 @@ import (
 var productionBaseURL = "https://api-pub.bitfinex.com/v2/"
 
 type requestFactory interface {
-	NewAuthenticatedRequestWithData(refURL string, data map[string]interface{}) (Request, error)
-	NewAuthenticatedRequest(refURL string) (Request, error)
+	NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType, refURL string, data map[string]interface{}) (Request, error)
+	NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error)
 }
 
 type Synchronous interface {
@@ -31,18 +32,19 @@ type Client struct {
 	nonce     utils.NonceGenerator
 
 	// service providers
-	Candles    CandleService
-	Orders     OrderService
-	Positions  PositionService
-	Trades     TradeService
-	Tickers    TickerService
-	Currencies CurrenciesService
-	Platform   PlatformService
-	Book       BookService
-	Wallet     WalletService
-	Ledgers    LedgerService
-	Stats      StatsService
-	Status     StatusService
+	Candles     CandleService
+	Orders      OrderService
+	Positions   PositionService
+	Trades      TradeService
+	Tickers     TickerService
+	Currencies  CurrenciesService
+	Platform    PlatformService
+	Book        BookService
+	Wallet      WalletService
+	Ledgers     LedgerService
+	Stats       StatsService
+	Status      StatusService
+	Derivatives DerivativesService
 
 	Synchronous
 }
@@ -105,6 +107,7 @@ func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.
 	c.Ledgers = LedgerService{Synchronous: c, requestFactory: c}
 	c.Stats = StatsService{Synchronous: c, requestFactory: c}
 	c.Status = StatusService{Synchronous: c, requestFactory: c}
+	c.Derivatives = DerivativesService{Synchronous: c, requestFactory: c}
 	return c
 }
 
@@ -138,12 +141,12 @@ func (c *Client) sign(msg string) (string, error) {
 	return hex.EncodeToString(sig.Sum(nil)), nil
 }
 
-func (c *Client) NewAuthenticatedRequest(refURL string) (Request, error) {
-	return c.NewAuthenticatedRequestWithData(refURL, nil)
+func (c *Client) NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error) {
+	return c.NewAuthenticatedRequestWithData(permissionType, refURL, nil)
 }
 
-func (c *Client) NewAuthenticatedRequestWithData(refURL string, data map[string]interface{}) (Request, error) {
-	authURL := "auth/r/" + refURL
+func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType,refURL string, data map[string]interface{}) (Request, error) {
+	authURL := fmt.Sprintf("auth/%s/%s", string(permissionType), refURL)
 	req := NewRequestWithData(authURL, data)
 	nonce := c.nonce.GetNonce()
 	b, err := json.Marshal(data)

@@ -15,7 +15,7 @@ type TradeService struct {
 
 // All returns all orders for the authenticated account.
 func (s *TradeService) All(symbol string) (*bitfinex.TradeSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequestWithData(path.Join("trades", symbol, "hist"), map[string]interface{}{"start": nil, "end": nil, "limit": nil})
+	req, err := s.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionRead, path.Join("trades", symbol, "hist"), map[string]interface{}{"start": nil, "end": nil, "limit": nil})
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (s *TradeService) AccountHistoryWithQuery(
 	limit bitfinex.QueryLimit,
 	sort bitfinex.SortOrder,
 	) (*bitfinex.TradeSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(path.Join("trades", symbol, "hist"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("trades", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
