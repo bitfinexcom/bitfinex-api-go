@@ -69,7 +69,7 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 		if bChecksum == oChecksum {
 			c.log.Debugf("Orderbook '%s' checksum verification successful.", symbol)
 		} else {
-			fmt.Printf("Orderbook '%s' checksum is invalid got %d bot got %d. Data Out of sync, reconnecting.",
+			c.log.Warningf("Orderbook '%s' checksum is invalid got %d bot got %d. Data Out of sync, reconnecting.",
 				symbol, bChecksum, oChecksum)
 			err := c.sendUnsubscribeMessage(context.Background(), chanId)
 			if err != nil {
@@ -96,7 +96,6 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 	// public data is returned as raw interface arrays, use a factory to convert to raw type & publish
 	if factory, ok := c.factories[channel]; ok {
 		// convert to type array of interfaces
-		fmt.Println(data)
 		if len(data) > 0 {
 			if _, ok := data[0].([]interface{}); ok {
 				interfaceArray := bitfinex.ToInterfaceArray(data)
