@@ -1,3 +1,14 @@
+2.2.1
+
+- Adds v2/rest Derivatives service with new functions
+    - SetCollateral
+- Adds v2/rest Status service with new functions
+    - DerivativeStatus
+    - DerivativeStatusMulti
+    - DerivativeStatusAll
+- Adds support for auth ws feed 'status'
+- Adds ws subscription function SubscribeStatus
+
 2.2.0
 
 - Adds v2/ws connection multiplexer
