@@ -8,9 +8,9 @@ type Credit struct {
 	Id        int
 	Currency  string
 	Status    string
-	Rate      float64
+	Rate      float64 `json:"rate,string"`
 	Period    float64
-	Amount    float64
+	Amount    float64 `json:"amount,string"`
 	Timestamp string
 }
 
