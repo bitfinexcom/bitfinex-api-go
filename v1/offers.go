@@ -26,6 +26,22 @@ type Offer struct {
 	OfferId         int64  `json:"offer_id"`
 }
 
+// Returns an array of Offer
+func (c *OffersService) All() ([]Offer, error) {
+	req, err := c.client.newAuthenticatedRequest("GET", "offers", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	offers := make([]Offer, 0)
+	_, err = c.client.do(req, &offers)
+	if err != nil {
+		return nil, err
+	}
+
+	return offers, nil
+}
+
 // Create new offer for LEND or LOAN a currency, use LEND or LOAN constants as direction
 func (s *OffersService) New(currency string, amount, rate float64, period int64, direction string) (Offer, error) {
 
