@@ -49,11 +49,11 @@ func (s *OffersService) New(currency string, amount, rate float64, period int64,
 		"currency":  currency,
 		"amount":    strconv.FormatFloat(amount, 'f', -1, 32),
 		"rate":      strconv.FormatFloat(rate, 'f', -1, 32),
-		"period":    strconv.FormatInt(period, 10),
+		"period":    period,
 		"direction": direction,
 	}
 
-	req, err := s.client.newAuthenticatedRequest("POST", "offers/new", payload)
+	req, err := s.client.newAuthenticatedRequest("POST", "offer/new", payload)
 
 	if err != nil {
 		return Offer{}, err
@@ -73,10 +73,10 @@ func (s *OffersService) New(currency string, amount, rate float64, period int64,
 func (s *OffersService) Cancel(offerId int64) (Offer, error) {
 
 	payload := map[string]interface{}{
-		"offer_id": strconv.FormatInt(offerId, 10),
+		"offer_id": offerId,
 	}
 
-	req, err := s.client.newAuthenticatedRequest("POST", "offers/cancel", payload)
+	req, err := s.client.newAuthenticatedRequest("POST", "offer/cancel", payload)
 
 	if err != nil {
 		return Offer{}, err
