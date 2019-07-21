@@ -37,11 +37,14 @@ const (
 
 type Mts int64
 type SortOrder int
+
 const (
-	OldestFirst         SortOrder = 1
-	NewestFirst         SortOrder = -1
+	OldestFirst SortOrder = 1
+	NewestFirst SortOrder = -1
 )
+
 type QueryLimit int
+
 const QueryLimitMax QueryLimit = 1000
 
 func CandleResolutionFromString(str string) (CandleResolution, error) {
@@ -75,8 +78,9 @@ func CandleResolutionFromString(str string) (CandleResolution, error) {
 }
 
 type PermissionType string
+
 const (
-	PermissionRead = "r"
+	PermissionRead  = "r"
 	PermissionWrite = "w"
 )
 
@@ -88,20 +92,20 @@ type CandleResolution candleResolution
 
 // Order sides
 const (
-	Bid OrderSide = 1
-	Ask OrderSide = 2
-	Long OrderSide = 1
+	Bid   OrderSide = 1
+	Ask   OrderSide = 2
+	Long  OrderSide = 1
 	Short OrderSide = 2
 )
 
 // Settings flags
 
 const (
-	Dec_s int = 9
-  Time_s int = 32
-  Timestamp int = 32768
-  Seq_all int = 65536
-  Checksum int = 131072
+	Dec_s     int = 9
+	Time_s    int = 32
+	Timestamp int = 32768
+	Seq_all   int = 65536
+	Checksum  int = 131072
 )
 
 type orderSide byte
@@ -141,10 +145,10 @@ type bookFrequency string
 type BookFrequency bookFrequency
 
 const (
-	OrderFlagHidden     int = 64
-	OrderFlagClose      int = 512
-	OrderFlagPostOnly   int = 4096
-	OrderFlagOCO        int = 16384
+	OrderFlagHidden   int = 64
+	OrderFlagClose    int = 512
+	OrderFlagPostOnly int = 4096
+	OrderFlagOCO      int = 16384
 )
 
 // OrderNewRequest represents an order to be posted to the bitfinex websocket
@@ -1700,15 +1704,15 @@ func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interfac
 }
 
 type Ledger struct {
-	ID		    int64
-	Currency	string
+	ID          int64
+	Currency    string
 	Nil1        float64
-	MTS		    int64
+	MTS         int64
 	Nil2        float64
-	Amount	    float64
-	Balance		float64
+	Amount      float64
+	Balance     float64
 	Nil3        float64
-	Description	string
+	Description string
 }
 
 // NewLedgerFromRaw takes the raw list of values as returned from the websocket
@@ -1723,14 +1727,14 @@ func NewLedgerFromRaw(raw []interface{}) (o *Ledger, err error) {
 			Nil2:        f64ValOrZero(raw[4]),
 			Amount:      f64ValOrZero(raw[5]),
 			Balance:     f64ValOrZero(raw[6]),
-			Nil3:		 f64ValOrZero(raw[7]),
+			Nil3:        f64ValOrZero(raw[7]),
 			Description: sValOrEmpty(raw[8]),
 			// API returns 3 Nil values, what do they map to?
 			// API documentation says ID is type integer but api returns a string
 		}
-	} else
-	{return o, fmt.Errorf("data slice too short for ledger: %#v", raw)
-	} 
+	} else {
+		return o, fmt.Errorf("data slice too short for ledger: %#v", raw)
+	}
 	return
 }
 
@@ -1775,24 +1779,24 @@ type CurrencyConf struct {
 }
 
 type ExplorerConf struct {
-	BaseUri         string
-	AddressUri      string
-	TransactionUri  string
+	BaseUri        string
+	AddressUri     string
+	TransactionUri string
 }
 
 type CurrencyConfigMapping string
 
 const (
-	CurrencyLabelMap CurrencyConfigMapping = "pub:map:currency:label"
-	CurrencySymbolMap CurrencyConfigMapping = "pub:map:currency:sym"
-	CurrencyUnitMap CurrencyConfigMapping = "pub:map:currency:unit"
+	CurrencyLabelMap    CurrencyConfigMapping = "pub:map:currency:label"
+	CurrencySymbolMap   CurrencyConfigMapping = "pub:map:currency:sym"
+	CurrencyUnitMap     CurrencyConfigMapping = "pub:map:currency:unit"
 	CurrencyExplorerMap CurrencyConfigMapping = "pub:map:currency:explorer"
 	CurrencyExchangeMap CurrencyConfigMapping = "pub:list:pair:exchange"
 )
 
 type RawCurrencyConf struct {
 	Mapping string
-	Data interface{}
+	Data    interface{}
 }
 
 func parseCurrencyLabelMap(config map[string]CurrencyConf, raw []interface{}) {
@@ -1813,7 +1817,7 @@ func parseCurrencyLabelMap(config map[string]CurrencyConf, raw []interface{}) {
 	}
 }
 
-func parseCurrencySymbMap(config map[string]CurrencyConf, raw []interface{})  {
+func parseCurrencySymbMap(config map[string]CurrencyConf, raw []interface{}) {
 	for _, rawLabel := range raw {
 		data := rawLabel.([]interface{})
 		cur := data[0].(string)
@@ -1831,7 +1835,7 @@ func parseCurrencySymbMap(config map[string]CurrencyConf, raw []interface{})  {
 	}
 }
 
-func parseCurrencyUnitMap(config map[string]CurrencyConf, raw []interface{})  {
+func parseCurrencyUnitMap(config map[string]CurrencyConf, raw []interface{}) {
 	for _, rawLabel := range raw {
 		data := rawLabel.([]interface{})
 		cur := data[0].(string)
@@ -1849,7 +1853,7 @@ func parseCurrencyUnitMap(config map[string]CurrencyConf, raw []interface{})  {
 	}
 }
 
-func parseCurrencyExplorerMap(config map[string]CurrencyConf, raw []interface{})  {
+func parseCurrencyExplorerMap(config map[string]CurrencyConf, raw []interface{}) {
 	for _, rawLabel := range raw {
 		data := rawLabel.([]interface{})
 		cur := data[0].(string)
@@ -1873,7 +1877,7 @@ func parseCurrencyExplorerMap(config map[string]CurrencyConf, raw []interface{})
 	}
 }
 
-func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{})  {
+func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{}) {
 	for _, rs := range raw {
 		symbol := rs.(string)
 		var base, quote string
@@ -1900,7 +1904,7 @@ func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{})
 func NewCurrencyConfFromRaw(raw []RawCurrencyConf) ([]CurrencyConf, error) {
 	configMap := make(map[string]CurrencyConf)
 	for _, r := range raw {
-		switch (CurrencyConfigMapping(r.Mapping)) {
+		switch CurrencyConfigMapping(r.Mapping) {
 		case CurrencyLabelMap:
 			data := r.Data.([]interface{})
 			parseCurrencyLabelMap(configMap, data)
@@ -1929,10 +1933,10 @@ func NewCurrencyConfFromRaw(raw []RawCurrencyConf) ([]CurrencyConf, error) {
 type StatKey string
 
 const (
-	FundingSizeKey StatKey = "funding.size"
-	CreditSizeKey StatKey = "credits.size"
+	FundingSizeKey   StatKey = "funding.size"
+	CreditSizeKey    StatKey = "credits.size"
 	CreditSizeSymKey StatKey = "credits.size.sym"
-	PositionSizeKey StatKey = "pos.size"
+	PositionSizeKey  StatKey = "pos.size"
 )
 
 type Stat struct {
@@ -1945,6 +1949,7 @@ type DerivativeStatusSnapshot struct {
 }
 
 type StatusType string
+
 const (
 	DerivativeStatusType StatusType = "deriv"
 )
@@ -1962,17 +1967,17 @@ type DerivativeStatus struct {
 func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*DerivativeStatus, error) {
 	if len(raw) == 11 {
 		ds := &DerivativeStatus{
-			Symbol:               symbol,
-			MTS:                  i64ValOrZero(raw[0]),
+			Symbol: symbol,
+			MTS:    i64ValOrZero(raw[0]),
 			// placeholder
-			Price:                f64ValOrZero(raw[2]),
-			SpotPrice:            f64ValOrZero(raw[3]),
+			Price:     f64ValOrZero(raw[2]),
+			SpotPrice: f64ValOrZero(raw[3]),
 			// placeholder
 			InsuranceFundBalance: f64ValOrZero(raw[5]),
 			// placeholder
 			// placeholder
-			FundingAccrued:       f64ValOrZero(raw[8]),
-			FundingStep:          f64ValOrZero(raw[9]),
+			FundingAccrued: f64ValOrZero(raw[8]),
+			FundingStep:    f64ValOrZero(raw[9]),
 			// placeholder
 		}
 		return ds, nil
@@ -1981,21 +1986,20 @@ func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*Derivative
 	}
 }
 
-
 func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
 	if len(raw) == 12 {
 		ds := &DerivativeStatus{
-			Symbol:               sValOrEmpty(raw[0]),
-			MTS:                  i64ValOrZero(raw[1]),
+			Symbol: sValOrEmpty(raw[0]),
+			MTS:    i64ValOrZero(raw[1]),
 			// placeholder
-			Price:                f64ValOrZero(raw[3]),
-			SpotPrice:            f64ValOrZero(raw[4]),
+			Price:     f64ValOrZero(raw[3]),
+			SpotPrice: f64ValOrZero(raw[4]),
 			// placeholder
 			InsuranceFundBalance: f64ValOrZero(raw[6]),
 			// placeholder
 			// placeholder
-			FundingAccrued:       f64ValOrZero(raw[9]),
-			FundingStep:          f64ValOrZero(raw[10]),
+			FundingAccrued: f64ValOrZero(raw[9]),
+			FundingStep:    f64ValOrZero(raw[10]),
 			// placeholder
 		}
 		return ds, nil
