@@ -27,7 +27,7 @@ func (c *WalletService) Transfer(amount float64, currency, from, to string) ([]T
 		"walletto":   to,
 	}
 
-	req, err := c.client.newAuthenticatedRequest("GET", "transfer", payload)
+	req, err := c.client.newAuthenticatedRequest("POST", "transfer", payload)
 
 	if err != nil {
 		return nil, err
