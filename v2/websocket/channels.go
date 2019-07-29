@@ -100,7 +100,10 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 			if _, ok := data[0].([]interface{}); ok {
 				interfaceArray := bitfinex.ToInterfaceArray(data)
 				// snapshot item
+				c.mtx.Lock()
+				// lock mutex since its mutates client struct
 				msg, err := factory.BuildSnapshot(chanID, interfaceArray, raw_msg)
+				c.mtx.Unlock()
 				if err != nil {
 					return err
 				}
