@@ -1410,7 +1410,6 @@ type BookUpdateSnapshot struct {
 }
 
 func NewBookUpdateSnapshotFromRaw(symbol, precision string, raw [][]float64, raw_numbers interface{}) (*BookUpdateSnapshot, error) {
-	fmt.Println(raw_numbers)
 	if len(raw) <= 0 {
 		return nil, fmt.Errorf("data slice too short for book snapshot: %#v", raw)
 	}

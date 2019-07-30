@@ -14,6 +14,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const WS_WRITE_CAPACITY = 100
+
 func newWs(baseURL string, logTransport bool, log *logging.Logger) *ws {
 	return &ws{
 		BaseURL:      baseURL,
@@ -23,6 +25,7 @@ func newWs(baseURL string, logTransport bool, log *logging.Logger) *ws {
 		log:          log,
 		lock:         &sync.RWMutex{},
 		createTime:   time.Now(),
+		writeChan:    make(chan []byte, WS_WRITE_CAPACITY),
 	}
 }
 
@@ -35,6 +38,7 @@ type ws struct {
 	logTransport  bool
 	log           *logging.Logger
 	createTime    time.Time
+	writeChan     chan []byte
 
 	quit chan error    // signal to parent with error, if applicable
 }
@@ -61,6 +65,7 @@ func (w *ws) Connect() error {
 		return err
 	}
 	w.ws = ws
+	go w.listenWriteChannel()
 	go w.listenWs()
 	return nil
 }
@@ -86,7 +91,8 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	default:
 	}
 	w.log.Debug("ws->srv: %s", string(bs))
-	err = w.ws.WriteMessage(websocket.TextMessage, bs)
+	// push request into writer channel
+	w.writeChan <- bs
 	if err != nil {
 		return err
 	}
@@ -95,6 +101,34 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 
 func (w *ws) Done() <-chan error {
 	return w.quit
+}
+
+// listen for write requests and perform them
+func (w *ws) listenWriteChannel() {
+	for {
+		select {
+		case <- w.quit: // ws closed
+			return
+		case message := <- w.writeChan:
+			wsWriter, err := w.ws.NextWriter(websocket.TextMessage)
+			if err != nil {
+				w.log.Error("Unable to provision ws connection writer: ", err)
+				w.stop(err)
+				return
+			}
+			_, err = wsWriter.Write(message)
+			if err != nil {
+				w.log.Error("Unable to write to ws: ", err)
+				w.stop(err)
+				return
+			}
+			if err := wsWriter.Close(); err != nil {
+				w.log.Error("Unable to close ws connection writer: ", err)
+				w.stop(err)
+				return
+			}
+		}
+	}
 }
 
 // listen on ws & fwd to listen()

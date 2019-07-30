@@ -143,6 +143,8 @@ func (c *Client) SubscribeStatus(ctx context.Context, symbol string, sType bitfi
 }
 
 func (c *Client) GetOrderbook(symbol string) (*Orderbook, error) {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
 	if val, ok := c.orderbooks[symbol]; ok {
 		// take dereferenced copy of orderbook
 		return val, nil

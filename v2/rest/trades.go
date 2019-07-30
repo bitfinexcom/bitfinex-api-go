@@ -14,8 +14,9 @@ type TradeService struct {
 }
 
 // All returns all orders for the authenticated account.
-func (s *TradeService) All(symbol string) (*bitfinex.TradeSnapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionRead, path.Join("trades", symbol, "hist"), map[string]interface{}{"start": nil, "end": nil, "limit": nil})
+// left this in her
+func (s *TradeService) allAccountWithSymbol(symbol string) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
+	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("trades", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
@@ -23,11 +24,27 @@ func (s *TradeService) All(symbol string) (*bitfinex.TradeSnapshot, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseRawToSnapshot(symbol, raw)
+	return parseRawPrivateToSnapshot(raw)
 }
 
-func (s *TradeService) AccountAll(symbol string) (*bitfinex.TradeSnapshot, error) {
-	return s.All(symbol)
+func (s *TradeService) allAccount() (*bitfinex.TradeExecutionUpdateSnapshot, error) {
+	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("trades", "hist"))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return parseRawPrivateToSnapshot(raw)
+}
+
+func (s *TradeService) AccountAll() (*bitfinex.TradeExecutionUpdateSnapshot, error) {
+	return s.allAccount()
+}
+
+func (s *TradeService) AccountAllWithSymbol(symbol string) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
+	return s.allAccountWithSymbol(symbol)
 }
 
 // return account trades that fit the given conditions
@@ -37,7 +54,7 @@ func (s *TradeService) AccountHistoryWithQuery(
 	end bitfinex.Mts,
 	limit bitfinex.QueryLimit,
 	sort bitfinex.SortOrder,
-	) (*bitfinex.TradeSnapshot, error) {
+	) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
 	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("trades", symbol, "hist"))
 	if err != nil {
 		return nil, err
@@ -51,7 +68,7 @@ func (s *TradeService) AccountHistoryWithQuery(
 	if err != nil {
 		return nil, err
 	}
-	return parseRawToSnapshot(symbol, raw)
+	return parseRawPrivateToSnapshot(raw)
 }
 
 // return publicly executed trades that fit the given query conditions
@@ -72,10 +89,14 @@ func (s *TradeService) PublicHistoryWithQuery(
 		if err != nil {
 			return nil, err
 		}
-		return parseRawToSnapshot(symbol, raw)
+		return parseRawPublicToSnapshot(symbol, raw)
 }
 
-func parseRawToSnapshot(symbol string, raw []interface{}) (*bitfinex.TradeSnapshot, error) {
+func parseRawPublicToSnapshot(symbol string, raw []interface{}) (*bitfinex.TradeSnapshot, error) {
+	if len(raw) <= 0 {
+		// return empty
+		return &bitfinex.TradeSnapshot{Snapshot: make([]*bitfinex.Trade, 0)}, nil
+	}
 	// convert to array of floats
 	dat := make([][]float64, 0)
 	for _, r := range raw {
@@ -86,4 +107,15 @@ func parseRawToSnapshot(symbol string, raw []interface{}) (*bitfinex.TradeSnapsh
 		dat = append(dat, t)
 	}
 	return bitfinex.NewTradeSnapshotFromRaw(symbol, dat)
+}
+
+func parseRawPrivateToSnapshot(raw []interface{}) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
+	if len(raw) <= 0 {
+		return &bitfinex.TradeExecutionUpdateSnapshot{Snapshot: make([]*bitfinex.TradeExecutionUpdate, 0)}, nil
+	}
+	tradeExecutions, err := bitfinex.NewTradeExecutionUpdateSnapshotFromRaw(raw)
+	if err != nil {
+		return nil, err
+	}
+	return tradeExecutions, nil
 }

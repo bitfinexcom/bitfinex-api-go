@@ -19,8 +19,6 @@ type Orderbook struct {
 // return a dereferenced copy of an orderbook side. This is so consumers can access
 // the book but not change the values that are used to generate the crc32 checksum
 func (ob *Orderbook) copySide(side []*bitfinex.BookUpdate) []bitfinex.BookUpdate {
-	ob.lock.RLock()
-	defer ob.lock.RUnlock()
 	var cpy []bitfinex.BookUpdate
 	for i := 0; i < len(side); i++ {
 		cpy = append(cpy, *side[i])
@@ -33,10 +31,14 @@ func (ob *Orderbook) Symbol() string {
 }
 
 func (ob *Orderbook) Asks() []bitfinex.BookUpdate {
+	ob.lock.RLock()
+	defer ob.lock.RUnlock()
 	return ob.copySide(ob.asks)
 }
 
 func (ob *Orderbook) Bids() []bitfinex.BookUpdate {
+	ob.lock.RLock()
+	defer ob.lock.RUnlock()
 	return ob.copySide(ob.bids)
 }
 

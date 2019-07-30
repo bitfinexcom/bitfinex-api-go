@@ -1,3 +1,9 @@
+2.2.2
+
+- Uses channel/write combo for websocket send requests to avoid race conditions
+- Use mutex for building snapshot to avoid race conditions
+- Use TradeExecution as type for authenticated trade data
+
 2.2.1
 
 - Adds v2/rest Derivatives service with new functions
