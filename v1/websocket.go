@@ -122,7 +122,7 @@ func (w *WebSocketService) AddSubscribe(channel string, pair string, c chan []fl
 	w.subscribes = append(w.subscribes, s)
 }
 
-func (w *WebSocketService) AddDirectSendSubscribeMessages(channel string, pair string, c chan []float64) error {
+func (w *WebSocketService) DirectSendSubscribeMessages(channel string, pair string, c chan []float64) error {
 	s := subscribeToChannel{
 		Channel: channel,
 		Pair:    pair,
