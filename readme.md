@@ -6,7 +6,7 @@
 ## Installation
 
 ``` bash
-go get github.com/bitfinexcom/bitfinex-api-go
+go get github.com/whybangbang/bitfinex-api-go
 ```
 
 ## Usage
