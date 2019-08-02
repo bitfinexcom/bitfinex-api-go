@@ -122,11 +122,32 @@ func (w *WebSocketService) AddSubscribe(channel string, pair string, c chan []fl
 	w.subscribes = append(w.subscribes, s)
 }
 
+func (w *WebSocketService) AddDirectSendSubscribeMessages(channel string, pair string, c chan []float64) error {
+	s := subscribeToChannel{
+		Channel: channel,
+		Pair:    pair,
+		Chan:    c,
+	}
+	w.subscribes = append(w.subscribes, s)
+
+	msg, _ := json.Marshal(subscribeMsg{
+		Event:   "subscribe",
+		Channel: s.Channel,
+		Pair:    s.Pair,
+	})
+
+	err := w.ws.WriteMessage(websocket.TextMessage, msg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (w *WebSocketService) ClearSubscriptions() {
 	w.subscribes = make([]subscribeToChannel, 0)
 }
 
-func (w *WebSocketService) SendSubscribeMessages() error {
+func (w *WebSocketService) sendSubscribeMessages() error {
 	for _, s := range w.subscribes {
 		msg, _ := json.Marshal(subscribeMsg{
 			Event:   "subscribe",
@@ -146,7 +167,7 @@ func (w *WebSocketService) SendSubscribeMessages() error {
 // This method supports next channels: book, trade, ticker.
 func (w *WebSocketService) Subscribe() error {
 	// Subscribe to each channel
-	if err := w.SendSubscribeMessages(); err != nil {
+	if err := w.sendSubscribeMessages(); err != nil {
 		return err
 	}
 
