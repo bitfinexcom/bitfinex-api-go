@@ -126,7 +126,7 @@ func (w *WebSocketService) ClearSubscriptions() {
 	w.subscribes = make([]subscribeToChannel, 0)
 }
 
-func (w *WebSocketService) sendSubscribeMessages() error {
+func (w *WebSocketService) SendSubscribeMessages() error {
 	for _, s := range w.subscribes {
 		msg, _ := json.Marshal(subscribeMsg{
 			Event:   "subscribe",
@@ -146,7 +146,7 @@ func (w *WebSocketService) sendSubscribeMessages() error {
 // This method supports next channels: book, trade, ticker.
 func (w *WebSocketService) Subscribe() error {
 	// Subscribe to each channel
-	if err := w.sendSubscribeMessages(); err != nil {
+	if err := w.SendSubscribeMessages(); err != nil {
 		return err
 	}
 
