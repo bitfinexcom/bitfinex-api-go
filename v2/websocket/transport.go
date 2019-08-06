@@ -14,12 +14,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// size of channel that the websocket writer
+// routine pulls from
 const WS_WRITE_CAPACITY = 100
+// size of channel that the websocket reader
+// routine pushes websocket updates into
+const WS_READ_CAPACITY = 10
 
 func newWs(baseURL string, logTransport bool, log *logging.Logger) *ws {
 	return &ws{
 		BaseURL:      baseURL,
-		downstream:   make(chan []byte),
+		downstream:   make(chan []byte, WS_READ_CAPACITY),
 		quit:         make(chan error),
 		logTransport: logTransport,
 		log:          log,
@@ -52,6 +57,7 @@ func (w *ws) Connect() error {
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		Proxy:           http.ProxyFromEnvironment,
+		HandshakeTimeout: time.Second * 10,
 	}
 
 	d.TLSClientConfig = &tls.Config{InsecureSkipVerify: w.TLSSkipVerify}
@@ -137,7 +143,6 @@ func (w *ws) listenWs() {
 		if w.ws == nil {
 			return
 		}
-
 		select {
 		case <-w.quit: // ws connection ended
 			return
@@ -156,7 +161,9 @@ func (w *ws) listenWs() {
 				return
 			}
 			w.log.Debugf("srv->ws: %s", string(msg))
+			w.lock.RLock()
 			w.downstream <- msg
+			w.lock.RUnlock()
 		}
 	}
 }
