@@ -434,13 +434,11 @@ func (c *Client) closeAsyncAndWait(socket *Socket, t time.Duration) {
 	go func() {
 		select {
 		case <-socket.Asynchronous.Done():
-			//socket.IsConnected = false
+			socket.IsConnected = false
 			wg.Done()
 		case <-timeout:
-			// TODO
-			panic("socket (id=%d) took too long to close.")
-			//c.log.Errorf("socket (id=%d) took too long to close.", socket.Id)
-			//wg.Done()
+			c.log.Errorf("socket (id=%d) took too long to close.", socket.Id)
+			wg.Done()
 		}
 	}()
 	go func() {
