@@ -314,7 +314,7 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 
 	if sub, ok := s.subsBySubID[subID]; ok {
 		if chanID != 0 {
-			s.log.Info("activated subscription %s %s for channel %d", sub.Request.Channel, sub.Request.Symbol, chanID)
+			s.log.Infof("activated subscription %s %s for channel %d", sub.Request.Channel, sub.Request.Symbol, chanID)
 		}
 		sub.pending = false
 		sub.ChanID = chanID
@@ -323,6 +323,7 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 		s.hbActive = true
 		return nil
 	}
+
 	return fmt.Errorf("could not find subscription ID %s to activate", subID)
 }
 
