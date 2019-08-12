@@ -63,7 +63,13 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 	symbol := sub.Request.Symbol
 	// force to signed integer
 	bChecksum := uint32(checksum)
-	if orderbook, ok := c.orderbooks[symbol]; ok {
+	var orderbook *Orderbook
+	c.mtx.Lock()
+	if ob, ok := c.orderbooks[symbol]; ok {
+		orderbook = ob
+	}
+	c.mtx.Unlock()
+	if orderbook != nil {
 		oChecksum := orderbook.Checksum()
 		// compare bitfinex checksum with local checksum
 		if bChecksum == oChecksum {

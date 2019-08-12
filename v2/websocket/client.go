@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/op/go-logging"
 	"strings"
 	"sync"
@@ -259,6 +260,7 @@ func (c *Client) Close() {
 		wg.Wait()
 	}
 	c.subscriptions.Close()
+	close(c.listener)
 }
 
 // Unsubscribe looks up an existing subscription by ID and sends an unsubscribe request.
@@ -414,7 +416,14 @@ func (c *Client) reconnectSocket(socket *Socket) error {
 func (c *Client) listenUpstream(socket *Socket) {
 	for {
 		select {
-		case <- socket.Asynchronous.Done():
+		case err := <- socket.Asynchronous.Done():
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+				err := c.reconnect(socket, err)
+				if err != nil {
+					c.log.Errorf("Unable to reconnect socket (id=%d) after err: %s", socket.Id, err.Error())
+					return
+				}
+			}
 			return
 		case msg := <- socket.Asynchronous.Listen():
 			if msg != nil {
@@ -434,13 +443,11 @@ func (c *Client) closeAsyncAndWait(socket *Socket, t time.Duration) {
 	go func() {
 		select {
 		case <-socket.Asynchronous.Done():
-			//socket.IsConnected = false
+			socket.IsConnected = false
 			wg.Done()
 		case <-timeout:
-			// TODO
-			panic("socket (id=%d) took too long to close.")
-			//c.log.Errorf("socket (id=%d) took too long to close.", socket.Id)
-			//wg.Done()
+			c.log.Errorf("socket (id=%d) took too long to close.", socket.Id)
+			wg.Done()
 		}
 	}()
 	go func() {
@@ -622,6 +629,8 @@ func (c *Client) getMostAvailableSocket() (*Socket, error) {
 
 // lookup the socket with the given Id, throw error if not found
 func (c *Client) socketById(socketId SocketId) (*Socket, error) {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
 	if socket, ok := c.sockets[socketId]; ok {
 		return socket, nil
 	}
@@ -631,14 +640,22 @@ func (c *Client) socketById(socketId SocketId) (*Socket, error) {
 // calculates how many free channels are available across all of the sockets
 func (c *Client) getTotalAvailableSocketCapacity() int {
 	freeCapacity := 0
-	for _, socket := range c.sockets {
-		freeCapacity += c.getAvailableSocketCapacity(socket.Id)
+	c.mtx.RLock()
+	ids := make([]SocketId, len(c.sockets))
+	for i, socket := range c.sockets {
+		ids[i] = socket.Id
+	}
+	c.mtx.RUnlock()
+	for _, id := range ids {
+		freeCapacity += c.getAvailableSocketCapacity(id)
 	}
 	return freeCapacity
 }
 
 // calculates how many free channels are available on the given socket
 func (c *Client) getAvailableSocketCapacity(socketId SocketId) int {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
 	subs, err := c.subscriptions.lookupBySocketId(socketId)
 	if err == nil {
 		return c.parameters.CapacityPerConnection - subs.Len()
@@ -648,6 +665,8 @@ func (c *Client) getAvailableSocketCapacity(socketId SocketId) int {
 
 // get the authenticated socket
 func (c *Client) GetAuthenticatedSocket() (*Socket, error) {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
 	for _, socket := range c.sockets {
 		if socket.IsAuthenticated {
 			return socket, nil

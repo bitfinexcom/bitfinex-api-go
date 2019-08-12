@@ -28,8 +28,14 @@ func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error) {
 		Flags: flag,
 	}
 	// TODO enable flag on reconnect?
-	// send to all sockets
-	for _, socket := range c.sockets {
+	// create sublist to stop concurrent map read
+	socks := make([]*Socket, len(c.sockets))
+	c.mtx.RLock()
+	for i, socket := range c.sockets {
+		socks[i] = socket
+	}
+	c.mtx.RUnlock()
+	for _, socket := range socks {
 		err := socket.Asynchronous.Send(ctx, req)
 		if err != nil {
 			return "", err
@@ -40,6 +46,8 @@ func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error) {
 
 // returns the count of websocket connections that are currently active
 func (c *Client) ConnectionCount() int {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
 	return len(c.sockets)
 }
 
@@ -50,7 +58,7 @@ func (c *Client) AvailableCapacity() int {
 // starts a new websocket connection. This function is only exposed in case you want to
 // implicitly add new connections otherwise connection management is already handled for you.
 func (c *Client) StartNewConnection() error {
-	return c.connectSocket(SocketId(len(c.sockets)))
+	return c.connectSocket(SocketId(c.ConnectionCount()))
 }
 
 func (c *Client) subscribeBySocket(ctx context.Context, socket *Socket, req *SubscriptionRequest) (string, error) {

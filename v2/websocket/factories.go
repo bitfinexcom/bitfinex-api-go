@@ -116,9 +116,9 @@ func (f *BookFactory) Build(chanID int64, objType string, raw []interface{}, raw
 
 		update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, sub.Request.Precision, raw, raw_json_number[1])
 		if f.manageBooks {
+			f.lock.Lock()
+			defer f.lock.Unlock()
 			if orderbook, ok := f.orderbooks[sub.Request.Symbol]; ok {
-				f.lock.Lock()
-				defer f.lock.Unlock()
 				orderbook.UpdateWith(update)
 			}
 		}

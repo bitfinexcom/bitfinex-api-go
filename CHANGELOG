@@ -1,3 +1,8 @@
+2.2.3
+
+- Add transport keep alive pinger to keep tls connection open
+- Fix multiple small race conditions
+
 2.2.2
 
 - Uses channel/write combo for websocket send requests to avoid race conditions
