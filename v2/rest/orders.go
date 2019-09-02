@@ -115,3 +115,51 @@ func (s *OrderService) getHistoricalOrders(symbol string) (*bitfinex.OrderSnapsh
 	}
 	return os, nil
 }
+
+func (s *OrderService) SubmitOrder(order *bitfinex.OrderNewRequest) (*bitfinex.Notification, error) {
+	bytes, err := order.ToJSON()
+	if err != nil {
+		return nil, err
+	}
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, path.Join("order", "submit"), bytes)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return bitfinex.NewNotificationFromRaw(raw)
+}
+
+func (s *OrderService) SubmitUpdateOrder(order *bitfinex.OrderUpdateRequest) (*bitfinex.Notification, error) {
+	bytes, err := order.ToJSON()
+	if err != nil {
+		return nil, err
+	}
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, path.Join("order", "update"), bytes)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return bitfinex.NewNotificationFromRaw(raw)
+}
+
+func (s *OrderService) SubmitCancelOrder(oc *bitfinex.OrderCancelRequest) (error) {
+	bytes, err := oc.ToJSON()
+	if err != nil {
+		return err
+	}
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, path.Join("order", "cancel"), bytes)
+	if err != nil {
+		return err
+	}
+	_, err = s.Request(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
