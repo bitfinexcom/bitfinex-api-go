@@ -18,6 +18,7 @@ var productionBaseURL = "https://api-pub.bitfinex.com/v2/"
 
 type requestFactory interface {
 	NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType, refURL string, data map[string]interface{}) (Request, error)
+	NewAuthenticatedRequestWithBytes(permissionType bitfinex.PermissionType, refURL string, data []byte) (Request, error)
 	NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error)
 }
 
@@ -45,6 +46,7 @@ type Client struct {
 	Stats       StatsService
 	Status      StatusService
 	Derivatives DerivativesService
+	Funding     FundingService
 
 	Synchronous
 }
@@ -108,6 +110,7 @@ func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.
 	c.Stats = StatsService{Synchronous: c, requestFactory: c}
 	c.Status = StatusService{Synchronous: c, requestFactory: c}
 	c.Derivatives = DerivativesService{Synchronous: c, requestFactory: c}
+	c.Funding = FundingService{Synchronous: c, requestFactory: c}
 	return c
 }
 
@@ -120,7 +123,7 @@ func (c *Client) Credentials(key string, secret string) *Client {
 // Request is a wrapper for standard http.Request.  Default method is POST with no data.
 type Request struct {
 	RefURL  string                 // ref url
-	Data    map[string]interface{} // body data
+	Data    []byte                 // body data
 	Method  string                 // http method
 	Params  url.Values             // query parameters
 	Headers map[string]string
@@ -142,23 +145,14 @@ func (c *Client) sign(msg string) (string, error) {
 }
 
 func (c *Client) NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error) {
-	return c.NewAuthenticatedRequestWithData(permissionType, refURL, nil)
+	return c.NewAuthenticatedRequestWithBytes(permissionType, refURL, []byte("{}"))
 }
 
-func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType,refURL string, data map[string]interface{}) (Request, error) {
+func (c *Client) NewAuthenticatedRequestWithBytes(permissionType bitfinex.PermissionType, refURL string, data []byte) (Request, error) {
 	authURL := fmt.Sprintf("auth/%s/%s", string(permissionType), refURL)
-	req := NewRequestWithData(authURL, data)
+	req := NewRequestWithBytes(authURL, data)
 	nonce := c.nonce.GetNonce()
-	b, err := json.Marshal(data)
-	if err != nil {
-		return Request{}, err
-	}
-	msg := "/api/v2/" + authURL + nonce
-	if data != nil {
-		msg += string(b)
-	} else {
-		msg += "{}"
-	}
+	msg := "/api/v2/" + authURL + nonce + string(data)
 	sig, err := c.sign(msg)
 	if err != nil {
 		return Request{}, err
@@ -171,19 +165,35 @@ func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.Permiss
 	return req, nil
 }
 
+func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType,refURL string, data map[string]interface{}) (Request, error) {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return Request{}, err
+	}
+	return c.NewAuthenticatedRequestWithBytes(permissionType, refURL, b)
+}
+
 func NewRequest(refURL string) Request {
-	return NewRequestWithDataMethod(refURL, nil, "POST")
+	return NewRequestWithDataMethod(refURL, []byte("{}"), "POST")
 }
 
 func NewRequestWithMethod(refURL string, method string) Request {
-	return NewRequestWithDataMethod(refURL, nil, method)
+	return NewRequestWithDataMethod(refURL, []byte("{}"), method)
 }
 
-func NewRequestWithData(refURL string, data map[string]interface{}) Request {
+func NewRequestWithBytes(refURL string, data []byte) Request {
 	return NewRequestWithDataMethod(refURL, data, "POST")
 }
 
-func NewRequestWithDataMethod(refURL string, data map[string]interface{}, method string) Request {
+func NewRequestWithData(refURL string, data map[string]interface{}) (Request, error) {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return Request{}, err
+	}
+	return NewRequestWithDataMethod(refURL, b, "POST"), nil
+}
+
+func NewRequestWithDataMethod(refURL string, data []byte, method string) Request {
 	return Request{
 		RefURL:  refURL,
 		Data:    data,
