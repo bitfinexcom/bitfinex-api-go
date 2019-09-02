@@ -194,3 +194,19 @@ func (c *Client) LookupSubscription(subID string) (*SubscriptionRequest, error) 
 	}
 	return s.Request, nil
 }
+
+func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *bitfinex.FundingOfferRequest) error {
+	socket, err := c.GetAuthenticatedSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, fundingOffer)
+}
+
+func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *bitfinex.FundingOfferCancelRequest) error {
+	socket, err := c.GetAuthenticatedSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, fundingOffer)
+}
