@@ -443,7 +443,6 @@ func (c *Client) closeAsyncAndWait(socket *Socket, t time.Duration) {
 	go func() {
 		select {
 		case <-socket.Asynchronous.Done():
-			socket.IsConnected = false
 			wg.Done()
 		case <-timeout:
 			c.log.Errorf("socket (id=%d) took too long to close.", socket.Id)

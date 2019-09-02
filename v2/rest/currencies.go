@@ -47,4 +47,3 @@ func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]
 	}
 	return configs, nil
 }
-
