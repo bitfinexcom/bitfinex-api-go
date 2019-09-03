@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -28,4 +29,21 @@ func (s *PositionService) All() (*bitfinex.PositionSnapshot, error) {
 	}
 
 	return os, nil
+}
+
+func (s *PositionService) Claim(cp *bitfinex.ClaimPositionRequest) (*bitfinex.Notification, error) {
+	bytes, err := cp.ToJSON()
+	if err != nil {
+		return nil, err
+	}
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, "position/claim", bytes)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(raw)
+	return bitfinex.NewNotificationFromRaw(raw)
 }

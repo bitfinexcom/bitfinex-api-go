@@ -24,15 +24,9 @@ func (h HttpTransport) Request(req Request) ([]interface{}, error) {
 		rel.RawQuery = req.Params.Encode()
 	}
 	if req.Data == nil {
-		req.Data = map[string]interface{}{}
+		req.Data = []byte("{}")
 	}
-
-	b, err := json.Marshal(req.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	body := bytes.NewReader(b)
+	body := bytes.NewReader(req.Data)
 
 	u := h.BaseURL.ResolveReference(rel)
 	httpReq, err := http.NewRequest(req.Method, u.String(), body)
@@ -42,7 +36,6 @@ func (h HttpTransport) Request(req Request) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	err = h.do(httpReq, &raw)
 	if err != nil {
 		return nil, err

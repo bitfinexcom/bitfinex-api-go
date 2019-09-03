@@ -14,7 +14,7 @@ func SubmitTestOrder(c *websocket.Client) {
 	log.Printf("Submitting new order")
 	err := c.SubmitOrder(context.Background(), &bitfinex.OrderNewRequest{
 		Symbol: "tBTCUSD",
-		CID:    123,
+		CID:    time.Now().Unix() / 1000,
 		Amount: 0.02,
 		Type: 	"EXCHANGE LIMIT",
 		Price:  5000,
@@ -53,7 +53,7 @@ func main() {
 	for obj := range c.Listen() {
 		switch obj.(type) {
 		case error:
-			log.Printf("channel closed: %s", obj)
+			log.Fatalf("channel closed: %s", obj)
 			break
 		case *websocket.AuthEvent:
 			// on authorize create new order

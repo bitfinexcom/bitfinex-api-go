@@ -1,3 +1,28 @@
+2.2.4
+
+- Adds new rest v2 functions
+    - Funding.Offers
+    - Funding.OfferHistory
+    - Funding.Loans
+    - Funding.LoanHistory
+    - Funding.Credits
+    - Funding.CreditHistory
+    - Funding.Trades
+    - Funding.SubmitOffer
+    - Funding.CancelOffer
+    - Orders.SubmitOrder
+    - Orders.CancelOrder
+    - Orders.SubmitUpdateOrder
+    - Orders.SubmitCancelOrder
+    - Positions.Claim
+    - Wallet.Transfer
+    - Wallet.DepositAddress
+    - Wallet.CreateDepositAddress
+    - Wallet.Withdraw
+- Adds new ws v2 functions
+    - Ws/SubmitFundingOffer
+    - Ws/SubmitFundingCancel
+
 2.2.3
 
 - Add transport keep alive pinger to keep tls connection open
