@@ -467,6 +467,7 @@ const (
 )
 
 type Position struct {
+	Id                   int64
 	Symbol               string
 	Status               PositionStatus
 	Amount               float64
@@ -491,6 +492,19 @@ func NewPositionFromRaw(raw []interface{}) (o *Position, err error) {
 		}
 	} else if len(raw) < 10 {
 		return o, fmt.Errorf("data slice too short for position: %#v", raw)
+	} else if len(raw) == 10 {
+		o = &Position{
+			Symbol:               sValOrEmpty(raw[0]),
+			Status:               PositionStatus(sValOrEmpty(raw[1])),
+			Amount:               f64ValOrZero(raw[2]),
+			BasePrice:            f64ValOrZero(raw[3]),
+			MarginFunding:        f64ValOrZero(raw[4]),
+			MarginFundingType:    i64ValOrZero(raw[5]),
+			ProfitLoss:           f64ValOrZero(raw[6]),
+			ProfitLossPercentage: f64ValOrZero(raw[7]),
+			LiquidationPrice:     f64ValOrZero(raw[8]),
+			Leverage:             f64ValOrZero(raw[9]),
+		}
 	} else {
 		o = &Position{
 			Symbol:               sValOrEmpty(raw[0]),
@@ -503,6 +517,7 @@ func NewPositionFromRaw(raw []interface{}) (o *Position, err error) {
 			ProfitLossPercentage: f64ValOrZero(raw[7]),
 			LiquidationPrice:     f64ValOrZero(raw[8]),
 			Leverage:             f64ValOrZero(raw[9]),
+			Id:                   int64(f64ValOrZero(raw[11])),
 		}
 	}
 	return
@@ -538,6 +553,19 @@ func NewPositionSnapshotFromRaw(raw []interface{}) (s *PositionSnapshot, err err
 	s = &PositionSnapshot{Snapshot: ps}
 
 	return
+}
+
+type ClaimPositionRequest struct {
+	Id int64
+}
+
+func (o *ClaimPositionRequest) ToJSON() ([]byte, error) {
+	aux := struct {
+		Id int64 `json:"id"`
+	}{
+		Id: o.Id,
+	}
+	return json.Marshal(aux)
 }
 
 // Trade represents a trade on the public data feed.
@@ -1400,6 +1428,13 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 			o.NotifyInfo = raw[4]
 		case "acc_tf":
 			o.NotifyInfo = raw[4]
+		case "pm-req":
+			p, err := NewPositionFromRaw(nraw)
+			if err != nil {
+				return o, err
+			}
+			cp := PositionCancel(*p)
+			o.NotifyInfo = &cp
 		}
 	}
 
