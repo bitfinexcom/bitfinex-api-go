@@ -1110,7 +1110,7 @@ type Credit struct {
 	Side          string
 	MTSCreated    int64
 	MTSUpdated    int64
-	Amout         float64
+	Amount        float64
 	Flags         interface{}
 	Status        CreditStatus
 	Rate          float64
