@@ -1131,7 +1131,7 @@ func NewCreditFromRaw(raw []interface{}) (o *Credit, err error) {
 		Side:          sValOrEmpty(raw[2]),
 		MTSCreated:    i64ValOrZero(raw[3]),
 		MTSUpdated:    i64ValOrZero(raw[4]),
-		Amout:         f64ValOrZero(raw[5]),
+		Amount:        f64ValOrZero(raw[5]),
 		Flags:         raw[6],
 		Status:        CreditStatus(sValOrEmpty(raw[7])),
 		Rate:          f64ValOrZero(raw[11]),
@@ -1201,7 +1201,7 @@ type Loan struct {
 	Side          string
 	MTSCreated    int64
 	MTSUpdated    int64
-	Amout         float64
+	Amount        float64
 	Flags         interface{}
 	Status        LoanStatus
 	Rate          float64
@@ -1227,7 +1227,7 @@ func NewLoanFromRaw(raw []interface{}) (o *Loan, err error) {
 		Side:          sValOrEmpty(raw[2]),
 		MTSCreated:    i64ValOrZero(raw[3]),
 		MTSUpdated:    i64ValOrZero(raw[4]),
-		Amout:         f64ValOrZero(raw[5]),
+		Amount:        f64ValOrZero(raw[5]),
 		Flags:         raw[6],
 		Status:        LoanStatus(sValOrEmpty(raw[7])),
 		Rate:          f64ValOrZero(raw[11]),
