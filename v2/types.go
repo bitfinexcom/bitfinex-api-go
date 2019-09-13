@@ -156,6 +156,7 @@ type OrderNewRequest struct {
 	Symbol        string  `json:"symbol"`
 	Amount        float64 `json:"amount,string"`
 	Price         float64 `json:"price,string"`
+	Leverage      int64   `json:"lev,omitempty"`
 	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 	PriceOcoStop  float64 `json:"price_oco_stop,string,omitempty"`
@@ -184,6 +185,7 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 		Symbol        string  `json:"symbol"`
 		Amount        float64 `json:"amount,string"`
 		Price         float64 `json:"price,string"`
+		Leverage      int64   `json:"lev,omitempty"`
 		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
 		PriceOcoStop  float64 `json:"price_oco_stop,string,omitempty"`
@@ -196,6 +198,7 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 		Symbol:        o.Symbol,
 		Amount:        o.Amount,
 		Price:         o.Price,
+		Leverage:      o.Leverage,
 		PriceTrailing: o.PriceTrailing,
 		PriceAuxLimit: o.PriceAuxLimit,
 		PriceOcoStop:  o.PriceOcoStop,
@@ -225,6 +228,7 @@ type OrderUpdateRequest struct {
 	GID           int64   `json:"gid,omitempty"`
 	Price         float64 `json:"price,string,omitempty"`
 	Amount        float64 `json:"amount,string,omitempty"`
+	Leverage      int64   `json:"lev,omitempty"`
 	Delta         float64 `json:"delta,string,omitempty"`
 	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
@@ -249,6 +253,7 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 		GID           int64   `json:"gid,omitempty"`
 		Price         float64 `json:"price,string,omitempty"`
 		Amount        float64 `json:"amount,string,omitempty"`
+		Leverage      int64   `json:"lev,omitempty"`
 		Delta         float64 `json:"delta,string,omitempty"`
 		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
 		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
@@ -260,6 +265,7 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 		ID:            o.ID,
 		GID:           o.GID,
 		Amount:        o.Amount,
+		Leverage:      o.Leverage,
 		Price:         o.Price,
 		PriceTrailing: o.PriceTrailing,
 		PriceAuxLimit: o.PriceAuxLimit,
