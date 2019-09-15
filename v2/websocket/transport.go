@@ -120,9 +120,6 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	w.log.Debug("ws->srv: %s", string(bs))
 	// push request into writer channel
 	w.writeChan <- bs
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
