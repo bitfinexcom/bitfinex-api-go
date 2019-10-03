@@ -169,6 +169,7 @@ type OrderNewRequest struct {
 	Close         bool    `json:"close,omitempty"`
 	OcoOrder      bool    `json:"oco_order,omitempty"`
 	TimeInForce   string  `json:"tif,omitempty"`
+	Lev           int     `json:"lev,omitempty"`
 }
 
 // MarshalJSON converts the order object into the format required by the bitfinex
@@ -195,6 +196,7 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 		PriceOcoStop  float64 `json:"price_oco_stop,string,omitempty"`
 		TimeInForce   string  `json:"tif,omitempty"`
 		Flags         int     `json:"flags,omitempty"`
+		Lev           int     `json:"lev,omitempty"`
 	}{
 		GID:           o.GID,
 		CID:           o.CID,
@@ -207,6 +209,7 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 		PriceAuxLimit: o.PriceAuxLimit,
 		PriceOcoStop:  o.PriceOcoStop,
 		TimeInForce:   o.TimeInForce,
+		Lev:           o.Lev,
 	}
 
 	if o.Hidden {
@@ -239,6 +242,7 @@ type OrderUpdateRequest struct {
 	Hidden        bool    `json:"hidden,omitempty"`
 	PostOnly      bool    `json:"postonly,omitempty"`
 	TimeInForce   string  `json:"tif,omitempty"`
+	Lev           int     `json:"lev,omitempty"`
 }
 
 // MarshalJSON converts the order object into the format required by the bitfinex
@@ -265,6 +269,7 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 		PostOnly      bool    `json:"postonly,omitempty"`
 		TimeInForce   string  `json:"tif,omitempty"`
 		Flags         int     `json:"flags,omitempty"`
+		Lev           int     `json:"lev,omitempty"`
 	}{
 		ID:            o.ID,
 		GID:           o.GID,
@@ -275,6 +280,7 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 		PriceAuxLimit: o.PriceAuxLimit,
 		Delta:         o.Delta,
 		TimeInForce:   o.TimeInForce,
+		Lev:           o.Lev,
 	}
 
 	if o.Hidden {
