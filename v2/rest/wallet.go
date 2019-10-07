@@ -11,7 +11,8 @@ type WalletService struct {
 	Synchronous
 }
 
-// All returns all orders for the authenticated account.
+// Retrieves all of the wallets for the account
+// see https://docs.bitfinex.com/reference#rest-auth-wallets for more info
 func (s *WalletService) Wallet() (*bitfinex.WalletSnapshot, error) {
 	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, "wallets")
 	if err != nil {
@@ -30,8 +31,9 @@ func (s *WalletService) Wallet() (*bitfinex.WalletSnapshot, error) {
 	return os, nil
 }
 
+// Submits a request to transfer funds from one Bitfinex wallet to another
+// see https://docs.bitfinex.com/reference#transfer-between-wallets for more info
 func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount float64) (*bitfinex.Notification, error) {
-	// `/v2/auth/w/transfer` (params: `from`, `to`, `currency`, `currency_to`, `amount`)
 	body := map[string]interface{}{
 		"from": from,
 		"to": to,
@@ -51,7 +53,6 @@ func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount 
 }
 
 func (ws *WalletService) depositAddress(wallet string, method string, renew int) (*bitfinex.Notification, error) {
-	// `/v2/auth/w/deposit/address` (params: `wallet`, `method`, `op_renew`(=1 to regenerate the wallet address))
 	body := map[string]interface{}{
 		"wallet": wallet,
 		"method": method,
@@ -68,18 +69,21 @@ func (ws *WalletService) depositAddress(wallet string, method string, renew int)
 	return bitfinex.NewNotificationFromRaw(raw)
 }
 
+// Retrieves the deposit address for the given Bitfinex wallet
+// see https://docs.bitfinex.com/reference#deposit-address for more info
 func (ws *WalletService) DepositAddress(wallet, method string) (*bitfinex.Notification, error) {
-	// `/v2/auth/w/deposit/address` (params: `wallet`, `method`, `op_renew`(=1 to regenerate the wallet address))
 	return ws.depositAddress(wallet, method, 0)
 }
 
+// Submits a request to create a new deposit address for the give Bitfinex wallet. Old addresses are still valid.
+// See https://docs.bitfinex.com/reference#deposit-address for more info
 func (ws *WalletService) CreateDepositAddress(wallet, method string) (*bitfinex.Notification, error) {
-	// `/v2/auth/w/deposit/address` (params: `wallet`, `method`, `op_renew`(=1 to regenerate the wallet address))
 	return ws.depositAddress(wallet, method, 1)
 }
 
+// Submits a request to withdraw funds from the given Bitfinex wallet to the given address
+// See https://docs.bitfinex.com/reference#withdraw for more info
 func (ws *WalletService) Withdraw(wallet, method string, amount float64, address string) (*bitfinex.Notification, error) {
-	// `/v2/auth/w/withdraw` (params: `wallet`, `method`, `amount`, `address`
 	body := map[string]interface{}{
 		"wallet": wallet,
 		"method": method,

@@ -51,10 +51,12 @@ type Client struct {
 	Synchronous
 }
 
+// Create a new Rest client
 func NewClient() *Client {
 	return NewClientWithURLNonce(productionBaseURL, utils.NewEpochNonceGenerator())
 }
 
+// Create a new Rest client with a custom nonce generator
 func NewClientWithURLNonce(url string, nonce utils.NonceGenerator) *Client {
 	httpDo := func(c *http.Client, req *http.Request) (*http.Response, error) {
 		return c.Do(req)
@@ -62,14 +64,17 @@ func NewClientWithURLNonce(url string, nonce utils.NonceGenerator) *Client {
 	return NewClientWithURLHttpDoNonce(url, httpDo, nonce)
 }
 
+// Create a new Rest client with a custom http handler
 func NewClientWithHttpDo(httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
 	return NewClientWithURLHttpDo(productionBaseURL, httpDo)
 }
 
+// Create a new Rest client with a custom base url and HTTP handler
 func NewClientWithURLHttpDo(base string, httpDo func(c *http.Client, r *http.Request) (*http.Response, error)) *Client {
 	return NewClientWithURLHttpDoNonce(base, httpDo, utils.NewEpochNonceGenerator())
 }
 
+// Create a new Rest client with a custom base url, HTTP handler and none generator
 func NewClientWithURLHttpDoNonce(base string, httpDo func(c *http.Client, r *http.Request) (*http.Response, error), nonce utils.NonceGenerator) *Client {
 	url, _ := url.Parse(base)
 	sync := &HttpTransport{
@@ -80,6 +85,7 @@ func NewClientWithURLHttpDoNonce(base string, httpDo func(c *http.Client, r *htt
 	return NewClientWithSynchronousNonce(sync, nonce)
 }
 
+// Create a new Rest client with a custom base url
 func NewClientWithURL(url string) *Client {
 	httpDo := func(c *http.Client, req *http.Request) (*http.Response, error) {
 		return c.Do(req)
@@ -87,11 +93,12 @@ func NewClientWithURL(url string) *Client {
 	return NewClientWithURLHttpDo(url, httpDo)
 }
 
+// Create a new Rest client with a synchronous HTTP handler and a custom nonce generaotr
 func NewClientWithSynchronousNonce(sync Synchronous, nonce utils.NonceGenerator) *Client {
 	return NewClientWithSynchronousURLNonce(sync, productionBaseURL, nonce)
 }
 
-// mock me in tests
+// Create a new Rest client with a synchronous HTTP handler and a custom base url and nonce generator
 func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.NonceGenerator) *Client {
 	c := &Client{
 		Synchronous: sync,
@@ -114,6 +121,7 @@ func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.
 	return c
 }
 
+// Set the clients credentials in order to make authenticated requests
 func (c *Client) Credentials(key string, secret string) *Client {
 	c.apiKey = key
 	c.apiSecret = secret
@@ -144,10 +152,16 @@ func (c *Client) sign(msg string) (string, error) {
 	return hex.EncodeToString(sig.Sum(nil)), nil
 }
 
+// Create a new authenticated GET request with the given permission type and endpoint url
+// For example permissionType = "r" and refUrl = "/orders" then the target endpoint will be
+// https://api.bitfinex.com/v2/auth/r/orders/:Symbol
 func (c *Client) NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error) {
 	return c.NewAuthenticatedRequestWithBytes(permissionType, refURL, []byte("{}"))
 }
 
+// Create a new authenticated POST request with the given permission type,endpoint url and data (bytes) as the body
+// For example permissionType = "r" and refUrl = "/orders" then the target endpoint will be
+// https://api.bitfinex.com/v2/auth/r/orders/:Symbol
 func (c *Client) NewAuthenticatedRequestWithBytes(permissionType bitfinex.PermissionType, refURL string, data []byte) (Request, error) {
 	authURL := fmt.Sprintf("auth/%s/%s", string(permissionType), refURL)
 	req := NewRequestWithBytes(authURL, data)
@@ -165,6 +179,9 @@ func (c *Client) NewAuthenticatedRequestWithBytes(permissionType bitfinex.Permis
 	return req, nil
 }
 
+// Create a new authenticated POST request with the given permission type,endpoint url and data (map[string]interface{}) as the body
+// For example permissionType = "r" and refUrl = "/orders" then the target endpoint will be
+// https://api.bitfinex.com/v2/auth/r/orders/:Symbol
 func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType,refURL string, data map[string]interface{}) (Request, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
@@ -173,18 +190,22 @@ func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.Permiss
 	return c.NewAuthenticatedRequestWithBytes(permissionType, refURL, b)
 }
 
+// Create new POST request with an empty body as payload
 func NewRequest(refURL string) Request {
 	return NewRequestWithDataMethod(refURL, []byte("{}"), "POST")
 }
 
+// Create a new request with the given method (POST | GET)
 func NewRequestWithMethod(refURL string, method string) Request {
 	return NewRequestWithDataMethod(refURL, []byte("{}"), method)
 }
 
+// Create a new POST request with the given bytes as body
 func NewRequestWithBytes(refURL string, data []byte) Request {
 	return NewRequestWithDataMethod(refURL, data, "POST")
 }
 
+// Create a new POST request with the given data (map[string]interface{}) as body
 func NewRequestWithData(refURL string, data map[string]interface{}) (Request, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
@@ -193,6 +214,7 @@ func NewRequestWithData(refURL string, data map[string]interface{}) (Request, er
 	return NewRequestWithDataMethod(refURL, b, "POST"), nil
 }
 
+// Create a new request with a given method (POST | GET) with bytes as body
 func NewRequestWithDataMethod(refURL string, data []byte, method string) Request {
 	return Request{
 		RefURL:  refURL,

@@ -222,7 +222,7 @@ func (c *Client) Connect() error {
 }
 
 
-// IsConnected returns true if the underlying asynchronous transport is connected to an endpoint.
+// Returns true if the underlying asynchronous transport is connected to an endpoint.
 func (c *Client) IsConnected() bool {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
@@ -234,14 +234,15 @@ func (c *Client) IsConnected() bool {
 	return false
 }
 
-// Listen provides an atomic interface for receiving API messages.
+// Listen for all incoming api websocket messages
 // When a websocket connection is terminated, the publisher channel will close.
 func (c *Client) Listen() <-chan interface{} {
 	return c.listener
 }
 
-// Close provides an interface for a user initiated shutdown.
-// Close will close the Done() channel.
+// Close the websocket client which will cause for all
+// active sockets to be exited and the Done() function
+// to be called
 func (c *Client) Close() {
 	c.terminal = true
 	var wg sync.WaitGroup
@@ -263,7 +264,7 @@ func (c *Client) Close() {
 	close(c.listener)
 }
 
-// Unsubscribe looks up an existing subscription by ID and sends an unsubscribe request.
+// Unsubscribe from the existing subscription with the given id
 func (c *Client) Unsubscribe(ctx context.Context, id string) error {
 	sub, err := c.subscriptions.lookupBySubscriptionID(id)
 	if err != nil {
@@ -662,7 +663,8 @@ func (c *Client) getAvailableSocketCapacity(socketId SocketId) int {
 	return c.parameters.CapacityPerConnection
 }
 
-// get the authenticated socket
+// Get the authenticated socket. Due to rate limitations
+// there can only be one authenticated socket active at a time
 func (c *Client) GetAuthenticatedSocket() (*Socket, error) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()

@@ -12,7 +12,8 @@ type TickerService struct {
 	Synchronous
 }
 
-// All returns all orders for the authenticated account.
+// Retrieves the ticker for the given symbol
+// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
 func (s *TickerService) Get(symbol string) (*bitfinex.Ticker, error) {
 	req := NewRequestWithMethod("tickers", "GET")
 	req.Params = make(url.Values)
@@ -29,6 +30,8 @@ func (s *TickerService) Get(symbol string) (*bitfinex.Ticker, error) {
 	return ticker, nil
 }
 
+// Retrieves the tickers for the given symbols
+// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
 func (s *TickerService) GetMulti(symbols []string) (*[]bitfinex.Ticker, error) {
 	req := NewRequestWithMethod("tickers", "GET")
 	req.Params = make(url.Values)
@@ -49,6 +52,8 @@ func (s *TickerService) GetMulti(symbols []string) (*[]bitfinex.Ticker, error) {
 	return &tickers, nil
 }
 
+// Retrieves all tickers for all symbols
+// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
 func (s *TickerService) All() (*[]bitfinex.Ticker, error) {
 	req := NewRequestWithMethod("tickers", "GET")
 	req.Params = make(url.Values)

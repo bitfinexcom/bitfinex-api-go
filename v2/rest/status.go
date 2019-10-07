@@ -37,6 +37,8 @@ func (ss *StatusService) get(sType string, key string) (*bitfinex.DerivativeStat
 	return s, nil
 }
 
+// Retrieves derivative status information for the given symbol from the platform
+// see https://docs.bitfinex.com/reference#rest-public-status for more info
 func (ss *StatusService) DerivativeStatus(symbol string) (*bitfinex.DerivativeStatus, error) {
 	data, err := ss.get(DERIV_TYPE, symbol)
 	if err != nil {
@@ -48,6 +50,8 @@ func (ss *StatusService) DerivativeStatus(symbol string) (*bitfinex.DerivativeSt
 	return data.Snapshot[0], err
 }
 
+// Retrieves derivative status information for the given symbols from the platform
+// see https://docs.bitfinex.com/reference#rest-public-status for more info
 func (ss *StatusService) DerivativeStatusMulti(symbols []string) ([]*bitfinex.DerivativeStatus, error) {
 	key := strings.Join(symbols, ",")
 	data, err := ss.get(DERIV_TYPE, key)
@@ -57,6 +61,8 @@ func (ss *StatusService) DerivativeStatusMulti(symbols []string) ([]*bitfinex.De
 	return data.Snapshot, err
 }
 
+// Retrieves derivative status information for all symbols from the platform
+// see https://docs.bitfinex.com/reference#rest-public-status for more info
 func (ss *StatusService) DerivativeStatusAll() ([]*bitfinex.DerivativeStatus, error) {
 	data, err := ss.get(DERIV_TYPE, "ALL")
 	if err != nil {
