@@ -26,52 +26,6 @@ go run examples/v2/trade-feed/main.go
 
 ## Quickstart
 
-
-``` go
-package main
-
-import (
-	"log"
-	"os"
-	"time"
-	"context"
-
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
-)
-
-func listenToOutput(c *websocket.Client) {
-	for obj := range c.Listen() {
-        log.Printf("MSG RECV: %#v", obj)
-    }
-}
-
-func main() {
-	c := websocket.New().Credentials("BFX_KEY", "BFX_SECRET")
-
-	err := c.Connect()
-	if err != nil {
-		log.Fatalf("Error websocket: %s", err)
-	}
-	defer c.Close()
-    go listenToOutput(c)
-
-	err := c.SubmitOrder(context.Background(), &bitfinex.OrderNewRequest{
-        Symbol: "tBTCUSD",
-        CID:    time.Now().Unix() / 1000,
-        Amount: 0.02,
-        Type: 	"EXCHANGE LIMIT",
-        Price:  5000,
-    })
-    if err != nil {
-        log.Fatalf("Error creating order: %s", err)
-    }
-
-	time.Sleep(time.Second * 20)
-}
-
-```
-
 ``` go
 package main
 
@@ -109,7 +63,7 @@ func main() {
 
 ``` go
 func main() {
-	client := bitfinex.NewClient().Credentials("API_KEY", "API_SEC")
+    client := bitfinex.NewClient().Credentials("API_KEY", "API_SEC")
 }
 ```
 
