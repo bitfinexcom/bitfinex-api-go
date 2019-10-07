@@ -11,7 +11,8 @@ type PositionService struct {
 	Synchronous
 }
 
-// All returns all positions for the authenticated account.
+// Retrieves all of the active positions
+// see https://docs.bitfinex.com/reference#rest-auth-positions for more info
 func (s *PositionService) All() (*bitfinex.PositionSnapshot, error) {
 	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, "positions")
 	if err != nil {
@@ -31,6 +32,8 @@ func (s *PositionService) All() (*bitfinex.PositionSnapshot, error) {
 	return os, nil
 }
 
+// Submits a request to claim an active position with the given id
+// see https://docs.bitfinex.com/reference#claim-position for more info
 func (s *PositionService) Claim(cp *bitfinex.ClaimPositionRequest) (*bitfinex.Notification, error) {
 	bytes, err := cp.ToJSON()
 	if err != nil {

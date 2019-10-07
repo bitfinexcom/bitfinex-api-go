@@ -12,7 +12,8 @@ type FundingService struct {
 	Synchronous
 }
 
-// All returns all ledgers for the authenticated account
+// Retreive all of the active fundign offers
+// see https://docs.bitfinex.com/reference#rest-auth-funding-offers for more info
 func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot, error) {
 	req, err :=fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol))
 	if err != nil {
@@ -29,6 +30,8 @@ func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot,
 	return offers, nil
 }
 
+// Retreive all of the past in-active funding offers
+// see https://docs.bitfinex.com/reference#rest-auth-funding-offers-hist for more info
 func (fs *FundingService) OfferHistory(symbol string) (*bitfinex.FundingOfferSnapshot, error) {
 	req, err :=fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol, "hist"))
 	if err != nil {
@@ -45,6 +48,8 @@ func (fs *FundingService) OfferHistory(symbol string) (*bitfinex.FundingOfferSna
 	return offers, nil
 }
 
+// Retreive all of the active funding loans
+// see https://docs.bitfinex.com/reference#rest-auth-funding-loans for more info
 func (fs *FundingService) Loans(symbol string) (*bitfinex.FundingLoanSnapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/loans", symbol))
 	if err != nil {
@@ -61,6 +66,8 @@ func (fs *FundingService) Loans(symbol string) (*bitfinex.FundingLoanSnapshot, e
 	return loans, nil
 }
 
+// Retreive all of the past in-active funding loans
+// see https://docs.bitfinex.com/reference#rest-auth-funding-loans-hist for more info
 func (fs *FundingService) LoansHistory(symbol string) (*bitfinex.FundingLoanSnapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/loans", symbol, "hist"))
 	if err != nil {
@@ -77,6 +84,8 @@ func (fs *FundingService) LoansHistory(symbol string) (*bitfinex.FundingLoanSnap
 	return loans, nil
 }
 
+// Retreive all of the active credits used in positions
+// see https://docs.bitfinex.com/reference#rest-auth-funding-credits for more info
 func (fs *FundingService) Credits(symbol string) (*bitfinex.FundingCreditSnapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/credits", symbol))
 	if err != nil {
@@ -93,6 +102,8 @@ func (fs *FundingService) Credits(symbol string) (*bitfinex.FundingCreditSnapsho
 	return loans, nil
 }
 
+// Retreive all of the past in-active credits used in positions
+// see https://docs.bitfinex.com/reference#rest-auth-funding-credits-hist for more info
 func (fs *FundingService) CreditsHistory(symbol string) (*bitfinex.FundingCreditSnapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/credits", symbol, "hist"))
 	if err != nil {
@@ -109,6 +120,8 @@ func (fs *FundingService) CreditsHistory(symbol string) (*bitfinex.FundingCredit
 	return loans, nil
 }
 
+// Retreive all of the matched funding trades
+// see https://docs.bitfinex.com/reference#rest-auth-funding-trades-hist for more info
 func (fs *FundingService) Trades(symbol string) (*bitfinex.FundingTradeSnapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/trades", symbol, "hist"))
 	if err != nil {
@@ -125,6 +138,8 @@ func (fs *FundingService) Trades(symbol string) (*bitfinex.FundingTradeSnapshot,
 	return loans, nil
 }
 
+// Submits a request to create a new funding offer
+// see https://docs.bitfinex.com/reference#submit-funding-offer for more info
 func (fs *FundingService) SubmitOffer(fo *bitfinex.FundingOfferRequest) (*bitfinex.Notification, error) {
 	bytes, err := fo.ToJSON()
 	if err != nil {
@@ -141,6 +156,8 @@ func (fs *FundingService) SubmitOffer(fo *bitfinex.FundingOfferRequest) (*bitfin
 	return bitfinex.NewNotificationFromRaw(raw)
 }
 
+// Submits a request to cancel the given offer
+// see https://docs.bitfinex.com/reference#cancel-funding-offer for more info
 func (fs *FundingService) CancelOffer(fc *bitfinex.FundingOfferCancelRequest) (*bitfinex.Notification, error) {
 	bytes, err := fc.ToJSON()
 	if err != nil {

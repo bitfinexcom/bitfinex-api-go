@@ -11,7 +11,8 @@ type DerivativesService struct {
 	Synchronous
 }
 
-// All returns all orders for the authenticated account.
+// Update the amount of collateral for a Derivative position
+// see https://docs.bitfinex.com/reference#rest-auth-deriv-pos-collateral-set for more info
 func (s *WalletService) SetCollateral(symbol string, amount float64) (bool, error) {
 	urlPath := path.Join("deriv", "collateral", "set")
 	data := map[string]interface{}{

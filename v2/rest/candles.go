@@ -14,7 +14,8 @@ type CandleService struct {
 	Synchronous
 }
 
-// Return Candles for the public account.
+// Retrieve the last candle for the given symbol with the given resolution
+// See https://docs.bitfinex.com/reference#rest-public-candles for more info
 func (c *CandleService) Last(symbol string, resolution bitfinex.CandleResolution) (*bitfinex.Candle, error) {
 	if symbol == "" {
 		return nil, fmt.Errorf("symbol cannot be empty")
@@ -39,7 +40,8 @@ func (c *CandleService) Last(symbol string, resolution bitfinex.CandleResolution
 	return cs, nil
 }
 
-// Return Candles for the public account.
+// Retrieves all candles (Max=1000) with the given symbol and the given candle resolution
+// See https://docs.bitfinex.com/reference#rest-public-candles for more info
 func (c *CandleService) History(symbol string, resolution bitfinex.CandleResolution) (*bitfinex.CandleSnapshot, error) {
 	if symbol == "" {
 		return nil, fmt.Errorf("symbol cannot be empty")
@@ -78,7 +80,8 @@ func (c *CandleService) History(symbol string, resolution bitfinex.CandleResolut
 }
 
 
-// Return Candles for the public account.
+// Retrieves all candles (Max=1000) that fit the given query criteria
+// See https://docs.bitfinex.com/reference#rest-public-candles for more info
 func (c *CandleService) HistoryWithQuery(
 	symbol string,
 	resolution bitfinex.CandleResolution,

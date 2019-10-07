@@ -55,30 +55,45 @@ func (ss *StatsService) getLast(symbol string, key bitfinex.StatKey, extra strin
 	return &bitfinex.Stat{Period: int64(period), Volume: volume}, nil
 }
 
+
+// Retrieves platform statistics for funding history
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) FundingHistory(symbol string) ([]bitfinex.Stat, error) {
 	return ss.getHistory(symbol, bitfinex.FundingSizeKey, "")
 }
 
+// Retrieves platform statistics for funding last
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) FundingLast(symbol string) (*bitfinex.Stat, error) {
 	return ss.getLast(symbol, bitfinex.FundingSizeKey, "")
 }
 
+// Retrieves platform statistics for credit size history
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) CreditSizeHistory(symbol string, side bitfinex.OrderSide) ([]bitfinex.Stat, error) {
 	return ss.getHistory(symbol, bitfinex.CreditSizeKey, "")
 }
 
+// Retrieves platform statistics for credit size last
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) CreditSizeLast(symbol string, side bitfinex.OrderSide) (*bitfinex.Stat, error) {
 	return ss.getLast(symbol, bitfinex.CreditSizeKey, "")
 }
 
+// Retrieves platform statistics for credit size history
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) SymbolCreditSizeHistory(fundingSymbol string, tradingSymbol string) ([]bitfinex.Stat, error) {
 	return ss.getHistory(fundingSymbol, bitfinex.CreditSizeSymKey, tradingSymbol)
 }
 
+// Retrieves platform statistics for credit size last
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) SymbolCreditSizeLast(fundingSymbol string, tradingSymbol string) (*bitfinex.Stat, error) {
 	return ss.getLast(fundingSymbol, bitfinex.CreditSizeSymKey, tradingSymbol)
 }
 
+// Retrieves platform statistics for position history
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) PositionHistory(symbol string, side bitfinex.OrderSide) ([]bitfinex.Stat, error) {
 	var strSide string
 	if side == bitfinex.Long {
@@ -91,6 +106,8 @@ func (ss *StatsService) PositionHistory(symbol string, side bitfinex.OrderSide) 
 	return ss.getHistory(symbol, bitfinex.PositionSizeKey, strSide)
 }
 
+// Retrieves platform statistics for position last
+// see https://docs.bitfinex.com/reference#rest-public-stats for more info
 func (ss *StatsService) PositionLast(symbol string, side bitfinex.OrderSide) (*bitfinex.Stat, error) {
 	var strSide string
 	if side == bitfinex.Long {

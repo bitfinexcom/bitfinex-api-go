@@ -39,15 +39,20 @@ func (s *TradeService) allAccount() (*bitfinex.TradeExecutionUpdateSnapshot, err
 	return parseRawPrivateToSnapshot(raw)
 }
 
+// Retrieves all matched trades for the account
+// see https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
 func (s *TradeService) AccountAll() (*bitfinex.TradeExecutionUpdateSnapshot, error) {
 	return s.allAccount()
 }
 
+// Retrieves all matched trades with the given symbol for the account
+// see https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
 func (s *TradeService) AccountAllWithSymbol(symbol string) (*bitfinex.TradeExecutionUpdateSnapshot, error) {
 	return s.allAccountWithSymbol(symbol)
 }
 
-// return account trades that fit the given conditions
+// Queries all matched trades with group of optional parameters
+// see https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
 func (s *TradeService) AccountHistoryWithQuery(
 	symbol string,
 	start bitfinex.Mts,
@@ -71,7 +76,8 @@ func (s *TradeService) AccountHistoryWithQuery(
 	return parseRawPrivateToSnapshot(raw)
 }
 
-// return publicly executed trades that fit the given query conditions
+// Queries all public trades with a group of optional paramters
+// see https://docs.bitfinex.com/reference#rest-public-trades for more info
 func (s *TradeService) PublicHistoryWithQuery(
 	symbol string,
 	start bitfinex.Mts,

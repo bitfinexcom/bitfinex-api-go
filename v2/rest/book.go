@@ -11,6 +11,8 @@ type BookService struct {
 	Synchronous
 }
 
+// Retrieve all books for the given symbol with the given precision at the given price level
+// see https://docs.bitfinex.com/reference#rest-public-books for more info
 func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, priceLevels int) (*bitfinex.BookUpdateSnapshot, error) {
 	req := NewRequestWithMethod(path.Join("book", symbol, string(precision)), "GET")
 	req.Params = make(url.Values)

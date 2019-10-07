@@ -12,7 +12,8 @@ type LedgerService struct {
 	Synchronous
 }
 
-// All returns all ledgers for the authenticated account.
+// Retrieves all of the past ledger entreies
+// see https://docs.bitfinex.com/reference#ledgers for more info
 func (s *LedgerService) Ledgers(currency string, start int64, end int64, max int32) (*bitfinex.LedgerSnapshot, error) {
     if max > 500 {
     	return nil, fmt.Errorf("Max request limit is higher then 500 : %#v", max)

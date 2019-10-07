@@ -12,7 +12,8 @@ type CurrenciesService struct {
 	Synchronous
 }
 
-// All returns all orders for the authenticated account.
+// Retreive currency and symbol service configuration data
+// see https://docs.bitfinex.com/reference#rest-public-conf for more info
 func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]bitfinex.CurrencyConf, error) {
 	segments := make([]string, 0)
 	if label {
