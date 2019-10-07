@@ -341,6 +341,7 @@ and nonce generator.
 ```go
 func (c *Client) AvailableCapacity() int
 ```
+Get the available capacity of the current websocket connections
 
 #### func (*Client) CancelOnDisconnect
 
@@ -355,8 +356,8 @@ disconnected.
 ```go
 func (c *Client) Close()
 ```
-Close provides an interface for a user initiated shutdown. Close will close the
-Done() channel.
+Close the websocket client which will cause for all active sockets to be exited
+and the Done() function to be called
 
 #### func (*Client) Connect
 
@@ -370,7 +371,7 @@ Connect to the Bitfinex API, this should only be called once.
 ```go
 func (c *Client) ConnectionCount() int
 ```
-returns the count of websocket connections that are currently active
+Gen the count of currently active websocket connections
 
 #### func (*Client) Credentials
 
@@ -384,42 +385,47 @@ Credentials assigns authentication credentials to a connection request.
 ```go
 func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error)
 ```
+Submit a request to enable the given flag
 
 #### func (*Client) GetAuthenticatedSocket
 
 ```go
 func (c *Client) GetAuthenticatedSocket() (*Socket, error)
 ```
-get the authenticated socket
+Get the authenticated socket. Due to rate limitations there can only be one
+authenticated socket active at a time
 
 #### func (*Client) GetOrderbook
 
 ```go
 func (c *Client) GetOrderbook(symbol string) (*Orderbook, error)
 ```
+Retrieve the Orderbook for the given symbol which is managed locally. This
+requires ManageOrderbook=True and an active chanel subscribed to the given
+symbols orderbook
 
 #### func (*Client) IsConnected
 
 ```go
 func (c *Client) IsConnected() bool
 ```
-IsConnected returns true if the underlying asynchronous transport is connected
-to an endpoint.
+Returns true if the underlying asynchronous transport is connected to an
+endpoint.
 
 #### func (*Client) Listen
 
 ```go
 func (c *Client) Listen() <-chan interface{}
 ```
-Listen provides an atomic interface for receiving API messages. When a websocket
-connection is terminated, the publisher channel will close.
+Listen for all incoming api websocket messages When a websocket connection is
+terminated, the publisher channel will close.
 
 #### func (*Client) LookupSubscription
 
 ```go
 func (c *Client) LookupSubscription(subID string) (*SubscriptionRequest, error)
 ```
-LookupSubscription looks up a subscription request by ID
+Get a subscription request using a subscription ID
 
 #### func (*Client) Send
 
@@ -433,93 +439,95 @@ Send publishes a generic message to the Bitfinex API.
 ```go
 func (c *Client) StartNewConnection() error
 ```
-starts a new websocket connection. This function is only exposed in case you
-want to implicitly add new connections otherwise connection management is
-already handled for you.
+Start a new websocket connection. This function is only exposed in case you want
+to implicitly add new connections otherwise connection management is already
+handled for you.
 
 #### func (*Client) SubmitCancel
 
 ```go
 func (c *Client) SubmitCancel(ctx context.Context, cancel *bitfinex.OrderCancelRequest) error
 ```
-SubmitCancel sends a cancel request.
+Submit a cancel request for an existing order
 
 #### func (*Client) SubmitFundingCancel
 
 ```go
 func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *bitfinex.FundingOfferCancelRequest) error
 ```
+Submit a request to cancel and existing funding offer
 
 #### func (*Client) SubmitFundingOffer
 
 ```go
 func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *bitfinex.FundingOfferRequest) error
 ```
+Submit a new funding offer request
 
 #### func (*Client) SubmitOrder
 
 ```go
 func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewRequest) error
 ```
-SubmitOrder sends an order request.
+Submit a request to create a new order
 
 #### func (*Client) SubmitUpdateOrder
 
 ```go
 func (c *Client) SubmitUpdateOrder(ctx context.Context, orderUpdate *bitfinex.OrderUpdateRequest) error
 ```
+Submit and update request to change an existing orders values
 
 #### func (*Client) Subscribe
 
 ```go
 func (c *Client) Subscribe(ctx context.Context, req *SubscriptionRequest) (string, error)
 ```
-Subscribe sends a subscription request to the Bitfinex API and tracks the
-subscription status by ID.
+Submit a request to subscribe to the given SubscriptionRequuest
 
 #### func (*Client) SubscribeBook
 
 ```go
 func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision bitfinex.BookPrecision, frequency bitfinex.BookFrequency, priceLevel int) (string, error)
 ```
-SubscribeBook sends a subscription request for market data for a given symbol,
-at a given frequency, with a given precision, returning no more than priceLevels
-price entries. Default values are Precision0, Frequency0, and priceLevels=25.
+Submit a subscription request for market data for the given symbol, at the given
+frequency, with the given precision, returning no more than priceLevels price
+entries. Default values are Precision0, Frequency0, and priceLevels=25.
 
 #### func (*Client) SubscribeCandles
 
 ```go
 func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution bitfinex.CandleResolution) (string, error)
 ```
-SubscribeCandles sends a subscription request for OHLC candles.
+Submit a subscription request to receive candle updates
 
 #### func (*Client) SubscribeStatus
 
 ```go
 func (c *Client) SubscribeStatus(ctx context.Context, symbol string, sType bitfinex.StatusType) (string, error)
 ```
+Submit a subscription request for status updates
 
 #### func (*Client) SubscribeTicker
 
 ```go
 func (c *Client) SubscribeTicker(ctx context.Context, symbol string) (string, error)
 ```
-SubscribeTicker sends a subscription request for the ticker.
+Submit a request to receive ticker updates
 
 #### func (*Client) SubscribeTrades
 
 ```go
 func (c *Client) SubscribeTrades(ctx context.Context, symbol string) (string, error)
 ```
-SubscribeTrades sends a subscription request for the trade feed.
+Submit a request to receive trade updates
 
 #### func (*Client) Unsubscribe
 
 ```go
 func (c *Client) Unsubscribe(ctx context.Context, id string) error
 ```
-Unsubscribe looks up an existing subscription by ID and sends an unsubscribe
-request.
+Unsubscribe from the existing subscription with the given id
 
 #### type ConfEvent
 
