@@ -12,7 +12,6 @@ A Golang reference implementation of the Bitfinex API for both REST and websocke
 
 ## Instillation
 
-
 ``` bash
 go get github.com/bitfinexcom/bitfinex-api-go
 ```
@@ -87,11 +86,10 @@ if err != nil {
 }
 ```
 
-
 See the <b>[examples](https://github.com/bitfinexcom/bitfinex-api-go/tree/master/examples)</b> directory for more, like:
 
 - [Creating/updating an order](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/examples/v2/ws-update-order/main.go)
-- [Subcribing to orderbook updates](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/examples/v2/book-feed/main.go)
+- [Subscribing to orderbook updates](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/examples/v2/book-feed/main.go)
 - [Integrating a custom logger](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/examples/v2/ws-custom-logger/main.go)
 - [Submitting funding offers](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/examples/v2/rest-funding/main.go)
 - [Retrieving active positions](https://github.com/bitfinexcom/bitfinex-api-go/blob/master/examples/v2/rest-positions/main.go)
