@@ -10,7 +10,7 @@ A Golang reference implementation of the Bitfinex API for both REST and websocke
 * Connection multiplexing
 * Types for all data schemas
 
-## Instillation
+## Installation
 
 ``` bash
 go get github.com/bitfinexcom/bitfinex-api-go
