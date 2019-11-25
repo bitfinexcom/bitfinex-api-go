@@ -1445,6 +1445,8 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 			}
 			cp := PositionCancel(*p)
 			o.NotifyInfo = &cp
+		default:
+			o.NotifyInfo = raw[4]
 		}
 	}
 
