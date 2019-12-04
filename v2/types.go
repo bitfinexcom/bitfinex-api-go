@@ -214,6 +214,7 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 		PriceAuxLimit: o.PriceAuxLimit,
 		PriceOcoStop:  o.PriceOcoStop,
 		TimeInForce:   o.TimeInForce,
+		Meta:          o.Meta,
 	}
 
 	if o.Hidden {
@@ -232,13 +233,8 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 		aux.Flags = aux.Flags + OrderFlagClose
 	}
 
-	if o.Meta == nil {
-		aux.Meta = make(map[string]interface{})
-	} else {
-		aux.Meta = o.Meta
-	}
-
 	if o.AffiliateCode != "" {
+		aux.Meta = make(map[string]interface{})
 		aux.Meta["aff_code"] = o.AffiliateCode
 	}
 
@@ -295,12 +291,7 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 		PriceAuxLimit: o.PriceAuxLimit,
 		Delta:         o.Delta,
 		TimeInForce:   o.TimeInForce,
-	}
-
-	if o.Meta == nil {
-		aux.Meta = make(map[string]interface{})
-	} else {
-		aux.Meta = o.Meta
+		Meta:          o.Meta,
 	}
 
 	if o.Hidden {
@@ -422,7 +413,7 @@ func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
 			MTSUpdated: i64ValOrZero(raw[8]),
 			// 3 trailing zeroes, what do they map to?
 		}
-	} else if len(raw) < 32 {
+	} else if len(raw) < 26 {
 		return o, fmt.Errorf("data slice too short for order: %#v", raw)
 	} else {
 		o = &Order{
@@ -446,7 +437,9 @@ func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
 			Notify:        bValOrFalse(raw[23]),
 			Hidden:        bValOrFalse(raw[24]),
 			PlacedID:      i64ValOrZero(raw[25]),
-			Meta:          siMapOrEmpty(raw[31]),
+		}
+		if len(raw) >= 31 {
+			o.Meta = siMapOrNil(raw[31])
 		}
 	}
 	return o, nil
