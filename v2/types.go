@@ -234,14 +234,13 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 
 	if o.Meta == nil {
 		aux.Meta = make(map[string]interface{})
+	} else {
+		aux.Meta = o.Meta
 	}
 
 	if o.AffiliateCode != "" {
 		aux.Meta["aff_code"] = o.AffiliateCode
 	}
-
-	l, _ := json.Marshal(aux)
-	fmt.Println(string(l))
 
 	return json.Marshal(aux)
 }
@@ -300,6 +299,8 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 
 	if o.Meta == nil {
 		aux.Meta = make(map[string]interface{})
+	} else {
+		aux.Meta = o.Meta
 	}
 
 	if o.Hidden {
