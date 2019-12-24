@@ -982,7 +982,6 @@ type FundingOfferRequest struct {
 	Rate   float64
 	Period int64
 	Hidden bool
-
 }
 
 func (o *FundingOfferRequest) ToJSON() ([]byte, error) {
@@ -997,7 +996,7 @@ func (o *FundingOfferRequest) ToJSON() ([]byte, error) {
 		Type:   o.Type,
 		Symbol: o.Symbol,
 		Amount: o.Amount,
-		Rate: o.Rate,
+		Rate:   o.Rate,
 		Period: o.Period,
 	}
 	if o.Hidden {
@@ -1583,7 +1582,7 @@ func IsRawBook(precision string) bool {
 
 // NewBookUpdateFromRaw creates a new book update object from raw data.  Precision determines how
 // to interpret the side (baked into Count versus Amount)
-// raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
+// raw book updates [ID, price, amount], aggregated book updates [price, count, amount]
 func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numbers interface{}) (b *BookUpdate, err error) {
 	if len(data) < 3 {
 		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(data), data)
@@ -1604,7 +1603,7 @@ func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numb
 		px_num = floatToJsonNumber(raw_num_array[1])
 		actionCtrl = px
 	} else {
-		// [price, amount, count]
+		// [price, count, amount]
 		px = f64ValOrZero(data[0])
 		px_num = floatToJsonNumber(raw_num_array[0])
 		cnt = i64ValOrZero(data[1])
