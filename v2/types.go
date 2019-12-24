@@ -1555,6 +1555,7 @@ type BookUpdate struct {
 	AmountJsNum json.Number // update amount as json.Number
 	Side        OrderSide   // side
 	Action      BookAction  // action (add/remove)
+	Period      float64     // Period level (Funding only)
 }
 
 type BookUpdateSnapshot struct {
@@ -1580,9 +1581,14 @@ func IsRawBook(precision string) bool {
 	return precision == "R0"
 }
 
+func IsFunding(symbol string) bool {
+	return strings.HasPrefix(symbol, "f")
+}
+
 // NewBookUpdateFromRaw creates a new book update object from raw data.  Precision determines how
 // to interpret the side (baked into Count versus Amount)
-// raw book updates [ID, price, amount], aggregated book updates [price, count, amount]
+// Trading - raw book updates [ID, price, amount], aggregated book updates [price, count, amount]
+// Funding - on raw books [ID, period, rate, amount], aggregated book updates [rate, period, count, amount]
 func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numbers interface{}) (b *BookUpdate, err error) {
 	if len(data) < 3 {
 		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(data), data)
@@ -1591,23 +1597,44 @@ func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numb
 	var px_num json.Number
 	var id, cnt int64
 	raw_num_array := raw_numbers.([]interface{})
-	amt := f64ValOrZero(data[2])
-	amt_num := floatToJsonNumber(raw_num_array[2])
 
 	var side OrderSide
-	var actionCtrl float64
-	if IsRawBook(precision) {
-		// [ID, price, amount]
-		id = i64ValOrZero(data[0])
-		px = f64ValOrZero(data[1])
-		px_num = floatToJsonNumber(raw_num_array[1])
-		actionCtrl = px
+	var actionCtrl, amt, period float64
+	var amt_num json.Number
+	if IsFunding(symbol) {
+		amt = f64ValOrZero(data[3])
+		amt_num = floatToJsonNumber(raw_num_array[3])
+		if IsRawBook(precision) {
+			// [ID, period, rate, amount]
+			id = i64ValOrZero(data[0])
+			px = f64ValOrZero(data[2])
+			px_num = floatToJsonNumber(raw_num_array[2])
+			actionCtrl = px
+			period = f64ValOrZero(data[1])
+		} else {
+			// [rate, period, count, amount]
+			px = f64ValOrZero(data[0])
+			px_num = floatToJsonNumber(raw_num_array[0])
+			cnt = i64ValOrZero(data[2])
+			actionCtrl = float64(cnt)
+			period = f64ValOrZero(data[1])
+		}
 	} else {
-		// [price, count, amount]
-		px = f64ValOrZero(data[0])
-		px_num = floatToJsonNumber(raw_num_array[0])
-		cnt = i64ValOrZero(data[1])
-		actionCtrl = float64(cnt)
+		amt = f64ValOrZero(data[2])
+		amt_num = floatToJsonNumber(raw_num_array[2])
+		if IsRawBook(precision) {
+			// [ID, price, amount]
+			id = i64ValOrZero(data[0])
+			px = f64ValOrZero(data[1])
+			px_num = floatToJsonNumber(raw_num_array[1])
+			actionCtrl = px
+		} else {
+			// [price, count, amount]
+			px = f64ValOrZero(data[0])
+			px_num = floatToJsonNumber(raw_num_array[0])
+			cnt = i64ValOrZero(data[1])
+			actionCtrl = float64(cnt)
+		}
 	}
 
 	if amt > 0 {
@@ -1633,6 +1660,7 @@ func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numb
 		Side:        side,
 		Action:      action,
 		ID:          id,
+		Period:      period,
 	}
 
 	return
