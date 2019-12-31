@@ -1,9 +1,9 @@
 package rest
 
 import (
-	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"path"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // LedgerService manages the Ledgers endpoint.
@@ -15,7 +15,7 @@ type FundingService struct {
 // Retreive all of the active fundign offers
 // see https://docs.bitfinex.com/reference#rest-auth-funding-offers for more info
 func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot, error) {
-	req, err :=fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol))
+	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol))
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot,
 // Retreive all of the past in-active funding offers
 // see https://docs.bitfinex.com/reference#rest-auth-funding-offers-hist for more info
 func (fs *FundingService) OfferHistory(symbol string) (*bitfinex.FundingOfferSnapshot, error) {
-	req, err :=fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol, "hist"))
+	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +171,5 @@ func (fs *FundingService) CancelOffer(fc *bitfinex.FundingOfferCancelRequest) (*
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(raw)
 	return bitfinex.NewNotificationFromRaw(raw)
 }
