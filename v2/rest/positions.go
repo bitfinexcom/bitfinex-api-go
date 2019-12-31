@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -47,6 +46,5 @@ func (s *PositionService) Claim(cp *bitfinex.ClaimPositionRequest) (*bitfinex.No
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(raw)
 	return bitfinex.NewNotificationFromRaw(raw)
 }
