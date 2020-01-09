@@ -1494,10 +1494,25 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 	}
 	// funding currency ticker
 	// ignore bid/ask period for now
-	// on funding currencies (ex. fUSD)
-	// SYMBOL, FRR, BID, BID_PERIOD, BID_SIZE, ASK, ASK_PERIOD, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE,
-	// LAST_PRICE, VOLUME, HIGH, LOW, _PLACEHOLDER, _PLACEHOLDER, FRR_AMOUNT_AVAILABLE
-	if len(raw) == 16 {
+	if len(raw) == 13 {
+		t = &Ticker{
+			Symbol:          symbol,
+			Bid:             f64ValOrZero(raw[1]),
+			BidSize:         f64ValOrZero(raw[2]),
+			Ask:             f64ValOrZero(raw[4]),
+			AskSize:         f64ValOrZero(raw[5]),
+			DailyChange:     f64ValOrZero(raw[7]),
+			DailyChangePerc: f64ValOrZero(raw[8]),
+			LastPrice:       f64ValOrZero(raw[9]),
+			Volume:          f64ValOrZero(raw[10]),
+			High:            f64ValOrZero(raw[11]),
+			Low:             f64ValOrZero(raw[12]),
+		}
+		return t, nil
+	} else if len(raw) == 16 {
+		// on funding currencies (ex. fUSD)
+		// SYMBOL, FRR, BID, BID_PERIOD, BID_SIZE, ASK, ASK_PERIOD, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE,
+		// LAST_PRICE, VOLUME, HIGH, LOW, _PLACEHOLDER, _PLACEHOLDER, FRR_AMOUNT_AVAILABLE
 		t = &Ticker{
 			Symbol:          symbol,
 			Frr:             f64ValOrZero(raw[0]),
