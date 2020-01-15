@@ -586,6 +586,7 @@ type Trade struct {
 	Amount float64
 	Price  float64
 	Side   OrderSide
+	Period float64 // Period (Funding only)
 }
 
 func NewTradeFromRaw(pair string, raw []interface{}) (o *Trade, err error) {
@@ -608,6 +609,10 @@ func NewTradeFromRaw(pair string, raw []interface{}) (o *Trade, err error) {
 		Amount: math.Abs(amt),
 		Price:  f64ValOrZero(raw[3]),
 		Side:   side,
+	}
+
+	if len(raw) == 5 {
+		o.Period = f64ValOrZero(raw[4])
 	}
 
 	return
