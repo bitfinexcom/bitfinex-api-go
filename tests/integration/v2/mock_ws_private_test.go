@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
@@ -178,7 +179,7 @@ func TestNewOrder(t *testing.T) {
 	if len(async.Sent) <= 1 {
 		t.Fatalf("expected >1 sent messages, got %d", len(async.Sent))
 	}
-	assert(t, &bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456}, async.Sent[1].(*bitfinex.OrderNewRequest))
+	assert(t, reflect.DeepEqual(&bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456}, async.Sent[1].(*bitfinex.OrderNewRequest)), true)
 
 	// order ack
 	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"MARKET",null,null,null,null,null,null,null,915.5,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitting market buy order for 1.0 BTC."]]`)
@@ -188,7 +189,7 @@ func TestNewOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.Notification{Type: "on-req", NotifyInfo: &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}}, not)
+	assert(t, reflect.DeepEqual(&bitfinex.Notification{Type: "on-req", NotifyInfo: &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}}, not), false)
 }
 
 func TestFills(t *testing.T) {
@@ -292,7 +293,7 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1514909325236, MTSUpdated: 1514909325631, Amount: 0, AmountOrig: 1, Type: "MARKET", Status: "EXECUTED @ 916.2(0.78): was PARTIALLY FILLED @ 915.9(0.22)", Price: 915.5, PriceAvg: 916.13496085}, oc)
+	assert(t, reflect.DeepEqual(&bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1514909325236, MTSUpdated: 1514909325631, Amount: 0, AmountOrig: 1, Type: "MARKET", Status: "EXECUTED @ 916.2(0.78): was PARTIALLY FILLED @ 915.9(0.22)", Price: 915.5, PriceAvg: 916.13496085}, oc), true)
 
 	// fills--trade executions
 	async.Publish(`[0,"te",[1,"tBTCUSD",1514909325593,1234567,0.21679716,915.9,null,null,-1]]`)
@@ -423,7 +424,7 @@ func TestCancel(t *testing.T) {
 	if len(async.Sent) <= 1 {
 		t.Fatalf("expected >1 sent messages, got %d", len(async.Sent))
 	}
-	assert(t, &bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}, async.Sent[1].(*bitfinex.OrderNewRequest))
+	assert(t, reflect.DeepEqual(&bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}, async.Sent[1].(*bitfinex.OrderNewRequest)), true)
 
 	// order pending new
 	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"LIMIT",null,null,null,null,null,null,null,900,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitting limit buy order for 1.0 BTC."]]`)
@@ -442,7 +443,7 @@ func TestCancel(t *testing.T) {
 	}
 
 	// assert order new update
-	assert(t, &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}, on)
+	assert(t, reflect.DeepEqual(&bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}, on), true)
 
 	// publish cancel request
 	req := &bitfinex.OrderCancelRequest{ID: on.ID}
@@ -468,7 +469,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179520203, Type: "LIMIT", Status: "CANCELED", Price: 900.0, Amount: 1, AmountOrig: 1}, oc)
+	assert(t, reflect.DeepEqual(&bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179520203, Type: "LIMIT", Status: "CANCELED", Price: 900.0, Amount: 1, AmountOrig: 1}, oc), true)
 }
 
 func TestUpdateOrder(t *testing.T) {
@@ -526,7 +527,7 @@ func TestUpdateOrder(t *testing.T) {
 	if len(async.Sent) <= 1 {
 		t.Fatalf("expected >1 sent messages, got %d", len(async.Sent))
 	}
-	assert(t, &bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}, async.Sent[1].(*bitfinex.OrderNewRequest))
+	assert(t, reflect.DeepEqual(&bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}, async.Sent[1].(*bitfinex.OrderNewRequest)), true)
 
 	// order pending new
 	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"LIMIT",null,null,null,null,null,null,null,900,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitting limit buy order for 1.0 BTC."]]`)
@@ -545,7 +546,7 @@ func TestUpdateOrder(t *testing.T) {
 	}
 
 	// assert order new update
-	assert(t, &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}, on)
+	assert(t, reflect.DeepEqual(&bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}, on), true)
 
 	// publish update request
 	req := &bitfinex.OrderUpdateRequest{
@@ -562,7 +563,7 @@ func TestUpdateOrder(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	// assert sent message
-	assert(t, req, async.Sent[pre].(*bitfinex.OrderUpdateRequest))
+	assert(t, reflect.DeepEqual(req, async.Sent[pre].(*bitfinex.OrderUpdateRequest)), true)
 
 	// cancel ack notify
 	async.Publish(`[0,"n",[1547469854094,"ou-req",null,null,[1234567,0,123,"tBTCUSD",1547469854025,1547469854042,0.04,0.04,"LIMIT",null,null,null,0,"ACTIVE",null,null,1200,0,0,0,null,null,null,0,0,null,null,null,"API>BFX",null,null,null],null,"SUCCESS","Submitting update to exchange limit buy order for 0.04 BTC."]]`)
@@ -574,7 +575,7 @@ func TestUpdateOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.OrderUpdate{ID:1234567, GID:0, CID:123, Symbol:"tBTCUSD", MTSCreated:1547469854025, MTSUpdated:1547469854121, Amount:0.04, AmountOrig:0.04, Type:"LIMIT", TypePrev:"", Flags:0, Status:"ACTIVE", Price:1200, PriceAvg:0, PriceTrailing:0, PriceAuxLimit:0, Notify:false, Hidden:false, PlacedID:0}, ou)
+	assert(t, reflect.DeepEqual(&bitfinex.OrderUpdate{ID:1234567, GID:0, CID:123, Symbol:"tBTCUSD", MTSCreated:1547469854025, MTSUpdated:1547469854121, Amount:0.04, AmountOrig:0.04, Type:"LIMIT", TypePrev:"", Flags:0, Status:"ACTIVE", Price:1200, PriceAvg:0, PriceTrailing:0, PriceAuxLimit:0, Notify:false, Hidden:false, PlacedID:0}, ou), true)
 }
 
 func TestUsesAuthenticatedSocket(t *testing.T) {

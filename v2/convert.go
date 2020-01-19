@@ -67,6 +67,13 @@ func f64ValOrZero(i interface{}) float64 {
 	return 0.0
 }
 
+func siMapOrNil(i interface{}) map[string]interface{} {
+	if m, ok := i.(map[string]interface{}); ok {
+		return m
+	}
+	return nil
+}
+
 func bValOrFalse(i interface{}) bool {
 	if r, ok := i.(bool); ok {
 		return r

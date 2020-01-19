@@ -154,21 +154,27 @@ const (
 // OrderNewRequest represents an order to be posted to the bitfinex websocket
 // service.
 type OrderNewRequest struct {
-	GID           int64   `json:"gid"`
-	CID           int64   `json:"cid"`
-	Type          string  `json:"type"`
-	Symbol        string  `json:"symbol"`
-	Amount        float64 `json:"amount,string"`
-	Price         float64 `json:"price,string"`
-	Leverage      int64   `json:"lev,omitempty"`
-	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
-	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
-	PriceOcoStop  float64 `json:"price_oco_stop,string,omitempty"`
-	Hidden        bool    `json:"hidden,omitempty"`
-	PostOnly      bool    `json:"postonly,omitempty"`
-	Close         bool    `json:"close,omitempty"`
-	OcoOrder      bool    `json:"oco_order,omitempty"`
-	TimeInForce   string  `json:"tif,omitempty"`
+	GID           int64                  `json:"gid"`
+	CID           int64                  `json:"cid"`
+	Type          string                 `json:"type"`
+	Symbol        string                 `json:"symbol"`
+	Amount        float64                `json:"amount,string"`
+	Price         float64                `json:"price,string"`
+	Leverage      int64                  `json:"lev,omitempty"`
+	PriceTrailing float64                `json:"price_trailing,string,omitempty"`
+	PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
+	PriceOcoStop  float64                `json:"price_oco_stop,string,omitempty"`
+	Hidden        bool                   `json:"hidden,omitempty"`
+	PostOnly      bool                   `json:"postonly,omitempty"`
+	Close         bool                   `json:"close,omitempty"`
+	OcoOrder      bool                   `json:"oco_order,omitempty"`
+	TimeInForce   string                 `json:"tif,omitempty"`
+	AffiliateCode string                 `json:"-"`
+	Meta          map[string]interface{} `json:"meta,omitempty"`
+}
+
+type OrderMeta struct {
+	AffiliateCode string `json:"aff_code,string,omitempty"`
 }
 
 // MarshalJSON converts the order object into the format required by the bitfinex
@@ -183,18 +189,19 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 
 func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 	aux := struct {
-		GID           int64   `json:"gid"`
-		CID           int64   `json:"cid"`
-		Type          string  `json:"type"`
-		Symbol        string  `json:"symbol"`
-		Amount        float64 `json:"amount,string"`
-		Price         float64 `json:"price,string"`
-		Leverage      int64   `json:"lev,omitempty"`
-		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
-		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
-		PriceOcoStop  float64 `json:"price_oco_stop,string,omitempty"`
-		TimeInForce   string  `json:"tif,omitempty"`
-		Flags         int     `json:"flags,omitempty"`
+		GID           int64                   `json:"gid"`
+		CID           int64                   `json:"cid"`
+		Type          string                  `json:"type"`
+		Symbol        string                  `json:"symbol"`
+		Amount        float64                 `json:"amount,string"`
+		Price         float64                 `json:"price,string"`
+		Leverage      int64                   `json:"lev,omitempty"`
+		PriceTrailing float64                 `json:"price_trailing,string,omitempty"`
+		PriceAuxLimit float64                 `json:"price_aux_limit,string,omitempty"`
+		PriceOcoStop  float64                 `json:"price_oco_stop,string,omitempty"`
+		TimeInForce   string                  `json:"tif,omitempty"`
+		Flags         int                     `json:"flags,omitempty"`
+		Meta          map[string]interface{}  `json:"meta,omitempty"`
 	}{
 		GID:           o.GID,
 		CID:           o.CID,
@@ -207,6 +214,7 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 		PriceAuxLimit: o.PriceAuxLimit,
 		PriceOcoStop:  o.PriceOcoStop,
 		TimeInForce:   o.TimeInForce,
+		Meta:          o.Meta,
 	}
 
 	if o.Hidden {
@@ -224,21 +232,28 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 	if o.Close {
 		aux.Flags = aux.Flags + OrderFlagClose
 	}
+
+	if o.AffiliateCode != "" {
+		aux.Meta = make(map[string]interface{})
+		aux.Meta["aff_code"] = o.AffiliateCode
+	}
+
 	return json.Marshal(aux)
 }
 
 type OrderUpdateRequest struct {
-	ID            int64   `json:"id"`
-	GID           int64   `json:"gid,omitempty"`
-	Price         float64 `json:"price,string,omitempty"`
-	Amount        float64 `json:"amount,string,omitempty"`
-	Leverage      int64   `json:"lev,omitempty"`
-	Delta         float64 `json:"delta,string,omitempty"`
-	PriceTrailing float64 `json:"price_trailing,string,omitempty"`
-	PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
-	Hidden        bool    `json:"hidden,omitempty"`
-	PostOnly      bool    `json:"postonly,omitempty"`
-	TimeInForce   string  `json:"tif,omitempty"`
+	ID            int64                  `json:"id"`
+	GID           int64                  `json:"gid,omitempty"`
+	Price         float64                `json:"price,string,omitempty"`
+	Amount        float64                `json:"amount,string,omitempty"`
+	Leverage      int64                  `json:"lev,omitempty"`
+	Delta         float64                `json:"delta,string,omitempty"`
+	PriceTrailing float64                `json:"price_trailing,string,omitempty"`
+	PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
+	Hidden        bool                   `json:"hidden,omitempty"`
+	PostOnly      bool                   `json:"postonly,omitempty"`
+	TimeInForce   string                 `json:"tif,omitempty"`
+	Meta          map[string]interface{} `json:"meta,omitempty"`
 }
 
 // MarshalJSON converts the order object into the format required by the bitfinex
@@ -253,18 +268,19 @@ func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
 
 func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 	aux := struct {
-		ID            int64   `json:"id"`
-		GID           int64   `json:"gid,omitempty"`
-		Price         float64 `json:"price,string,omitempty"`
-		Amount        float64 `json:"amount,string,omitempty"`
-		Leverage      int64   `json:"lev,omitempty"`
-		Delta         float64 `json:"delta,string,omitempty"`
-		PriceTrailing float64 `json:"price_trailing,string,omitempty"`
-		PriceAuxLimit float64 `json:"price_aux_limit,string,omitempty"`
-		Hidden        bool    `json:"hidden,omitempty"`
-		PostOnly      bool    `json:"postonly,omitempty"`
-		TimeInForce   string  `json:"tif,omitempty"`
-		Flags         int     `json:"flags,omitempty"`
+		ID            int64                  `json:"id"`
+		GID           int64                  `json:"gid,omitempty"`
+		Price         float64                `json:"price,string,omitempty"`
+		Amount        float64                `json:"amount,string,omitempty"`
+		Leverage      int64                  `json:"lev,omitempty"`
+		Delta         float64                `json:"delta,string,omitempty"`
+		PriceTrailing float64                `json:"price_trailing,string,omitempty"`
+		PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
+		Hidden        bool                   `json:"hidden,omitempty"`
+		PostOnly      bool                   `json:"postonly,omitempty"`
+		TimeInForce   string                 `json:"tif,omitempty"`
+		Flags         int                    `json:"flags,omitempty"`
+		Meta          map[string]interface{} `json:"meta,omitempty"`
 	}{
 		ID:            o.ID,
 		GID:           o.GID,
@@ -275,6 +291,7 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 		PriceAuxLimit: o.PriceAuxLimit,
 		Delta:         o.Delta,
 		TimeInForce:   o.TimeInForce,
+		Meta:          o.Meta,
 	}
 
 	if o.Hidden {
@@ -377,6 +394,7 @@ type Order struct {
 	Notify        bool
 	Hidden        bool
 	PlacedID      int64
+	Meta          map[string]interface{}
 }
 
 // NewOrderFromRaw takes the raw list of values as returned from the websocket
@@ -398,7 +416,6 @@ func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
 	} else if len(raw) < 26 {
 		return o, fmt.Errorf("data slice too short for order: %#v", raw)
 	} else {
-		// TODO: API docs say ID, GID, CID, MTS_CREATE, MTS_UPDATE are int but API returns float
 		o = &Order{
 			ID:            int64(f64ValOrZero(raw[0])),
 			GID:           int64(f64ValOrZero(raw[1])),
@@ -421,9 +438,11 @@ func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
 			Hidden:        bValOrFalse(raw[24]),
 			PlacedID:      i64ValOrZero(raw[25]),
 		}
+		if len(raw) >= 31 {
+			o.Meta = siMapOrNil(raw[31])
+		}
 	}
-
-	return
+	return o, nil
 }
 
 // OrderSnapshotFromRaw takes a raw list of values as returned from the websocket
