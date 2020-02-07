@@ -327,13 +327,17 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 	return fmt.Errorf("could not find subscription ID %s to activate", subID)
 }
 
-func (s *subscriptions) lookupByChannelID(chanID int64) (*subscription, error) {
+func (s *subscriptions) lookupBySocketChannelID(chanID int64, sId SocketId) (*subscription, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	if sub, ok := s.subsByChanID[chanID]; ok {
-		return sub, nil
+	if subs, ok := s.subsBySocketId[sId]; ok {
+		for _, s := range subs {
+			if s.ChanID == chanID {
+				return s, nil
+			}
+		}
 	}
-	return nil, fmt.Errorf("could not find subscription for channel ID %d", chanID)
+	return nil, fmt.Errorf("could not find subscription for channel ID %d and socket sId %d", chanID, sId)
 }
 
 func (s *subscriptions) lookupBySubscriptionID(subID string) (*subscription, error) {

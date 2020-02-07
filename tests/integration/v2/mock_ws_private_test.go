@@ -34,13 +34,17 @@ func TestAuthentication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &websocket.InfoEvent{Version: 2}, ev)
+	assert(t, fmt.Sprint(websocket.InfoEvent{Version: 2}), fmt.Sprint(*ev))
 
 	// assert outgoing auth request
 	if err := async.waitForMessage(0); err != nil {
 		t.Fatal(err.Error())
 	}
-	assert(t, &websocket.SubscriptionRequest{SubID: "nonce1", Event: "auth", APIKey: "apiKeyABC"}, async.Sent[0].(*websocket.SubscriptionRequest))
+	expected := websocket.SubscriptionRequest{SubID: "nonce1", Event: "auth", APIKey: "apiKeyABC"}
+	actual := *async.Sent[0].(*websocket.SubscriptionRequest)
+	assert(t, expected.SubID, actual.SubID)
+	assert(t, expected.Event, actual.Event)
+	assert(t, expected.APIKey, actual.APIKey)
 
 	// auth ack
 	async.Publish(`{"event":"auth","status":"OK","chanId":0,"userId":1,"subId":"nonce1","auth_id":"valid-auth-guid","caps":{"orders":{"read":1,"write":0},"account":{"read":1,"write":0},"funding":{"read":1,"write":0},"history":{"read":1,"write":0},"wallets":{"read":1,"write":0},"withdraw":{"read":0,"write":0},"positions":{"read":1,"write":0}}}`)
@@ -50,7 +54,11 @@ func TestAuthentication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &websocket.AuthEvent{Status: "OK", SubID: "nonce1", ChanID: 0}, av)
+	expected2 := websocket.AuthEvent{Status: "OK", SubID: "nonce1", ChanID: 0}
+	actual2 := *av
+	assert(t, expected2.SubID, actual2.SubID)
+	assert(t, expected2.Status, actual2.Status)
+	assert(t, expected2.ChanID, actual2.ChanID)
 }
 
 func TestWalletBalanceUpdates(t *testing.T) {
@@ -105,25 +113,25 @@ func TestWalletBalanceUpdates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.WalletUpdate{Type: "exchange", Currency: "BTC", Balance: 30, BalanceAvailable: 30}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "exchange", Currency: "BTC", Balance: 30, BalanceAvailable: 30}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "exchange", Currency: "USD", Balance: 80000, BalanceAvailable: 80000}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "exchange", Currency: "USD", Balance: 80000, BalanceAvailable: 80000}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "exchange", Currency: "ETH", Balance: 100, BalanceAvailable: 100}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "exchange", Currency: "ETH", Balance: 100, BalanceAvailable: 100}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "funding", Currency: "BTC", Balance: 10, BalanceAvailable: 10}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "funding", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "funding", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "funding", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}), fmt.Sprint(*wu))
 	bu, err := listener.nextBalanceUpdate()
 	if err != nil {
 		t.Fatal(err)
 	}
 	// total aum, net aum
-	assert(t, &bitfinex.BalanceUpdate{TotalAUM: 147260, NetAUM: 147260}, bu)
+	assert(t, fmt.Sprint(bitfinex.BalanceUpdate{TotalAUM: 147260, NetAUM: 147260}), fmt.Sprint(*bu))
 }
 
 func TestNewOrder(t *testing.T) {
@@ -178,17 +186,24 @@ func TestNewOrder(t *testing.T) {
 	if len(async.Sent) <= 1 {
 		t.Fatalf("expected >1 sent messages, got %d", len(async.Sent))
 	}
-	assert(t, &bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456}, async.Sent[1].(*bitfinex.OrderNewRequest))
+
+	expected := bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456}
+	actual := *async.Sent[1].(*bitfinex.OrderNewRequest)
+	assert(t, expected.Symbol, actual.Symbol)
+	assert(t, expected.CID, actual.CID)
+	assert(t, expected.Amount, actual.Amount)
 
 	// order ack
-	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"MARKET",null,null,null,null,null,null,null,915.5,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitting market buy order for 1.0 BTC."]]`)
+	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"MARKET",null,null,null,null,null,null,null,915.5,null,null,null,null,null,null,0,null,null,null,null,null,null,null,null,null],null,"SUCCESS","Submitting market buy order for 1.0 BTC."]]`)
 
 	// assert order ack notification
 	not, err := listener.nextNotification()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.Notification{Type: "on-req", NotifyInfo: &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}}, not)
+	expected2 := bitfinex.Notification{Type: "on-req", NotifyInfo: bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}, Status: "SUCCESS", Text: "Submitting market buy order for 1.0 BTC."}
+	not.NotifyInfo = *not.NotifyInfo.(*bitfinex.OrderNew)
+	assert(t, fmt.Sprint(expected2), fmt.Sprint(*not))
 }
 
 func TestFills(t *testing.T) {
@@ -282,9 +297,9 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 0.21679716, BasePrice: 915.9}, pu)
+	assert(t, fmt.Sprint(bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 0.21679716, BasePrice: 915.9}), fmt.Sprint(*pu))
 	pu, _ = listener.nextPositionUpdate()
-	assert(t, &bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085}, pu)
+	assert(t, fmt.Sprint(bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085}), fmt.Sprint(*pu))
 
 	// full fill--order terminal state message
 	async.Publish(`[0,"oc",[1234567,0,123,"tBTCUSD",1514909325236,1514909325631,0,1,"MARKET",null,null,null,0,"EXECUTED @ 916.2(0.78): was PARTIALLY FILLED @ 915.9(0.22)",null,null,915.5,916.13496085,null,null,null,null,null,0,0,0]]`)
@@ -292,21 +307,21 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1514909325236, MTSUpdated: 1514909325631, Amount: 0, AmountOrig: 1, Type: "MARKET", Status: "EXECUTED @ 916.2(0.78): was PARTIALLY FILLED @ 915.9(0.22)", Price: 915.5, PriceAvg: 916.13496085}, oc)
+	assert(t, fmt.Sprint(bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1514909325236, MTSUpdated: 1514909325631, Amount: 0, AmountOrig: 1, Type: "MARKET", Status: "EXECUTED @ 916.2(0.78): was PARTIALLY FILLED @ 915.9(0.22)", Price: 915.5, PriceAvg: 916.13496085}), fmt.Sprint(*oc))
 
 	// fills--trade executions
-	async.Publish(`[0,"te",[1,"tBTCUSD",1514909325593,1234567,0.21679716,915.9,null,null,-1]]`)
-	async.Publish(`[0,"te",[2,"tBTCUSD",1514909325597,1234567,0.78320284,916.2,null,null,-1]]`)
+	async.Publish(`[0,"te",[1,"tBTCUSD",1514909325593,1234567,0.21679716,915.9,null,null,0]]`)
+	async.Publish(`[0,"te",[2,"tBTCUSD",1514909325597,1234567,0.78320284,916.2,null,null,0]]`)
 	te, err := listener.nextTradeExecution()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.TradeExecution{ID: 1, MTS: 1514909325593, Amount: 0.21679716, Price: 915.9}, te)
+	assert(t, fmt.Sprint(bitfinex.TradeExecution{ID: 1, Pair: "tBTCUSD", OrderID: 1234567, MTS: 1514909325593, Amount: 0.21679716, Price: 915.9}), fmt.Sprint(*te))
 	te, err = listener.nextTradeExecution()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.TradeExecution{ID: 2, MTS: 1514909325597, Amount: 0.78320284, Price: 916.2}, te)
+	assert(t, fmt.Sprint(bitfinex.TradeExecution{ID: 2, Pair: "tBTCUSD", OrderID: 1234567, MTS: 1514909325597, Amount: 0.78320284, Price: 916.2}), fmt.Sprint(*te))
 
 	// fills--trade updates
 	async.Publish(`[0,"tu",[1,"tBTCUSD",1514909325593,1234567,0.21679716,915.9,"MARKET",915.5,-1,-0.39712904,"USD"]]`)
@@ -315,9 +330,9 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.TradeExecutionUpdate{ID: 1, Pair: "tBTCUSD", MTS: 1514909325593, ExecAmount: 0.21679716, ExecPrice: 915.9, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -0.39712904, FeeCurrency: "USD"}, tu)
+	assert(t, fmt.Sprint(bitfinex.TradeExecutionUpdate{ID: 1, Pair: "tBTCUSD", MTS: 1514909325593, ExecAmount: 0.21679716, ExecPrice: 915.9, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -0.39712904, FeeCurrency: "USD"}), fmt.Sprint(*tu))
 	tu, _ = listener.nextTradeUpdate()
-	assert(t, &bitfinex.TradeExecutionUpdate{ID: 2, Pair: "tBTCUSD", MTS: 1514909325597, ExecAmount: 0.78320284, ExecPrice: 916.2, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -1.43514088, FeeCurrency: "USD"}, tu)
+	assert(t, fmt.Sprint(bitfinex.TradeExecutionUpdate{ID: 2, Pair: "tBTCUSD", MTS: 1514909325597, ExecAmount: 0.78320284, ExecPrice: 916.2, OrderType: "MARKET", OrderPrice: 915.5, OrderID: 1234567, Maker: -1, Fee: -1.43514088, FeeCurrency: "USD"}), fmt.Sprint(*tu))
 
 	// fills--wallet updates from fee deduction
 	async.Publish(`[0,"wu",["margin","USD",9999.60287096,0,null]]`)
@@ -326,9 +341,9 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9999.60287096}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9999.60287096}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9998.16773008}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9998.16773008}), fmt.Sprint(*wu))
 
 	// margin info update for executed trades
 	async.Publish(`[0,"miu",["base",[-2.76536085,0,19150.16773008,19147.40236923]]]`)
@@ -337,25 +352,25 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.MarginInfoBase{}, mb)
+	assert(t, fmt.Sprint(bitfinex.MarginInfoBase{UserProfitLoss: -2.76536085, MarginBalance: 19150.16773008, MarginNet: 19147.40236923}), fmt.Sprint(*mb))
 	mu, err := listener.nextMarginInfoUpdate()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.MarginInfoUpdate{}, mu)
+	assert(t, fmt.Sprint(bitfinex.MarginInfoUpdate{Symbol: "tBTCUSD", TradableBalance: 60162.93960325}), fmt.Sprint(*mu))
 
 	// position update for executed trades
 	async.Publish(`[0,"pu",["tBTCUSD","ACTIVE",1,916.13496085,0,0,-2.76536085,-0.30185082,0,43.7962]]`)
 	pu, _ = listener.nextPositionUpdate()
-	assert(t, &bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085, ProfitLoss: -2.76536085, ProfitLossPercentage: -0.30185082, Leverage: 43.7962}, pu)
+	assert(t, fmt.Sprint(bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085, ProfitLoss: -2.76536085, ProfitLossPercentage: -0.30185082, Leverage: 43.7962}), fmt.Sprint(*pu))
 
 	// wallet margin update for executed trades
 	async.Publish(`[0,"wu",["margin","BTC",10,0,10]]`)
 	async.Publish(`[0,"wu",["margin","USD",9998.16773008,0,9998.16773008]]`)
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, &bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9998.16773008, BalanceAvailable: 9998.16773008}, wu)
+	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9998.16773008, BalanceAvailable: 9998.16773008}), fmt.Sprint(*wu))
 
 	// funding update for executed trades
 	async.Publish(`[0,"fiu",["sym","ftBTCUSD",[0,0,0,0]]]`)
@@ -363,7 +378,7 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.FundingInfo{Symbol: "ftBTCUSD"}, fi)
+	assert(t, fmt.Sprint(bitfinex.FundingInfo{Symbol: "ftBTCUSD"}), fmt.Sprint(*fi))
 }
 
 func TestCancel(t *testing.T) {
@@ -423,12 +438,12 @@ func TestCancel(t *testing.T) {
 	if len(async.Sent) <= 1 {
 		t.Fatalf("expected >1 sent messages, got %d", len(async.Sent))
 	}
-	assert(t, &bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}, async.Sent[1].(*bitfinex.OrderNewRequest))
+	assert(t, fmt.Sprint(bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}), fmt.Sprint(*async.Sent[1].(*bitfinex.OrderNewRequest)))
 
 	// order pending new
-	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"LIMIT",null,null,null,null,null,null,null,900,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitting limit buy order for 1.0 BTC."]]`)
+	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"LIMIT",null,null,null,null,null,null,null,900,null,null,null,null,null,null,0,null,null,null,null,null,null,null,null],null,"SUCCESS","Submitting limit buy order for 1.0 BTC."]]`)
 	// order working--limit order
-	async.Publish(`[0,"on",[1234567,0,123,"tBTCUSD",1515179518260,1515179518315,1,1,"LIMIT",null,null,null,0,"ACTIVE",null,null,900,0,null,null,null,null,null,0,0,0]]`)
+	async.Publish(`[0,"on",[1234567,0,123,"tBTCUSD",1515179518260,1515179518315,1,1,"LIMIT",null,null,null,0,"ACTIVE",null,null,900,0,null,null,null,null,null,0,0,null,null,null,null,null,null,null,null]]`)
 
 	// eat order ack notification
 	_, err_n := listener.nextNotification()
@@ -442,7 +457,7 @@ func TestCancel(t *testing.T) {
 	}
 
 	// assert order new update
-	assert(t, &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}, on)
+	assert(t, fmt.Sprint(bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}), fmt.Sprint(*on))
 
 	// publish cancel request
 	req := &bitfinex.OrderCancelRequest{ID: on.ID}
@@ -458,17 +473,17 @@ func TestCancel(t *testing.T) {
 	assert(t, req, async.Sent[pre].(*bitfinex.OrderCancelRequest))
 
 	// cancel ack notify
-	async.Publish(`[0,"n",[null,"oc-req",null,null,[1149686139,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitted for cancellation; waiting for confirmation (ID: 1149686139)."]]`)
+	async.Publish(`[0,"n",[null,"oc-req",null,null,[1149686139,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,0,null,null,null,null,null,null,null,null,null,null,null,null],null,"SUCCESS","Submitted for cancellation; waiting for confirmation (ID: 1149686139)."]]`)
 
 	// cancel confirm
-	async.Publish(`[0,"oc",[1234567,0,123,"tBTCUSD",1515179518260,1515179520203,1,1,"LIMIT",null,null,null,0,"CANCELED",null,null,900,0,null,null,null,null,null,0,0,0]]`)
+	async.Publish(`[0,"oc",[1234567,0,123,"tBTCUSD",1515179518260,1515179520203,1,1,"LIMIT",null,null,null,0,"CANCELED",null,null,900,0,null,null,null,null,null,0,0,0,null,null,null,null,null,null,null]]`)
 
 	// assert cancel ack
 	oc, err := listener.nextOrderCancel()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179520203, Type: "LIMIT", Status: "CANCELED", Price: 900.0, Amount: 1, AmountOrig: 1}, oc)
+	assert(t, fmt.Sprint(bitfinex.OrderCancel{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179520203, Type: "LIMIT", Status: "CANCELED", Price: 900.0, Amount: 1, AmountOrig: 1}), fmt.Sprint(*oc))
 }
 
 func TestUpdateOrder(t *testing.T) {
@@ -526,12 +541,12 @@ func TestUpdateOrder(t *testing.T) {
 	if len(async.Sent) <= 1 {
 		t.Fatalf("expected >1 sent messages, got %d", len(async.Sent))
 	}
-	assert(t, &bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}, async.Sent[1].(*bitfinex.OrderNewRequest))
+	assert(t, fmt.Sprint(bitfinex.OrderNewRequest{Symbol: "tBTCUSD", CID: 123, Amount: -0.456, Type: "LIMIT", Price: 900.0}), fmt.Sprint(*async.Sent[1].(*bitfinex.OrderNewRequest)))
 
 	// order pending new
-	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"LIMIT",null,null,null,null,null,null,null,900,null,null,null,null,null,null,0,null,null],null,"SUCCESS","Submitting limit buy order for 1.0 BTC."]]`)
+	async.Publish(`[0,"n",[null,"on-req",null,null,[1234567,null,123,"tBTCUSD",null,null,1,1,"LIMIT",null,null,null,null,null,null,null,900,null,null,null,null,null,null,0,null,null,null,null,null,null,null,null,null,null],null,"SUCCESS","Submitting limit buy order for 1.0 BTC."]]`)
 	// order working--limit order
-	async.Publish(`[0,"on",[1234567,0,123,"tBTCUSD",1515179518260,1515179518315,1,1,"LIMIT",null,null,null,0,"ACTIVE",null,null,900,0,null,null,null,null,null,0,0,0]]`)
+	async.Publish(`[0,"on",[1234567,0,123,"tBTCUSD",1515179518260,1515179518315,1,1,"LIMIT",null,null,null,0,"ACTIVE",null,null,900,0,null,null,null,null,null,0,0,0,null,null,null,null,null,null,null]]`)
 
 	// eat order ack notification
 	_, errn := listener.nextNotification()
@@ -545,7 +560,7 @@ func TestUpdateOrder(t *testing.T) {
 	}
 
 	// assert order new update
-	assert(t, &bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}, on)
+	assert(t, fmt.Sprint(bitfinex.OrderNew{ID: 1234567, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1515179518260, MTSUpdated: 1515179518315, Type: "LIMIT", Amount: 1, AmountOrig: 1, Status: "ACTIVE", Price: 900.0}), fmt.Sprint(*on))
 
 	// publish update request
 	req := &bitfinex.OrderUpdateRequest{
@@ -562,7 +577,7 @@ func TestUpdateOrder(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	// assert sent message
-	assert(t, req, async.Sent[pre].(*bitfinex.OrderUpdateRequest))
+	assert(t, fmt.Sprint(*req), fmt.Sprint(*async.Sent[pre].(*bitfinex.OrderUpdateRequest)))
 
 	// cancel ack notify
 	async.Publish(`[0,"n",[1547469854094,"ou-req",null,null,[1234567,0,123,"tBTCUSD",1547469854025,1547469854042,0.04,0.04,"LIMIT",null,null,null,0,"ACTIVE",null,null,1200,0,0,0,null,null,null,0,0,null,null,null,"API>BFX",null,null,null],null,"SUCCESS","Submitting update to exchange limit buy order for 0.04 BTC."]]`)
@@ -574,7 +589,7 @@ func TestUpdateOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.OrderUpdate{ID:1234567, GID:0, CID:123, Symbol:"tBTCUSD", MTSCreated:1547469854025, MTSUpdated:1547469854121, Amount:0.04, AmountOrig:0.04, Type:"LIMIT", TypePrev:"", Flags:0, Status:"ACTIVE", Price:1200, PriceAvg:0, PriceTrailing:0, PriceAuxLimit:0, Notify:false, Hidden:false, PlacedID:0}, ou)
+	assert(t, fmt.Sprint(bitfinex.OrderUpdate{ID:1234567, GID:0, CID:123, Symbol:"tBTCUSD", MTSCreated:1547469854025, MTSUpdated:1547469854121, Amount:0.04, AmountOrig:0.04, Type:"LIMIT", TypePrev:"", Flags:0, Status:"ACTIVE", Price:1200, PriceAvg:0, PriceTrailing:0, PriceAuxLimit:0, Notify:false, Hidden:false, PlacedID:0}), fmt.Sprint(*ou))
 }
 
 func TestUsesAuthenticatedSocket(t *testing.T) {
@@ -603,7 +618,7 @@ func TestUsesAuthenticatedSocket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &websocket.InfoEvent{Version: 2}, ev)
+	assert(t, fmt.Sprint(websocket.InfoEvent{Version: 2}), fmt.Sprint(*ev))
 	// auth ack
 	async.Publish(`{"event":"auth","status":"OK","chanId":0,"userId":1,"subId":"nonce1","auth_id":"valid-auth-guid","caps":{"orders":{"read":1,"write":0},"account":{"read":1,"write":0},"funding":{"read":1,"write":0},"history":{"read":1,"write":0},"wallets":{"read":1,"write":0},"withdraw":{"read":0,"write":0},"positions":{"read":1,"write":0}}}`)
 	// force websocket to create new connections

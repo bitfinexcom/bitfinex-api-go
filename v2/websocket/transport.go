@@ -16,7 +16,7 @@ import (
 
 // size of channel that the websocket writer
 // routine pulls from
-const WS_WRITE_CAPACITY = 100
+const WS_WRITE_CAPACITY = 5000
 // size of channel that the websocket reader
 // routine pushes websocket updates into
 const WS_READ_CAPACITY = 10
@@ -101,10 +101,6 @@ func (w *ws) keepAlivePinger() {
 // can block so specify a context with timeout if you don't want to wait for too
 // long.
 func (w *ws) Send(ctx context.Context, msg interface{}) error {
-	if w.ws == nil {
-		return ErrWSNotConnected
-	}
-
 	bs, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -181,6 +177,10 @@ func (w *ws) listenWs() {
 			}
 			w.log.Debugf("srv->ws: %s", string(msg))
 			w.lock.RLock()
+			if w.downstream == nil {
+				w.lock.RUnlock()
+				return
+			}
 			w.downstream <- msg
 			w.lock.RUnlock()
 		}
@@ -199,6 +199,7 @@ func (w *ws) stop(err error) {
 		w.quit <- err // pass error back
 		close(w.quit) // signal to parent listeners
 		close(w.downstream)
+		w.downstream = nil
 		if err := w.ws.Close(); err != nil {
 			w.log.Error(fmt.Errorf("error closing websocket: %s", err))
 		}

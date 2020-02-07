@@ -271,7 +271,7 @@ func (c *Client) Unsubscribe(ctx context.Context, id string) error {
 		return err
 	}
 	// sub is removed from manager on ack from API
-	return c.sendUnsubscribeMessage(ctx, sub.ChanID)
+	return c.sendUnsubscribeMessage(ctx, sub)
 }
 
 func (c *Client) listenDisconnect() {
@@ -472,17 +472,12 @@ func (c *Client) handleMessage(socketId SocketId, msg []byte) error {
 	return err
 }
 
-func (c *Client) sendUnsubscribeMessage(ctx context.Context, chanID int64) error {
-	// get the socket that the channel is assigned to
-	sub, err := c.subscriptions.lookupByChannelID(chanID)
-	if err != nil {
-		return err
-	}
+func (c *Client) sendUnsubscribeMessage(ctx context.Context, sub *subscription) error {
 	socket, err := c.socketById(sub.SocketId)
 	if err != nil {
 		return err
 	}
-	return socket.Asynchronous.Send(ctx, unsubscribeMsg{Event: "unsubscribe", ChanID: chanID})
+	return socket.Asynchronous.Send(ctx, unsubscribeMsg{Event: "unsubscribe", ChanID: sub.ChanID})
 }
 
 func (c *Client) checkResubscription(socketId SocketId) {

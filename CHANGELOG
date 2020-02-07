@@ -1,3 +1,12 @@
+2.2.7
+
+- Separates subscriptions by socketID to prevent clashing
+
+2.2.6
+
+- Adds AffiliateCode field to order submission
+- Extracts and exposes Meta field from order object
+
 2.2.5
 
 - hotfix: parse notify info even if type not recognised
