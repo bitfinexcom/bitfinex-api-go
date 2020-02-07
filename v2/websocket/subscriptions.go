@@ -327,17 +327,6 @@ func (s *subscriptions) activate(subID string, chanID int64) error {
 	return fmt.Errorf("could not find subscription ID %s to activate", subID)
 }
 
-// depreciated, make sure you use lookupBySocketChannelID to avoid subscriptions
-// clashing when there are many sockets open
-func (s *subscriptions) lookupByChannelID(chanID int64) (*subscription, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-	if sub, ok := s.subsByChanID[chanID]; ok {
-		return sub, nil
-	}
-	return nil, fmt.Errorf("could not find subscription for channel ID %d", chanID)
-}
-
 func (s *subscriptions) lookupBySocketChannelID(chanID int64, sId SocketId) (*subscription, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
