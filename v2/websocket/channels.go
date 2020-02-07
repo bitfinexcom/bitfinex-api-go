@@ -23,7 +23,7 @@ func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
 	}
 
 	chanID := int64(chID)
-	sub, err := c.subscriptions.lookupByChannelID(chanID)
+	sub, err := c.subscriptions.lookupBySocketChannelID(chanID, socketId)
 	if err != nil {
 		// no subscribed channel for message
 		return err
@@ -38,16 +38,16 @@ func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
 				return nil
 			case "cs":
 				if checksum, ok := raw[2].(float64); ok {
-					return c.handleChecksumChannel(chanID, int(checksum))
+					return c.handleChecksumChannel(sub, int(checksum))
 				} else {
 					c.log.Error("Unable to parse checksum")
 				}
 			default:
 				body := raw[2].([]interface{})
-				return c.handlePublicChannel(chanID, sub.Request.Channel, data, body, msg)
+				return c.handlePublicChannel(sub, sub.Request.Channel, data, body, msg)
 			}
 		case []interface{}:
-			return c.handlePublicChannel(chanID, sub.Request.Channel, "", data, msg)
+			return c.handlePublicChannel(sub, sub.Request.Channel, "", data, msg)
 		}
 	} else {
 		return c.handlePrivateChannel(raw)
@@ -55,11 +55,7 @@ func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
 	return nil
 }
 
-func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
-	sub, err := c.subscriptions.lookupByChannelID(chanId)
-	if err != nil {
-		return err
-	}
+func (c *Client) handleChecksumChannel(sub *subscription, checksum int) error {
 	symbol := sub.Request.Symbol
 	// force to signed integer
 	bChecksum := uint32(checksum)
@@ -77,7 +73,7 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 		} else {
 			c.log.Warningf("Orderbook '%s' checksum is invalid got %d bot got %d. Data Out of sync, reconnecting.",
 				symbol, bChecksum, oChecksum)
-			err := c.sendUnsubscribeMessage(context.Background(), chanId)
+			err := c.sendUnsubscribeMessage(context.Background(), sub)
 			if err != nil {
 				return err
 			}
@@ -97,7 +93,7 @@ func (c *Client) handleChecksumChannel(chanId int64, checksum int) error {
 	return nil
 }
 
-func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data []interface{}, raw_msg []byte) error {
+func (c *Client) handlePublicChannel(sub *subscription, channel, objType string, data []interface{}, raw_msg []byte) error {
 	// unauthenticated data slice
 	// public data is returned as raw interface arrays, use a factory to convert to raw type & publish
 	if factory, ok := c.factories[channel]; ok {
@@ -108,7 +104,7 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 				// snapshot item
 				c.mtx.Lock()
 				// lock mutex since its mutates client struct
-				msg, err := factory.BuildSnapshot(chanID, interfaceArray, raw_msg)
+				msg, err := factory.BuildSnapshot(sub, interfaceArray, raw_msg)
 				c.mtx.Unlock()
 				if err != nil {
 					return err
@@ -118,7 +114,7 @@ func (c *Client) handlePublicChannel(chanID int64, channel, objType string, data
 				}
 			} else {
 				// single item
-				msg, err := factory.Build(chanID, objType, data, raw_msg)
+				msg, err := factory.Build(sub, objType, data, raw_msg)
 				if err != nil {
 					return err
 				}
