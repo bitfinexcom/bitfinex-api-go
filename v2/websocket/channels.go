@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -100,7 +101,7 @@ func (c *Client) handlePublicChannel(sub *subscription, channel, objType string,
 		// convert to type array of interfaces
 		if len(data) > 0 {
 			if _, ok := data[0].([]interface{}); ok {
-				interfaceArray := bitfinex.ToInterfaceArray(data)
+				interfaceArray := convert.ToInterfaceArray(data)
 				// snapshot item
 				c.mtx.Lock()
 				// lock mutex since its mutates client struct
@@ -132,7 +133,7 @@ func (c *Client) handlePublicChannel(sub *subscription, channel, objType string,
 
 func (c *Client) handlePrivateChannel(raw []interface{}) error {
 	// authenticated data slice, or a heartbeat
-	if val, ok := raw[1].(string); ok && val == "hb"{
+	if val, ok := raw[1].(string); ok && val == "hb" {
 		chanID, ok := raw[0].(float64)
 		if !ok {
 			c.log.Warningf("could not find chanID: %#v", raw)

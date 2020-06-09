@@ -6,12 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/utils"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/bitfinexcom/bitfinex-api-go/utils"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 var productionBaseURL = "https://api-pub.bitfinex.com/v2/"
@@ -47,6 +48,7 @@ type Client struct {
 	Status      StatusService
 	Derivatives DerivativesService
 	Funding     FundingService
+	Pulse       PulseService
 
 	Synchronous
 }
@@ -109,7 +111,7 @@ func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.
 	c.Candles = CandleService{Synchronous: c}
 	c.Trades = TradeService{Synchronous: c, requestFactory: c}
 	c.Tickers = TickerService{Synchronous: c, requestFactory: c}
-	c.Currencies = CurrenciesService{ Synchronous: c, requestFactory: c}
+	c.Currencies = CurrenciesService{Synchronous: c, requestFactory: c}
 	c.Platform = PlatformService{Synchronous: c}
 	c.Positions = PositionService{Synchronous: c, requestFactory: c}
 	c.Wallet = WalletService{Synchronous: c, requestFactory: c}
@@ -118,6 +120,7 @@ func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.
 	c.Status = StatusService{Synchronous: c, requestFactory: c}
 	c.Derivatives = DerivativesService{Synchronous: c, requestFactory: c}
 	c.Funding = FundingService{Synchronous: c, requestFactory: c}
+	c.Pulse = PulseService{Synchronous: c, requestFactory: c}
 	return c
 }
 
@@ -130,10 +133,10 @@ func (c *Client) Credentials(key string, secret string) *Client {
 
 // Request is a wrapper for standard http.Request.  Default method is POST with no data.
 type Request struct {
-	RefURL  string                 // ref url
-	Data    []byte                 // body data
-	Method  string                 // http method
-	Params  url.Values             // query parameters
+	RefURL  string     // ref url
+	Data    []byte     // body data
+	Method  string     // http method
+	Params  url.Values // query parameters
 	Headers map[string]string
 }
 
@@ -182,7 +185,7 @@ func (c *Client) NewAuthenticatedRequestWithBytes(permissionType bitfinex.Permis
 // Create a new authenticated POST request with the given permission type,endpoint url and data (map[string]interface{}) as the body
 // For example permissionType = "r" and refUrl = "/orders" then the target endpoint will be
 // https://api.bitfinex.com/v2/auth/r/orders/:Symbol
-func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType,refURL string, data map[string]interface{}) (Request, error) {
+func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType, refURL string, data map[string]interface{}) (Request, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
 		return Request{}, err
