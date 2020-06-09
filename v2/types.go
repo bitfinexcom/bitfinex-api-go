@@ -7,6 +7,8 @@ import (
 	"log"
 	"math"
 	"strings"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
 // Prefixes for available pairs
@@ -189,19 +191,19 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 
 func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 	aux := struct {
-		GID           int64                   `json:"gid"`
-		CID           int64                   `json:"cid"`
-		Type          string                  `json:"type"`
-		Symbol        string                  `json:"symbol"`
-		Amount        float64                 `json:"amount,string"`
-		Price         float64                 `json:"price,string"`
-		Leverage      int64                   `json:"lev,omitempty"`
-		PriceTrailing float64                 `json:"price_trailing,string,omitempty"`
-		PriceAuxLimit float64                 `json:"price_aux_limit,string,omitempty"`
-		PriceOcoStop  float64                 `json:"price_oco_stop,string,omitempty"`
-		TimeInForce   string                  `json:"tif,omitempty"`
-		Flags         int                     `json:"flags,omitempty"`
-		Meta          map[string]interface{}  `json:"meta,omitempty"`
+		GID           int64                  `json:"gid"`
+		CID           int64                  `json:"cid"`
+		Type          string                 `json:"type"`
+		Symbol        string                 `json:"symbol"`
+		Amount        float64                `json:"amount,string"`
+		Price         float64                `json:"price,string"`
+		Leverage      int64                  `json:"lev,omitempty"`
+		PriceTrailing float64                `json:"price_trailing,string,omitempty"`
+		PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
+		PriceOcoStop  float64                `json:"price_oco_stop,string,omitempty"`
+		TimeInForce   string                 `json:"tif,omitempty"`
+		Flags         int                    `json:"flags,omitempty"`
+		Meta          map[string]interface{} `json:"meta,omitempty"`
 	}{
 		GID:           o.GID,
 		CID:           o.CID,
@@ -410,45 +412,45 @@ type Order struct {
 func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
 	if len(raw) == 12 {
 		o = &Order{
-			ID:         int64(f64ValOrZero(raw[0])),
-			Symbol:     sValOrEmpty(raw[1]),
-			Amount:     f64ValOrZero(raw[2]),
-			AmountOrig: f64ValOrZero(raw[3]),
-			Type:       sValOrEmpty(raw[4]),
-			Status:     OrderStatus(sValOrEmpty(raw[5])),
-			Price:      f64ValOrZero(raw[6]),
-			PriceAvg:   f64ValOrZero(raw[7]),
-			MTSUpdated: i64ValOrZero(raw[8]),
+			ID:         int64(convert.F64ValOrZero(raw[0])),
+			Symbol:     convert.SValOrEmpty(raw[1]),
+			Amount:     convert.F64ValOrZero(raw[2]),
+			AmountOrig: convert.F64ValOrZero(raw[3]),
+			Type:       convert.SValOrEmpty(raw[4]),
+			Status:     OrderStatus(convert.SValOrEmpty(raw[5])),
+			Price:      convert.F64ValOrZero(raw[6]),
+			PriceAvg:   convert.F64ValOrZero(raw[7]),
+			MTSUpdated: convert.I64ValOrZero(raw[8]),
 			// 3 trailing zeroes, what do they map to?
 		}
 	} else if len(raw) < 26 {
 		return o, fmt.Errorf("data slice too short for order: %#v", raw)
 	} else {
 		o = &Order{
-			ID:            int64(f64ValOrZero(raw[0])),
-			GID:           int64(f64ValOrZero(raw[1])),
-			CID:           int64(f64ValOrZero(raw[2])),
-			Symbol:        sValOrEmpty(raw[3]),
-			MTSCreated:    int64(f64ValOrZero(raw[4])),
-			MTSUpdated:    int64(f64ValOrZero(raw[5])),
-			Amount:        f64ValOrZero(raw[6]),
-			AmountOrig:    f64ValOrZero(raw[7]),
-			Type:          sValOrEmpty(raw[8]),
-			TypePrev:      sValOrEmpty(raw[9]),
-			MTSTif:        int64(f64ValOrZero(raw[10])),
-			Flags:         i64ValOrZero(raw[12]),
-			Status:        OrderStatus(sValOrEmpty(raw[13])),
-			Price:         f64ValOrZero(raw[16]),
-			PriceAvg:      f64ValOrZero(raw[17]),
-			PriceTrailing: f64ValOrZero(raw[18]),
-			PriceAuxLimit: f64ValOrZero(raw[19]),
-			Notify:        bValOrFalse(raw[23]),
-			Hidden:        bValOrFalse(raw[24]),
-			PlacedID:      i64ValOrZero(raw[25]),
+			ID:            int64(convert.F64ValOrZero(raw[0])),
+			GID:           int64(convert.F64ValOrZero(raw[1])),
+			CID:           int64(convert.F64ValOrZero(raw[2])),
+			Symbol:        convert.SValOrEmpty(raw[3]),
+			MTSCreated:    int64(convert.F64ValOrZero(raw[4])),
+			MTSUpdated:    int64(convert.F64ValOrZero(raw[5])),
+			Amount:        convert.F64ValOrZero(raw[6]),
+			AmountOrig:    convert.F64ValOrZero(raw[7]),
+			Type:          convert.SValOrEmpty(raw[8]),
+			TypePrev:      convert.SValOrEmpty(raw[9]),
+			MTSTif:        int64(convert.F64ValOrZero(raw[10])),
+			Flags:         convert.I64ValOrZero(raw[12]),
+			Status:        OrderStatus(convert.SValOrEmpty(raw[13])),
+			Price:         convert.F64ValOrZero(raw[16]),
+			PriceAvg:      convert.F64ValOrZero(raw[17]),
+			PriceTrailing: convert.F64ValOrZero(raw[18]),
+			PriceAuxLimit: convert.F64ValOrZero(raw[19]),
+			Notify:        convert.BValOrFalse(raw[23]),
+			Hidden:        convert.BValOrFalse(raw[24]),
+			PlacedID:      convert.I64ValOrZero(raw[25]),
 		}
 	}
 	if len(raw) >= 31 {
-		o.Meta = siMapOrEmpty(raw[31])
+		o.Meta = convert.SiMapOrEmpty(raw[31])
 	}
 	return o, nil
 }
@@ -520,41 +522,41 @@ type Position struct {
 func NewPositionFromRaw(raw []interface{}) (o *Position, err error) {
 	if len(raw) == 6 {
 		o = &Position{
-			Symbol:            sValOrEmpty(raw[0]),
-			Status:            PositionStatus(sValOrEmpty(raw[1])),
-			Amount:            f64ValOrZero(raw[2]),
-			BasePrice:         f64ValOrZero(raw[3]),
-			MarginFunding:     f64ValOrZero(raw[4]),
-			MarginFundingType: i64ValOrZero(raw[5]),
+			Symbol:            convert.SValOrEmpty(raw[0]),
+			Status:            PositionStatus(convert.SValOrEmpty(raw[1])),
+			Amount:            convert.F64ValOrZero(raw[2]),
+			BasePrice:         convert.F64ValOrZero(raw[3]),
+			MarginFunding:     convert.F64ValOrZero(raw[4]),
+			MarginFundingType: convert.I64ValOrZero(raw[5]),
 		}
 	} else if len(raw) < 10 {
 		return o, fmt.Errorf("data slice too short for position: %#v", raw)
 	} else if len(raw) == 10 {
 		o = &Position{
-			Symbol:               sValOrEmpty(raw[0]),
-			Status:               PositionStatus(sValOrEmpty(raw[1])),
-			Amount:               f64ValOrZero(raw[2]),
-			BasePrice:            f64ValOrZero(raw[3]),
-			MarginFunding:        f64ValOrZero(raw[4]),
-			MarginFundingType:    i64ValOrZero(raw[5]),
-			ProfitLoss:           f64ValOrZero(raw[6]),
-			ProfitLossPercentage: f64ValOrZero(raw[7]),
-			LiquidationPrice:     f64ValOrZero(raw[8]),
-			Leverage:             f64ValOrZero(raw[9]),
+			Symbol:               convert.SValOrEmpty(raw[0]),
+			Status:               PositionStatus(convert.SValOrEmpty(raw[1])),
+			Amount:               convert.F64ValOrZero(raw[2]),
+			BasePrice:            convert.F64ValOrZero(raw[3]),
+			MarginFunding:        convert.F64ValOrZero(raw[4]),
+			MarginFundingType:    convert.I64ValOrZero(raw[5]),
+			ProfitLoss:           convert.F64ValOrZero(raw[6]),
+			ProfitLossPercentage: convert.F64ValOrZero(raw[7]),
+			LiquidationPrice:     convert.F64ValOrZero(raw[8]),
+			Leverage:             convert.F64ValOrZero(raw[9]),
 		}
 	} else {
 		o = &Position{
-			Symbol:               sValOrEmpty(raw[0]),
-			Status:               PositionStatus(sValOrEmpty(raw[1])),
-			Amount:               f64ValOrZero(raw[2]),
-			BasePrice:            f64ValOrZero(raw[3]),
-			MarginFunding:        f64ValOrZero(raw[4]),
-			MarginFundingType:    i64ValOrZero(raw[5]),
-			ProfitLoss:           f64ValOrZero(raw[6]),
-			ProfitLossPercentage: f64ValOrZero(raw[7]),
-			LiquidationPrice:     f64ValOrZero(raw[8]),
-			Leverage:             f64ValOrZero(raw[9]),
-			Id:                   int64(f64ValOrZero(raw[11])),
+			Symbol:               convert.SValOrEmpty(raw[0]),
+			Status:               PositionStatus(convert.SValOrEmpty(raw[1])),
+			Amount:               convert.F64ValOrZero(raw[2]),
+			BasePrice:            convert.F64ValOrZero(raw[3]),
+			MarginFunding:        convert.F64ValOrZero(raw[4]),
+			MarginFundingType:    convert.I64ValOrZero(raw[5]),
+			ProfitLoss:           convert.F64ValOrZero(raw[6]),
+			ProfitLossPercentage: convert.F64ValOrZero(raw[7]),
+			LiquidationPrice:     convert.F64ValOrZero(raw[8]),
+			Leverage:             convert.F64ValOrZero(raw[9]),
+			Id:                   int64(convert.F64ValOrZero(raw[11])),
 		}
 	}
 	return
@@ -620,7 +622,7 @@ func NewTradeFromRaw(pair string, raw []interface{}) (o *Trade, err error) {
 		return o, fmt.Errorf("data slice too short for trade: %#v", raw)
 	}
 
-	amt := f64ValOrZero(raw[2])
+	amt := convert.F64ValOrZero(raw[2])
 	var side OrderSide
 	if amt > 0 {
 		side = Bid
@@ -630,10 +632,10 @@ func NewTradeFromRaw(pair string, raw []interface{}) (o *Trade, err error) {
 
 	o = &Trade{
 		Pair:   pair,
-		ID:     i64ValOrZero(raw[0]),
-		MTS:    i64ValOrZero(raw[1]),
+		ID:     convert.I64ValOrZero(raw[0]),
+		MTS:    convert.I64ValOrZero(raw[1]),
 		Amount: math.Abs(amt),
-		Price:  f64ValOrZero(raw[3]),
+		Price:  convert.F64ValOrZero(raw[3]),
 		Side:   side,
 	}
 
@@ -679,26 +681,26 @@ type TradeExecutionUpdate struct {
 func NewTradeExecutionUpdateFromRaw(raw []interface{}) (o *TradeExecutionUpdate, err error) {
 	if len(raw) == 4 {
 		o = &TradeExecutionUpdate{
-			ID:         i64ValOrZero(raw[0]),
-			MTS:        i64ValOrZero(raw[1]),
-			ExecAmount: f64ValOrZero(raw[2]),
-			ExecPrice:  f64ValOrZero(raw[3]),
+			ID:         convert.I64ValOrZero(raw[0]),
+			MTS:        convert.I64ValOrZero(raw[1]),
+			ExecAmount: convert.F64ValOrZero(raw[2]),
+			ExecPrice:  convert.F64ValOrZero(raw[3]),
 		}
 		return
 	}
 	if len(raw) == 11 {
 		o = &TradeExecutionUpdate{
-			ID:          i64ValOrZero(raw[0]),
-			Pair:        sValOrEmpty(raw[1]),
-			MTS:         i64ValOrZero(raw[2]),
-			OrderID:     i64ValOrZero(raw[3]),
-			ExecAmount:  f64ValOrZero(raw[4]),
-			ExecPrice:   f64ValOrZero(raw[5]),
-			OrderType:   sValOrEmpty(raw[6]),
-			OrderPrice:  f64ValOrZero(raw[7]),
-			Maker:       iValOrZero(raw[8]),
-			Fee:         f64ValOrZero(raw[9]),
-			FeeCurrency: sValOrEmpty(raw[10]),
+			ID:          convert.I64ValOrZero(raw[0]),
+			Pair:        convert.SValOrEmpty(raw[1]),
+			MTS:         convert.I64ValOrZero(raw[2]),
+			OrderID:     convert.I64ValOrZero(raw[3]),
+			ExecAmount:  convert.F64ValOrZero(raw[4]),
+			ExecPrice:   convert.F64ValOrZero(raw[5]),
+			OrderType:   convert.SValOrEmpty(raw[6]),
+			OrderPrice:  convert.F64ValOrZero(raw[7]),
+			Maker:       convert.IValOrZero(raw[8]),
+			Fee:         convert.F64ValOrZero(raw[9]),
+			FeeCurrency: convert.SValOrEmpty(raw[10]),
 		}
 		return
 	}
@@ -755,18 +757,18 @@ func NewTradeExecutionFromRaw(raw []interface{}) (o *TradeExecution, err error) 
 
 	// trade executions sometimes omit order type, price, and maker flag
 	o = &TradeExecution{
-		ID:      i64ValOrZero(raw[0]),
-		Pair:    sValOrEmpty(raw[1]),
-		MTS:     i64ValOrZero(raw[2]),
-		OrderID: i64ValOrZero(raw[3]),
-		Amount:  f64ValOrZero(raw[4]),
-		Price:   f64ValOrZero(raw[5]),
+		ID:      convert.I64ValOrZero(raw[0]),
+		Pair:    convert.SValOrEmpty(raw[1]),
+		MTS:     convert.I64ValOrZero(raw[2]),
+		OrderID: convert.I64ValOrZero(raw[3]),
+		Amount:  convert.F64ValOrZero(raw[4]),
+		Price:   convert.F64ValOrZero(raw[5]),
 	}
 
 	if len(raw) >= 9 {
-		o.OrderType = sValOrEmpty(raw[6])
-		o.OrderPrice = f64ValOrZero(raw[7])
-		o.Maker = iValOrZero(raw[8])
+		o.OrderType = convert.SValOrEmpty(raw[6])
+		o.OrderPrice = convert.F64ValOrZero(raw[7])
+		o.Maker = convert.IValOrZero(raw[8])
 	}
 
 	return
@@ -783,20 +785,20 @@ type Wallet struct {
 func NewWalletFromRaw(raw []interface{}) (o *Wallet, err error) {
 	if len(raw) == 4 {
 		o = &Wallet{
-			Type:              sValOrEmpty(raw[0]),
-			Currency:          sValOrEmpty(raw[1]),
-			Balance:           f64ValOrZero(raw[2]),
-			UnsettledInterest: f64ValOrZero(raw[3]),
+			Type:              convert.SValOrEmpty(raw[0]),
+			Currency:          convert.SValOrEmpty(raw[1]),
+			Balance:           convert.F64ValOrZero(raw[2]),
+			UnsettledInterest: convert.F64ValOrZero(raw[3]),
 		}
 	} else if len(raw) < 5 {
 		return o, fmt.Errorf("data slice too short for wallet: %#v", raw)
 	} else {
 		o = &Wallet{
-			Type:              sValOrEmpty(raw[0]),
-			Currency:          sValOrEmpty(raw[1]),
-			Balance:           f64ValOrZero(raw[2]),
-			UnsettledInterest: f64ValOrZero(raw[3]),
-			BalanceAvailable:  f64ValOrZero(raw[4]),
+			Type:              convert.SValOrEmpty(raw[0]),
+			Currency:          convert.SValOrEmpty(raw[1]),
+			Balance:           convert.F64ValOrZero(raw[2]),
+			UnsettledInterest: convert.F64ValOrZero(raw[3]),
+			BalanceAvailable:  convert.F64ValOrZero(raw[4]),
 		}
 	}
 	return
@@ -845,10 +847,10 @@ func NewBalanceInfoFromRaw(raw []interface{}) (o *BalanceInfo, err error) {
 	}
 
 	o = &BalanceInfo{
-		TotalAUM: f64ValOrZero(raw[0]),
-		NetAUM:   f64ValOrZero(raw[1]),
-		/*WalletType: sValOrEmpty(raw[2]),
-		Currency:   sValOrEmpty(raw[3]),*/
+		TotalAUM: convert.F64ValOrZero(raw[0]),
+		NetAUM:   convert.F64ValOrZero(raw[1]),
+		/*WalletType: convert.SValOrEmpty(raw[2]),
+		Currency:   convert.SValOrEmpty(raw[3]),*/
 	}
 
 	return
@@ -904,7 +906,7 @@ func NewMarginInfoUpdateFromRaw(symbol string, raw []interface{}) (o *MarginInfo
 
 	o = &MarginInfoUpdate{
 		Symbol:          symbol,
-		TradableBalance: f64ValOrZero(raw[0]),
+		TradableBalance: convert.F64ValOrZero(raw[0]),
 	}
 
 	return
@@ -923,10 +925,10 @@ func NewMarginInfoBaseFromRaw(raw []interface{}) (o *MarginInfoBase, err error) 
 	}
 
 	o = &MarginInfoBase{
-		UserProfitLoss: f64ValOrZero(raw[0]),
-		UserSwaps:      f64ValOrZero(raw[1]),
-		MarginBalance:  f64ValOrZero(raw[2]),
-		MarginNet:      f64ValOrZero(raw[3]),
+		UserProfitLoss: convert.F64ValOrZero(raw[0]),
+		UserSwaps:      convert.F64ValOrZero(raw[1]),
+		MarginBalance:  convert.F64ValOrZero(raw[2]),
+		MarginNet:      convert.F64ValOrZero(raw[3]),
 	}
 
 	return
@@ -961,10 +963,10 @@ func NewFundingInfoFromRaw(raw []interface{}) (o *FundingInfo, err error) {
 
 	o = &FundingInfo{
 		Symbol:       sym,
-		YieldLoan:    f64ValOrZero(data[0]),
-		YieldLend:    f64ValOrZero(data[1]),
-		DurationLoan: f64ValOrZero(data[2]),
-		DurationLend: f64ValOrZero(data[3]),
+		YieldLoan:    convert.F64ValOrZero(data[0]),
+		YieldLend:    convert.F64ValOrZero(data[1]),
+		DurationLoan: convert.F64ValOrZero(data[2]),
+		DurationLend: convert.F64ValOrZero(data[3]),
 	}
 
 	return
@@ -1067,22 +1069,22 @@ func NewOfferFromRaw(raw []interface{}) (o *Offer, err error) {
 	}
 
 	o = &Offer{
-		ID:         i64ValOrZero(raw[0]),
-		Symbol:     sValOrEmpty(raw[1]),
-		MTSCreated: i64ValOrZero(raw[2]),
-		MTSUpdated: i64ValOrZero(raw[3]),
-		Amount:     f64ValOrZero(raw[4]),
-		AmountOrig: f64ValOrZero(raw[5]),
-		Type:       sValOrEmpty(raw[6]),
+		ID:         convert.I64ValOrZero(raw[0]),
+		Symbol:     convert.SValOrEmpty(raw[1]),
+		MTSCreated: convert.I64ValOrZero(raw[2]),
+		MTSUpdated: convert.I64ValOrZero(raw[3]),
+		Amount:     convert.F64ValOrZero(raw[4]),
+		AmountOrig: convert.F64ValOrZero(raw[5]),
+		Type:       convert.SValOrEmpty(raw[6]),
 		Flags:      raw[9],
-		Status:     OfferStatus(sValOrEmpty(raw[10])),
-		Rate:       f64ValOrZero(raw[14]),
-		Period:     i64ValOrZero(raw[15]),
-		Notify:     bValOrFalse(raw[16]),
-		Hidden:     bValOrFalse(raw[17]),
-		Insure:     bValOrFalse(raw[18]),
-		Renew:      bValOrFalse(raw[19]),
-		RateReal:   f64ValOrZero(raw[20]),
+		Status:     OfferStatus(convert.SValOrEmpty(raw[10])),
+		Rate:       convert.F64ValOrZero(raw[14]),
+		Period:     convert.I64ValOrZero(raw[15]),
+		Notify:     convert.BValOrFalse(raw[16]),
+		Hidden:     convert.BValOrFalse(raw[17]),
+		Insure:     convert.BValOrFalse(raw[18]),
+		Renew:      convert.BValOrFalse(raw[19]),
+		RateReal:   convert.F64ValOrZero(raw[20]),
 	}
 
 	return
@@ -1162,25 +1164,25 @@ func NewCreditFromRaw(raw []interface{}) (o *Credit, err error) {
 	}
 
 	o = &Credit{
-		ID:            i64ValOrZero(raw[0]),
-		Symbol:        sValOrEmpty(raw[1]),
-		Side:          sValOrEmpty(raw[2]),
-		MTSCreated:    i64ValOrZero(raw[3]),
-		MTSUpdated:    i64ValOrZero(raw[4]),
-		Amount:        f64ValOrZero(raw[5]),
+		ID:            convert.I64ValOrZero(raw[0]),
+		Symbol:        convert.SValOrEmpty(raw[1]),
+		Side:          convert.SValOrEmpty(raw[2]),
+		MTSCreated:    convert.I64ValOrZero(raw[3]),
+		MTSUpdated:    convert.I64ValOrZero(raw[4]),
+		Amount:        convert.F64ValOrZero(raw[5]),
 		Flags:         raw[6],
-		Status:        CreditStatus(sValOrEmpty(raw[7])),
-		Rate:          f64ValOrZero(raw[11]),
-		Period:        i64ValOrZero(raw[12]),
-		MTSOpened:     i64ValOrZero(raw[13]),
-		MTSLastPayout: i64ValOrZero(raw[14]),
-		Notify:        bValOrFalse(raw[15]),
-		Hidden:        bValOrFalse(raw[16]),
-		Insure:        bValOrFalse(raw[17]),
-		Renew:         bValOrFalse(raw[18]),
-		RateReal:      f64ValOrZero(raw[19]),
-		NoClose:       bValOrFalse(raw[20]),
-		PositionPair:  sValOrEmpty(raw[21]),
+		Status:        CreditStatus(convert.SValOrEmpty(raw[7])),
+		Rate:          convert.F64ValOrZero(raw[11]),
+		Period:        convert.I64ValOrZero(raw[12]),
+		MTSOpened:     convert.I64ValOrZero(raw[13]),
+		MTSLastPayout: convert.I64ValOrZero(raw[14]),
+		Notify:        convert.BValOrFalse(raw[15]),
+		Hidden:        convert.BValOrFalse(raw[16]),
+		Insure:        convert.BValOrFalse(raw[17]),
+		Renew:         convert.BValOrFalse(raw[18]),
+		RateReal:      convert.F64ValOrZero(raw[19]),
+		NoClose:       convert.BValOrFalse(raw[20]),
+		PositionPair:  convert.SValOrEmpty(raw[21]),
 	}
 
 	return
@@ -1258,24 +1260,24 @@ func NewLoanFromRaw(raw []interface{}) (o *Loan, err error) {
 	}
 
 	o = &Loan{
-		ID:            i64ValOrZero(raw[0]),
-		Symbol:        sValOrEmpty(raw[1]),
-		Side:          sValOrEmpty(raw[2]),
-		MTSCreated:    i64ValOrZero(raw[3]),
-		MTSUpdated:    i64ValOrZero(raw[4]),
-		Amount:        f64ValOrZero(raw[5]),
+		ID:            convert.I64ValOrZero(raw[0]),
+		Symbol:        convert.SValOrEmpty(raw[1]),
+		Side:          convert.SValOrEmpty(raw[2]),
+		MTSCreated:    convert.I64ValOrZero(raw[3]),
+		MTSUpdated:    convert.I64ValOrZero(raw[4]),
+		Amount:        convert.F64ValOrZero(raw[5]),
 		Flags:         raw[6],
-		Status:        LoanStatus(sValOrEmpty(raw[7])),
-		Rate:          f64ValOrZero(raw[11]),
-		Period:        i64ValOrZero(raw[12]),
-		MTSOpened:     i64ValOrZero(raw[13]),
-		MTSLastPayout: i64ValOrZero(raw[14]),
-		Notify:        bValOrFalse(raw[15]),
-		Hidden:        bValOrFalse(raw[16]),
-		Insure:        bValOrFalse(raw[17]),
-		Renew:         bValOrFalse(raw[18]),
-		RateReal:      f64ValOrZero(raw[19]),
-		NoClose:       bValOrFalse(raw[20]),
+		Status:        LoanStatus(convert.SValOrEmpty(raw[7])),
+		Rate:          convert.F64ValOrZero(raw[11]),
+		Period:        convert.I64ValOrZero(raw[12]),
+		MTSOpened:     convert.I64ValOrZero(raw[13]),
+		MTSLastPayout: convert.I64ValOrZero(raw[14]),
+		Notify:        convert.BValOrFalse(raw[15]),
+		Hidden:        convert.BValOrFalse(raw[16]),
+		Insure:        convert.BValOrFalse(raw[17]),
+		Renew:         convert.BValOrFalse(raw[18]),
+		RateReal:      convert.F64ValOrZero(raw[19]),
+		NoClose:       convert.BValOrFalse(raw[20]),
 	}
 
 	return o, nil
@@ -1334,14 +1336,14 @@ func NewFundingTradeFromRaw(raw []interface{}) (o *FundingTrade, err error) {
 	}
 
 	o = &FundingTrade{
-		ID:         i64ValOrZero(raw[0]),
-		Symbol:     sValOrEmpty(raw[1]),
-		MTSCreated: i64ValOrZero(raw[2]),
-		OfferID:    i64ValOrZero(raw[3]),
-		Amount:     f64ValOrZero(raw[4]),
-		Rate:       f64ValOrZero(raw[5]),
-		Period:     i64ValOrZero(raw[6]),
-		Maker:      i64ValOrZero(raw[7]),
+		ID:         convert.I64ValOrZero(raw[0]),
+		Symbol:     convert.SValOrEmpty(raw[1]),
+		MTSCreated: convert.I64ValOrZero(raw[2]),
+		OfferID:    convert.I64ValOrZero(raw[3]),
+		Amount:     convert.F64ValOrZero(raw[4]),
+		Rate:       convert.F64ValOrZero(raw[5]),
+		Period:     convert.I64ValOrZero(raw[6]),
+		Maker:      convert.I64ValOrZero(raw[7]),
 	}
 
 	return
@@ -1397,13 +1399,13 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 	}
 
 	o = &Notification{
-		MTS:       i64ValOrZero(raw[0]),
-		Type:      sValOrEmpty(raw[1]),
-		MessageID: i64ValOrZero(raw[2]),
+		MTS:       convert.I64ValOrZero(raw[0]),
+		Type:      convert.SValOrEmpty(raw[1]),
+		MessageID: convert.I64ValOrZero(raw[2]),
 		//NotifyInfo: raw[4],
-		Code:   i64ValOrZero(raw[5]),
-		Status: sValOrEmpty(raw[6]),
-		Text:   sValOrEmpty(raw[7]),
+		Code:   convert.I64ValOrZero(raw[5]),
+		Status: convert.SValOrEmpty(raw[6]),
+		Text:   convert.SValOrEmpty(raw[7]),
 	}
 
 	// raw[4] = notify info
@@ -1524,16 +1526,16 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 	if len(raw) == 13 {
 		t = &Ticker{
 			Symbol:          symbol,
-			Bid:             f64ValOrZero(raw[1]),
-			BidSize:         f64ValOrZero(raw[2]),
-			Ask:             f64ValOrZero(raw[4]),
-			AskSize:         f64ValOrZero(raw[5]),
-			DailyChange:     f64ValOrZero(raw[7]),
-			DailyChangePerc: f64ValOrZero(raw[8]),
-			LastPrice:       f64ValOrZero(raw[9]),
-			Volume:          f64ValOrZero(raw[10]),
-			High:            f64ValOrZero(raw[11]),
-			Low:             f64ValOrZero(raw[12]),
+			Bid:             convert.F64ValOrZero(raw[1]),
+			BidSize:         convert.F64ValOrZero(raw[2]),
+			Ask:             convert.F64ValOrZero(raw[4]),
+			AskSize:         convert.F64ValOrZero(raw[5]),
+			DailyChange:     convert.F64ValOrZero(raw[7]),
+			DailyChangePerc: convert.F64ValOrZero(raw[8]),
+			LastPrice:       convert.F64ValOrZero(raw[9]),
+			Volume:          convert.F64ValOrZero(raw[10]),
+			High:            convert.F64ValOrZero(raw[11]),
+			Low:             convert.F64ValOrZero(raw[12]),
 		}
 		return t, nil
 	} else if len(raw) == 16 {
@@ -1542,19 +1544,19 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 		// LAST_PRICE, VOLUME, HIGH, LOW, _PLACEHOLDER, _PLACEHOLDER, FRR_AMOUNT_AVAILABLE
 		t = &Ticker{
 			Symbol:          symbol,
-			Frr:             f64ValOrZero(raw[0]),
-			Bid:             f64ValOrZero(raw[1]),
-			BidPeriod:       i64ValOrZero(raw[2]),
-			BidSize:         f64ValOrZero(raw[3]),
-			Ask:             f64ValOrZero(raw[4]),
-			AskPeriod:       i64ValOrZero(raw[5]),
-			AskSize:         f64ValOrZero(raw[6]),
-			DailyChange:     f64ValOrZero(raw[7]),
-			DailyChangePerc: f64ValOrZero(raw[8]),
-			LastPrice:       f64ValOrZero(raw[9]),
-			Volume:          f64ValOrZero(raw[10]),
-			High:            f64ValOrZero(raw[11]),
-			Low:             f64ValOrZero(raw[12]),
+			Frr:             convert.F64ValOrZero(raw[0]),
+			Bid:             convert.F64ValOrZero(raw[1]),
+			BidPeriod:       convert.I64ValOrZero(raw[2]),
+			BidSize:         convert.F64ValOrZero(raw[3]),
+			Ask:             convert.F64ValOrZero(raw[4]),
+			AskPeriod:       convert.I64ValOrZero(raw[5]),
+			AskSize:         convert.F64ValOrZero(raw[6]),
+			DailyChange:     convert.F64ValOrZero(raw[7]),
+			DailyChangePerc: convert.F64ValOrZero(raw[8]),
+			LastPrice:       convert.F64ValOrZero(raw[9]),
+			Volume:          convert.F64ValOrZero(raw[10]),
+			High:            convert.F64ValOrZero(raw[11]),
+			Low:             convert.F64ValOrZero(raw[12]),
 		}
 		return t, nil
 	}
@@ -1564,16 +1566,16 @@ func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 	// SYMBOL, BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE, LAST_PRICE, VOLUME, HIGH, LOW
 	t = &Ticker{
 		Symbol:          symbol,
-		Bid:             f64ValOrZero(raw[0]),
-		BidSize:         f64ValOrZero(raw[1]),
-		Ask:             f64ValOrZero(raw[2]),
-		AskSize:         f64ValOrZero(raw[3]),
-		DailyChange:     f64ValOrZero(raw[4]),
-		DailyChangePerc: f64ValOrZero(raw[5]),
-		LastPrice:       f64ValOrZero(raw[6]),
-		Volume:          f64ValOrZero(raw[7]),
-		High:            f64ValOrZero(raw[8]),
-		Low:             f64ValOrZero(raw[9]),
+		Bid:             convert.F64ValOrZero(raw[0]),
+		BidSize:         convert.F64ValOrZero(raw[1]),
+		Ask:             convert.F64ValOrZero(raw[2]),
+		AskSize:         convert.F64ValOrZero(raw[3]),
+		DailyChange:     convert.F64ValOrZero(raw[4]),
+		DailyChangePerc: convert.F64ValOrZero(raw[5]),
+		LastPrice:       convert.F64ValOrZero(raw[6]),
+		Volume:          convert.F64ValOrZero(raw[7]),
+		High:            convert.F64ValOrZero(raw[8]),
+		Low:             convert.F64ValOrZero(raw[9]),
 	}
 
 	return t, nil
@@ -1642,22 +1644,22 @@ func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numb
 	var px_num json.Number
 	var id, cnt int64
 	raw_num_array := raw_numbers.([]interface{})
-	amt := f64ValOrZero(data[2])
-	amt_num := floatToJsonNumber(raw_num_array[2])
+	amt := convert.F64ValOrZero(data[2])
+	amt_num := convert.FloatToJsonNumber(raw_num_array[2])
 
 	var side OrderSide
 	var actionCtrl float64
 	if IsRawBook(precision) {
 		// [ID, price, amount]
-		id = i64ValOrZero(data[0])
-		px = f64ValOrZero(data[1])
-		px_num = floatToJsonNumber(raw_num_array[1])
+		id = convert.I64ValOrZero(data[0])
+		px = convert.F64ValOrZero(data[1])
+		px_num = convert.FloatToJsonNumber(raw_num_array[1])
 		actionCtrl = px
 	} else {
 		// [price, amount, count]
-		px = f64ValOrZero(data[0])
-		px_num = floatToJsonNumber(raw_num_array[0])
-		cnt = i64ValOrZero(data[1])
+		px = convert.F64ValOrZero(data[0])
+		px_num = convert.FloatToJsonNumber(raw_num_array[0])
+		cnt = convert.I64ValOrZero(data[1])
 		actionCtrl = float64(cnt)
 	}
 
@@ -1744,12 +1746,12 @@ func NewCandleFromRaw(symbol string, resolution CandleResolution, raw []interfac
 	c = &Candle{
 		Symbol:     symbol,
 		Resolution: resolution,
-		MTS:        i64ValOrZero(raw[0]),
-		Open:       f64ValOrZero(raw[1]),
-		Close:      f64ValOrZero(raw[2]),
-		High:       f64ValOrZero(raw[3]),
-		Low:        f64ValOrZero(raw[4]),
-		Volume:     f64ValOrZero(raw[5]),
+		MTS:        convert.I64ValOrZero(raw[0]),
+		Open:       convert.F64ValOrZero(raw[1]),
+		Close:      convert.F64ValOrZero(raw[2]),
+		High:       convert.F64ValOrZero(raw[3]),
+		Low:        convert.F64ValOrZero(raw[4]),
+		Volume:     convert.F64ValOrZero(raw[5]),
 	}
 
 	return
@@ -1772,15 +1774,15 @@ type Ledger struct {
 func NewLedgerFromRaw(raw []interface{}) (o *Ledger, err error) {
 	if len(raw) == 9 {
 		o = &Ledger{
-			ID:          int64(f64ValOrZero(raw[0])),
-			Currency:    sValOrEmpty(raw[1]),
-			Nil1:        f64ValOrZero(raw[2]),
-			MTS:         i64ValOrZero(raw[3]),
-			Nil2:        f64ValOrZero(raw[4]),
-			Amount:      f64ValOrZero(raw[5]),
-			Balance:     f64ValOrZero(raw[6]),
-			Nil3:        f64ValOrZero(raw[7]),
-			Description: sValOrEmpty(raw[8]),
+			ID:          int64(convert.F64ValOrZero(raw[0])),
+			Currency:    convert.SValOrEmpty(raw[1]),
+			Nil1:        convert.F64ValOrZero(raw[2]),
+			MTS:         convert.I64ValOrZero(raw[3]),
+			Nil2:        convert.F64ValOrZero(raw[4]),
+			Amount:      convert.F64ValOrZero(raw[5]),
+			Balance:     convert.F64ValOrZero(raw[6]),
+			Nil3:        convert.F64ValOrZero(raw[7]),
+			Description: convert.SValOrEmpty(raw[8]),
 			// API returns 3 Nil values, what do they map to?
 			// API documentation says ID is type integer but api returns a string
 		}
@@ -2020,16 +2022,16 @@ func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*Derivative
 	if len(raw) == 11 {
 		ds := &DerivativeStatus{
 			Symbol: symbol,
-			MTS:    i64ValOrZero(raw[0]),
+			MTS:    convert.I64ValOrZero(raw[0]),
 			// placeholder
-			Price:     f64ValOrZero(raw[2]),
-			SpotPrice: f64ValOrZero(raw[3]),
+			Price:     convert.F64ValOrZero(raw[2]),
+			SpotPrice: convert.F64ValOrZero(raw[3]),
 			// placeholder
-			InsuranceFundBalance: f64ValOrZero(raw[5]),
+			InsuranceFundBalance: convert.F64ValOrZero(raw[5]),
 			// placeholder
 			// placeholder
-			FundingAccrued: f64ValOrZero(raw[8]),
-			FundingStep:    f64ValOrZero(raw[9]),
+			FundingAccrued: convert.F64ValOrZero(raw[8]),
+			FundingStep:    convert.F64ValOrZero(raw[9]),
 			// placeholder
 		}
 		return ds, nil
@@ -2041,17 +2043,17 @@ func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*Derivative
 func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
 	if len(raw) == 12 {
 		ds := &DerivativeStatus{
-			Symbol: sValOrEmpty(raw[0]),
-			MTS:    i64ValOrZero(raw[1]),
+			Symbol: convert.SValOrEmpty(raw[0]),
+			MTS:    convert.I64ValOrZero(raw[1]),
 			// placeholder
-			Price:     f64ValOrZero(raw[3]),
-			SpotPrice: f64ValOrZero(raw[4]),
+			Price:     convert.F64ValOrZero(raw[3]),
+			SpotPrice: convert.F64ValOrZero(raw[4]),
 			// placeholder
-			InsuranceFundBalance: f64ValOrZero(raw[6]),
+			InsuranceFundBalance: convert.F64ValOrZero(raw[6]),
 			// placeholder
 			// placeholder
-			FundingAccrued: f64ValOrZero(raw[9]),
-			FundingStep:    f64ValOrZero(raw[10]),
+			FundingAccrued: convert.F64ValOrZero(raw[9]),
+			FundingStep:    convert.F64ValOrZero(raw[10]),
 			// placeholder
 		}
 		return ds, nil

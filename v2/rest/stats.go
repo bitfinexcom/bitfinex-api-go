@@ -2,8 +2,9 @@ package rest
 
 import (
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"path"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // TradeService manages the Trade endpoint.
@@ -54,7 +55,6 @@ func (ss *StatsService) getLast(symbol string, key bitfinex.StatKey, extra strin
 	volume := stat[1].(float64)
 	return &bitfinex.Stat{Period: int64(period), Volume: volume}, nil
 }
-
 
 // Retrieves platform statistics for funding history
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info

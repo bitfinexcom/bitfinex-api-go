@@ -3,9 +3,11 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"strings"
 	"sync"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 type messageFactory interface {
@@ -28,7 +30,7 @@ func (f *TickerFactory) Build(sub *subscription, objType string, raw []interface
 }
 
 func (f *TickerFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := bitfinex.ToFloat64Array(raw)
+	converted, err := convert.ToFloat64Array(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +55,7 @@ func (f *TradeFactory) Build(sub *subscription, objType string, raw []interface{
 }
 
 func (f *TradeFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := bitfinex.ToFloat64Array(raw)
+	converted, err := convert.ToFloat64Array(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -62,16 +64,16 @@ func (f *TradeFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw
 
 type BookFactory struct {
 	*subscriptions
-	orderbooks     map[string]*Orderbook
-	manageBooks    bool
-	lock           sync.Mutex
+	orderbooks  map[string]*Orderbook
+	manageBooks bool
+	lock        sync.Mutex
 }
 
 func newBookFactory(subs *subscriptions, obs map[string]*Orderbook, manageBooks bool) *BookFactory {
 	return &BookFactory{
 		subscriptions: subs,
-		orderbooks: obs,
-		manageBooks: manageBooks,
+		orderbooks:    obs,
+		manageBooks:   manageBooks,
 	}
 }
 
@@ -79,7 +81,7 @@ func ConvertBytesToJsonNumberArray(raw_bytes []byte) ([]interface{}, error) {
 	var raw_json_number []interface{}
 	d := json.NewDecoder(strings.NewReader(string(raw_bytes)))
 	d.UseNumber()
-	str_conv_err := d.Decode(&raw_json_number);
+	str_conv_err := d.Decode(&raw_json_number)
 	if str_conv_err != nil {
 		return nil, str_conv_err
 	}
@@ -106,7 +108,7 @@ func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}
 }
 
 func (f *BookFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := bitfinex.ToFloat64Array(raw)
+	converted, err := convert.ToFloat64Array(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +156,7 @@ func (f *CandlesFactory) Build(sub *subscription, objType string, raw []interfac
 }
 
 func (f *CandlesFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := bitfinex.ToFloat64Array(raw)
+	converted, err := convert.ToFloat64Array(raw)
 	if err != nil {
 		return nil, err
 	}
