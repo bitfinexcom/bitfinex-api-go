@@ -19,6 +19,32 @@ func F64Slice(in []interface{}) ([]float64, error) {
 	return ret, nil
 }
 
+func ItfToStrSlice(in interface{}) ([]string, error) {
+	ret := []string{}
+	raw, ok := in.([]interface{})
+	if !ok {
+		return ret, nil
+	}
+
+	for _, e := range raw {
+		item, ok := e.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected slice of strings, got: %v", in)
+		}
+		ret = append(ret, item)
+	}
+
+	return ret, nil
+}
+
+func ToInt(in interface{}) int {
+	var out int
+	if val, ok := in.(int); ok {
+		out = val
+	}
+	return out
+}
+
 func ToInterfaceArray(i []interface{}) [][]interface{} {
 	newArr := make([][]interface{}, len(i))
 	for index, item := range i {
