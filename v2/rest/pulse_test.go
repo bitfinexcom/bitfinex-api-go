@@ -148,3 +148,63 @@ func TestPublicPulseHistory(t *testing.T) {
 		assert.Equal(t, expected, pph[0])
 	})
 }
+
+func TestAddPulse(t *testing.T) {
+	t.Run("invalid payload", func(t *testing.T) {
+		p := &pulse.Pulse{Title: "foo"}
+		c := NewClient()
+		pm, err := c.Pulse.AddPulse(p)
+		require.NotNil(t, err)
+		require.Nil(t, pm)
+	})
+
+	t.Run("valid payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			respData := []interface{}{
+				"id",
+				float64(1591614631576),
+				nil,
+				"uid",
+				nil,
+				"title",
+				"content",
+				nil,
+				nil,
+				1,
+				1,
+				nil,
+				[]interface{}{"tag1", "tag2"},
+				[]interface{}{"attach1", "attach2"},
+				nil,
+				5,
+				nil,
+				nil,
+				nil,
+			}
+			payload, _ := json.Marshal(respData)
+			w.Write(payload)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		pm, err := c.Pulse.AddPulse(&pulse.Pulse{Title: "foo bar baz qux 123"})
+		require.Nil(t, err)
+
+		expected := &pulse.Pulse{
+			ID:          "id",
+			MTS:         1591614631576,
+			UserID:      "uid",
+			Title:       "title",
+			Content:     "content",
+			IsPin:       1,
+			IsPublic:    1,
+			Tags:        []string{"tag1", "tag2"},
+			Attachments: []string{"attach1", "attach2"},
+			Likes:       5,
+		}
+
+		assert.Equal(t, expected, pm)
+	})
+}
