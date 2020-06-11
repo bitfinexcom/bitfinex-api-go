@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulse"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulseprofile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,8 +23,8 @@ func TestPublicPulseProfile(t *testing.T) {
 	t.Run("response data slice too short", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			respData := []interface{}{"abc123"}
-			retData, _ := json.Marshal(respData)
-			w.Write(retData)
+			payload, _ := json.Marshal(respData)
+			w.Write(payload)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -53,8 +54,8 @@ func TestPublicPulseProfile(t *testing.T) {
 				5,
 				nil,
 			}
-			retData, _ := json.Marshal(respData)
-			w.Write(retData)
+			payload, _ := json.Marshal(respData)
+			w.Write(payload)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -73,5 +74,77 @@ func TestPublicPulseProfile(t *testing.T) {
 			TwitterHandle: "twitter",
 		}
 		assert.Equal(t, expected, pp)
+	})
+}
+
+func TestPublicPulseHistory(t *testing.T) {
+	t.Run("response data slice too short", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			respData := []interface{}{
+				[]interface{}{"id"},
+			}
+			payload, _ := json.Marshal(respData)
+			w.Write(payload)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		pp, err := c.Pulse.PublicPulseHistory("", "")
+		require.NotNil(t, err)
+		require.Nil(t, pp)
+	})
+
+	t.Run("valid response data no profile", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			respData := []interface{}{
+				[]interface{}{
+					"id",
+					float64(1591614631576),
+					nil,
+					"uid",
+					nil,
+					"title",
+					"content",
+					nil,
+					nil,
+					1,
+					1,
+					nil,
+					[]interface{}{"tag1", "tag2"},
+					[]interface{}{"attach1", "attach2"},
+					nil,
+					5,
+					nil,
+					nil,
+					nil,
+				},
+			}
+			payload, _ := json.Marshal(respData)
+			w.Write(payload)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		pph, err := c.Pulse.PublicPulseHistory("", "")
+		require.Nil(t, err)
+
+		expected := &pulse.Pulse{
+			ID:          "id",
+			MTS:         1591614631576,
+			UserID:      "uid",
+			Title:       "title",
+			Content:     "content",
+			IsPin:       1,
+			IsPublic:    1,
+			Tags:        []string{"tag1", "tag2"},
+			Attachments: []string{"attach1", "attach2"},
+			Likes:       5,
+		}
+
+		assert.Equal(t, expected, pph[0])
 	})
 }
