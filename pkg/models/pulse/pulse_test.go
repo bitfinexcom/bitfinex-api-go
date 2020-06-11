@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewFromRaw(t *testing.T) {
+func TestNewPulseFromRaw(t *testing.T) {
 	t.Run("insufficient arguments", func(t *testing.T) {
 		payload := []interface{}{
 			[]interface{}{"abc123"},

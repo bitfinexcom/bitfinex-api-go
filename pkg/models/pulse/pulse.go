@@ -9,17 +9,17 @@ import (
 
 // Pulse message data structure
 type Pulse struct {
-	ID           string
-	MTS          int64
-	UserID       string
-	Title        string
-	Content      string
-	IsPin        int
-	IsPublic     int
-	Tags         []string
-	Attachments  []string
-	Likes        int
-	PulseProfile *pulseprofile.PulseProfile
+	ID           string                     `json:"id,omitempty"`
+	MTS          int64                      `json:"mts,omitempty"`
+	UserID       string                     `json:"userId,omitempty"`
+	Title        string                     `json:"title,omitempty"`
+	Content      string                     `json:"content,omitempty"`
+	IsPin        int                        `json:"isPin"`
+	IsPublic     int                        `json:"isPublic"`
+	Tags         []string                   `json:"tags,omitempty"`
+	Attachments  []string                   `json:"attachments,omitempty"`
+	Likes        int                        `json:"likes,omitempty"`
+	PulseProfile *pulseprofile.PulseProfile `json:"pulseProfile,omitempty"`
 }
 
 var pulseFields = map[string]int{
@@ -36,7 +36,8 @@ var pulseFields = map[string]int{
 	"PulseProfile": 18,
 }
 
-func newSingleFromRaw(raw []interface{}) (*Pulse, error) {
+// NewSingleFromRaw returns pointer to Pulse message
+func NewSingleFromRaw(raw []interface{}) (*Pulse, error) {
 	if len(raw) < 19 {
 		return nil, fmt.Errorf("data slice too short for Pulse Message: %#v", raw)
 	}
@@ -66,13 +67,15 @@ func newSingleFromRaw(raw []interface{}) (*Pulse, error) {
 	rawProfile := raw[pulseFields["PulseProfile"]]
 	rawProfileItf, ok := rawProfile.([]interface{})
 	if !ok {
-		// if, for some reazon, we can't extract profile data at given index,
-		// we return whatever pulse data we have in place
 		return p, nil
 	}
 
-	rawProfilePayload := convert.ToInterfaceArray(rawProfileItf)[0]
-	p.PulseProfile, err = pulseprofile.NewFromRaw(rawProfilePayload)
+	profilePayload := convert.ToInterfaceArray(rawProfileItf)
+	if len(profilePayload) < 1 {
+		return p, nil
+	}
+
+	p.PulseProfile, err = pulseprofile.NewFromRaw(profilePayload[0])
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +83,7 @@ func newSingleFromRaw(raw []interface{}) (*Pulse, error) {
 	return p, nil
 }
 
-// NewFromRaw returns slice of Pulse messages
+// NewFromRaw returns slice of Pulse message pointers
 func NewFromRaw(raws []interface{}) ([]*Pulse, error) {
 	if len(raws) < 1 {
 		return nil, fmt.Errorf("data slice is too short for Pulse History: %#v", raws)
@@ -90,7 +93,7 @@ func NewFromRaw(raws []interface{}) ([]*Pulse, error) {
 
 	for _, raw := range raws {
 		raw := raw.([]interface{})
-		p, err := newSingleFromRaw(raw)
+		p, err := NewSingleFromRaw(raw)
 		if err != nil {
 			return nil, err
 		}
