@@ -33,15 +33,29 @@ func TestItfToStrSlice(t *testing.T) {
 }
 
 func TestToInt(t *testing.T) {
-	t.Run("valid argument", func(t *testing.T) {
+	t.Run("valid int argument", func(t *testing.T) {
 		payload := 1234
 		expected := 1234
 		got := convert.ToInt(payload)
 		assert.Equal(t, expected, got)
 	})
 
-	t.Run("invalid argument", func(t *testing.T) {
+	t.Run("valid string int", func(t *testing.T) {
 		payload := "1"
+		expected := 1
+		got := convert.ToInt(payload)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("float64", func(t *testing.T) {
+		var payload float64 = 1234
+		expected := 1234
+		got := convert.ToInt(payload)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("invalid string int", func(t *testing.T) {
+		payload := "foo"
 		expected := 0
 		got := convert.ToInt(payload)
 		assert.Equal(t, expected, got)
