@@ -37,11 +37,27 @@ func ItfToStrSlice(in interface{}) ([]string, error) {
 	return ret, nil
 }
 
+// ToInt converts various types to integer. If fails, returns 0
 func ToInt(in interface{}) int {
 	var out int
-	if val, ok := in.(int); ok {
-		out = val
+
+	switch in.(type) {
+	case string:
+		if str, ok := in.(string); ok {
+			if i, err := strconv.Atoi(str); err == nil {
+				out = i
+			}
+		}
+	case float64:
+		if flt64, ok := in.(float64); ok {
+			out = int(flt64)
+		}
+	default:
+		if val, ok := in.(int); ok {
+			out = val
+		}
 	}
+
 	return out
 }
 
