@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
@@ -15,5 +15,5 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 
-	fmt.Printf("got public pulse profile: %+v\n", profile)
+	spew.Dump(profile)
 }

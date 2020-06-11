@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewFromRaw(t *testing.T) {
+func TestNewProfileFromRaw(t *testing.T) {
 	t.Run("insufficient arguments", func(t *testing.T) {
 		payload := []interface{}{"abc123"}
 		pp, err := pulseprofile.NewFromRaw(payload)

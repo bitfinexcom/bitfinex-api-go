@@ -1,19 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
 	c := rest.NewClient()
 
-	pulseHist, err := c.Pulse.PublicPulseHistory("1", "")
+	pulseHist, err := c.Pulse.PublicPulseHistory("", "")
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Fatalf("PublicPulseHistory: %s", err)
 	}
 
-	fmt.Printf("got public pulse message: %+v\n", pulseHist[0])
+	spew.Dump(pulseHist)
 }
