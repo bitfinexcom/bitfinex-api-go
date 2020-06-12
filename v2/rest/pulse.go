@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulse"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulseprofile"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
@@ -108,4 +109,21 @@ func (ps *PulseService) PulseHistory(isPublic int) ([]*pulse.Pulse, error) {
 	}
 
 	return pph, nil
+}
+
+// DeletePulse removes pulse, returns 0 if no pulse was deleted and 1 if it was
+func (ps *PulseService) DeletePulse(pid string) (int, error) {
+	payload := map[string]interface{}{"pid": pid}
+
+	req, err := ps.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, path.Join("pulse", "del"), payload)
+	if err != nil {
+		return 0, err
+	}
+
+	raw, err := ps.Request(req)
+	if err != nil {
+		return 0, err
+	}
+
+	return convert.ToInt(raw[0]), nil
 }
