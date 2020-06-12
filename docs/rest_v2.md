@@ -91,6 +91,7 @@ type Client struct {
 	Status      StatusService
 	Derivatives DerivativesService
 	Funding     FundingService
+	Pulse       PulseService
 
 	Synchronous
 }
@@ -485,6 +486,57 @@ func (s *PositionService) Claim(cp *bitfinex.ClaimPositionRequest) (*bitfinex.No
 ```
 Submits a request to claim an active position with the given id see
 https://docs.bitfinex.com/reference#claim-position for more info
+
+#### type PulseService
+
+```go
+type PulseService struct {
+	Synchronous
+}
+```
+
+
+#### func (*PulseService) AddPulse
+
+```go
+func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error)
+```
+AddPulse submits pulse message see
+https://docs.bitfinex.com/reference#rest-auth-pulse-add
+
+#### func (*PulseService) DeletePulse
+
+```go
+func (ps *PulseService) DeletePulse(pid string) (int, error)
+```
+DeletePulse removes your pulse message. Returns 0 if no pulse was deleted and 1
+if it was see https://docs.bitfinex.com/reference#rest-auth-pulse-del
+
+#### func (*PulseService) PublicPulseHistory
+
+```go
+func (ps *PulseService) PublicPulseHistory(limit, end int) ([]*pulse.Pulse, error)
+```
+PublicPulseHistory returns latest pulse messages. You can specify an end
+timestamp to view older messages. see
+https://docs.bitfinex.com/reference#rest-public-pulse-hist
+
+#### func (*PulseService) PublicPulseProfile
+
+```go
+func (ps *PulseService) PublicPulseProfile(nickname string) (*pulseprofile.PulseProfile, error)
+```
+PublicPulseProfile returns details for a specific Pulse profile
+https://docs.bitfinex.com/reference#rest-public-pulse-profile
+
+#### func (*PulseService) PulseHistory
+
+```go
+func (ps *PulseService) PulseHistory(isPublic int) ([]*pulse.Pulse, error)
+```
+PulseHistory allows you to retrieve your private pulse history or the public
+pulse history with an additional UID_LIKED field see
+https://docs.bitfinex.com/reference#rest-auth-pulse-hist
 
 #### type Request
 
