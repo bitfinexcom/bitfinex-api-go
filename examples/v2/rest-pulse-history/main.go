@@ -10,7 +10,7 @@ import (
 func main() {
 	c := rest.NewClient()
 
-	pulseHist, err := c.Pulse.PublicPulseHistory("", "")
+	pulseHist, err := c.Pulse.PublicPulseHistory(0, 0)
 	if err != nil {
 		log.Fatalf("PublicPulseHistory: %s", err)
 	}
