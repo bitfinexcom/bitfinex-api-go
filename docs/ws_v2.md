@@ -60,7 +60,7 @@ const WS_READ_CAPACITY = 10
 size of channel that the websocket reader routine pushes websocket updates into
 
 ```go
-const WS_WRITE_CAPACITY = 100
+const WS_WRITE_CAPACITY = 5000
 ```
 size of channel that the websocket writer routine pulls from
 
@@ -157,13 +157,13 @@ type BookFactory struct {
 #### func (*BookFactory) Build
 
 ```go
-func (f *BookFactory) Build(chanID int64, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
+func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (*BookFactory) BuildSnapshot
 
 ```go
-func (f *BookFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
+func (f *BookFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (BookFactory) Close
@@ -207,13 +207,13 @@ type CandlesFactory struct {
 #### func (*CandlesFactory) Build
 
 ```go
-func (f *CandlesFactory) Build(chanID int64, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
+func (f *CandlesFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (*CandlesFactory) BuildSnapshot
 
 ```go
-func (f *CandlesFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
+func (f *CandlesFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (CandlesFactory) Close
@@ -715,13 +715,13 @@ type StatsFactory struct {
 #### func (*StatsFactory) Build
 
 ```go
-func (f *StatsFactory) Build(chanID int64, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
+func (f *StatsFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (*StatsFactory) BuildSnapshot
 
 ```go
-func (f *StatsFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
+func (f *StatsFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (StatsFactory) Close
@@ -855,13 +855,13 @@ type TickerFactory struct {
 #### func (*TickerFactory) Build
 
 ```go
-func (f *TickerFactory) Build(chanID int64, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
+func (f *TickerFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (*TickerFactory) BuildSnapshot
 
 ```go
-func (f *TickerFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
+func (f *TickerFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (TickerFactory) Close
@@ -905,13 +905,13 @@ type TradeFactory struct {
 #### func (*TradeFactory) Build
 
 ```go
-func (f *TradeFactory) Build(chanID int64, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
+func (f *TradeFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (*TradeFactory) BuildSnapshot
 
 ```go
-func (f *TradeFactory) BuildSnapshot(chanID int64, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
+func (f *TradeFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
 ```
 
 #### func (TradeFactory) Close
