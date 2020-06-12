@@ -38,6 +38,7 @@ func TestPublicPulseProfile(t *testing.T) {
 
 	t.Run("valid response data", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/pulse/profile/Bitfinex", r.RequestURI)
 			respMock := []interface{}{
 				"abc123",
 				float64(1591614631576),
@@ -98,6 +99,7 @@ func TestPublicPulseHistory(t *testing.T) {
 
 	t.Run("valid response data no profile", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/pulse/hist?end=1591691528075&limit=1", r.RequestURI)
 			limit := r.URL.Query().Get("limit")
 			end := r.URL.Query().Get("end")
 			assert.Equal(t, "1", limit)
@@ -165,6 +167,7 @@ func TestAddPulse(t *testing.T) {
 
 	t.Run("response data slice too short", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/pulse/add", r.RequestURI)
 			respMock := []interface{}{"id"}
 			payload, _ := json.Marshal(respMock)
 			w.Write(payload)
@@ -233,6 +236,7 @@ func TestAddPulse(t *testing.T) {
 func TestPulseHistory(t *testing.T) {
 	t.Run("response data slice too short", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/r/pulse/hist?isPublic=0", r.RequestURI)
 			isPublic := r.URL.Query().Get("isPublic")
 			assert.Equal(t, "0", isPublic)
 
@@ -385,5 +389,25 @@ func TestPulseHistory(t *testing.T) {
 		}
 
 		assert.Equal(t, expected, pm[0])
+	})
+}
+
+func TestDeletePulse(t *testing.T) {
+	t.Run("response", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/pulse/del", r.RequestURI)
+
+			respMock := []interface{}{1}
+			payload, _ := json.Marshal(respMock)
+			w.Write(payload)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		deleted, err := c.Pulse.DeletePulse("abc123")
+		require.Nil(t, err)
+		assert.Equal(t, 1, deleted)
 	})
 }
