@@ -18,7 +18,8 @@ type PulseService struct {
 	Synchronous
 }
 
-// PublicPulseProfile get pulse profile by nickname
+// PublicPulseProfile returns details for a specific Pulse profile
+// https://docs.bitfinex.com/reference#rest-public-pulse-profile
 func (ps *PulseService) PublicPulseProfile(nickname string) (*pulseprofile.PulseProfile, error) {
 	if (len(nickname)) == 0 {
 		return nil, fmt.Errorf("nickname is required argument")
@@ -38,7 +39,9 @@ func (ps *PulseService) PublicPulseProfile(nickname string) (*pulseprofile.Pulse
 	return pp, nil
 }
 
-// PublicPulseHistory returns public pulse messages
+// PublicPulseHistory returns latest pulse messages. You can specify
+// an end timestamp to view older messages.
+// see https://docs.bitfinex.com/reference#rest-public-pulse-hist
 func (ps *PulseService) PublicPulseHistory(limit, end int) ([]*pulse.Pulse, error) {
 	req := NewRequestWithMethod(path.Join("pulse", "hist"), "GET")
 	req.Params = make(url.Values)
@@ -58,7 +61,8 @@ func (ps *PulseService) PublicPulseHistory(limit, end int) ([]*pulse.Pulse, erro
 	return pph, nil
 }
 
-// AddPulse submits pulse messages
+// AddPulse submits pulse message
+// see https://docs.bitfinex.com/reference#rest-auth-pulse-add
 func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error) {
 	tl := len(p.Title)
 	if tl < 16 || tl > 120 {
@@ -88,7 +92,9 @@ func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error) {
 	return pm, nil
 }
 
-// PulseHistory returns private pulse messages
+// PulseHistory allows you to retrieve your private pulse history or the public pulse history
+// with an additional UID_LIKED field
+// see https://docs.bitfinex.com/reference#rest-auth-pulse-hist
 func (ps *PulseService) PulseHistory(isPublic int) ([]*pulse.Pulse, error) {
 	req, err := ps.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("pulse", "hist"))
 	if err != nil {
@@ -111,7 +117,8 @@ func (ps *PulseService) PulseHistory(isPublic int) ([]*pulse.Pulse, error) {
 	return pph, nil
 }
 
-// DeletePulse removes pulse, returns 0 if no pulse was deleted and 1 if it was
+// DeletePulse removes your pulse message. Returns 0 if no pulse was deleted and 1 if it was
+// see https://docs.bitfinex.com/reference#rest-auth-pulse-del
 func (ps *PulseService) DeletePulse(pid string) (int, error) {
 	payload := map[string]interface{}{"pid": pid}
 
