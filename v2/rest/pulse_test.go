@@ -24,7 +24,8 @@ func TestPublicPulseProfile(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			respMock := []interface{}{"abc123"}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -56,7 +57,8 @@ func TestPublicPulseProfile(t *testing.T) {
 				nil,
 			}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -85,7 +87,8 @@ func TestPublicPulseHistory(t *testing.T) {
 				[]interface{}{"id"},
 			}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -129,7 +132,8 @@ func TestPublicPulseHistory(t *testing.T) {
 				},
 			}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -170,7 +174,8 @@ func TestAddPulse(t *testing.T) {
 			assert.Equal(t, "/auth/w/pulse/add", r.RequestURI)
 			respMock := []interface{}{"id"}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -206,7 +211,8 @@ func TestAddPulse(t *testing.T) {
 				nil,
 			}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -244,7 +250,8 @@ func TestPulseHistory(t *testing.T) {
 				[]interface{}{"id"},
 			}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -285,7 +292,8 @@ func TestPulseHistory(t *testing.T) {
 				},
 			}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -357,7 +365,8 @@ func TestPulseHistory(t *testing.T) {
 				},
 			}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
@@ -399,7 +408,8 @@ func TestDeletePulse(t *testing.T) {
 
 			respMock := []interface{}{1}
 			payload, _ := json.Marshal(respMock)
-			w.Write(payload)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(handler))
