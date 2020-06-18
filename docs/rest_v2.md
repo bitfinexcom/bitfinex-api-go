@@ -92,6 +92,7 @@ type Client struct {
 	Derivatives DerivativesService
 	Funding     FundingService
 	Pulse       PulseService
+	Invoice     InvoiceService
 
 	Synchronous
 }
@@ -335,6 +336,23 @@ type HttpTransport struct {
 ```go
 func (h HttpTransport) Request(req Request) ([]interface{}, error)
 ```
+
+#### type InvoiceService
+
+```go
+type InvoiceService struct {
+	Synchronous
+}
+```
+
+
+#### func (*InvoiceService) GenerateInvoice
+
+```go
+func (is *InvoiceService) GenerateInvoice(currency, wallet, amount string) (*invoice.Invoice, error)
+```
+GenerateInvoice generates a Lightning Network deposit invoice
+https://docs.bitfinex.com/reference#rest-auth-deposit-invoice
 
 #### type LedgerService
 
