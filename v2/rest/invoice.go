@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"path"
 	"strconv"
@@ -13,6 +14,13 @@ import (
 type InvoiceService struct {
 	requestFactory
 	Synchronous
+}
+
+// DepositInvoiceArgs data structure constructing deposit invoice payload
+type DepositInvoiceArgs struct {
+	Currency string `json:"currency,omitempty"`
+	Wallet   string `json:"wallet,omitempty"`
+	Amount   string `json:"amount,omitempty"`
 }
 
 var validCurrencies = map[string]struct {
@@ -73,26 +81,26 @@ func validAmount(currency, amount string) error {
 }
 
 // GenerateInvoice generates a Lightning Network deposit invoice
+// Accepts DepositInvoiceArgs type as argument
 // https://docs.bitfinex.com/reference#rest-auth-deposit-invoice
-func (is *InvoiceService) GenerateInvoice(currency, wallet, amount string) (*invoice.Invoice, error) {
-	if err := validCurrency(currency); err != nil {
+func (is *InvoiceService) GenerateInvoice(payload DepositInvoiceArgs) (*invoice.Invoice, error) {
+	if err := validCurrency(payload.Currency); err != nil {
 		return nil, err
 	}
 
-	if err := validAmount(currency, amount); err != nil {
+	if err := validAmount(payload.Currency, payload.Amount); err != nil {
 		return nil, err
 	}
 
-	payload := map[string]interface{}{
-		"currency": currency,
-		"wallet":   wallet,
-		"amount":   amount,
+	pldBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
 	}
 
-	req, err := is.NewAuthenticatedRequestWithData(
+	req, err := is.NewAuthenticatedRequestWithBytes(
 		bitfinex.PermissionWrite,
 		path.Join("deposit", "invoice"),
-		payload,
+		pldBytes,
 	)
 	if err != nil {
 		return nil, err
