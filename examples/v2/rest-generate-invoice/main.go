@@ -23,7 +23,13 @@ func main() {
 		NewClientWithURL("https://api.staging.bitfinex.com/v2/").
 		Credentials(key, secret)
 
-	resp, err := c.Invoice.GenerateInvoice("LNX", "exchange", "0.002")
+	args := rest.DepositInvoiceArgs{
+		Currency: "LNX",
+		Wallet:   "exchange",
+		Amount:   "0.002",
+	}
+
+	resp, err := c.Invoice.GenerateInvoice(args)
 	if err != nil {
 		log.Fatal(err)
 	}
