@@ -1,4 +1,4 @@
-package rest
+package rest_test
 
 import (
 	"encoding/json"
@@ -7,28 +7,50 @@ import (
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/invoice"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGenerateInvoice(t *testing.T) {
 	t.Run("unsupported currency", func(t *testing.T) {
-		c := NewClient()
-		invc, err := c.Invoice.GenerateInvoice("ETH", "exchange", "0.0001")
+		c := rest.NewClient()
+
+		args := rest.DepositInvoiceArgs{
+			Currency: "ETH",
+			Wallet:   "exchange",
+			Amount:   "0.0001",
+		}
+
+		invc, err := c.Invoice.GenerateInvoice(args)
 		require.NotNil(t, err)
 		require.Nil(t, invc)
 	})
 
 	t.Run("amount too small", func(t *testing.T) {
-		c := NewClient()
-		invc, err := c.Invoice.GenerateInvoice("LNX", "exchange", "0.0000001")
+		c := rest.NewClient()
+
+		args := rest.DepositInvoiceArgs{
+			Currency: "LNX",
+			Wallet:   "exchange",
+			Amount:   "0.0000001",
+		}
+
+		invc, err := c.Invoice.GenerateInvoice(args)
 		require.NotNil(t, err)
 		require.Nil(t, invc)
 	})
 
 	t.Run("amount too large", func(t *testing.T) {
-		c := NewClient()
-		invc, err := c.Invoice.GenerateInvoice("LNX", "exchange", "0.03")
+		c := rest.NewClient()
+
+		args := rest.DepositInvoiceArgs{
+			Currency: "LNX",
+			Wallet:   "exchange",
+			Amount:   "0.03",
+		}
+
+		invc, err := c.Invoice.GenerateInvoice(args)
 		require.NotNil(t, err)
 		require.Nil(t, invc)
 	})
@@ -44,8 +66,15 @@ func TestGenerateInvoice(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(handler))
 		defer server.Close()
 
-		c := NewClientWithURL(server.URL)
-		invc, err := c.Invoice.GenerateInvoice("LNX", "exchange", "0.0001")
+		c := rest.NewClientWithURL(server.URL)
+
+		pld := rest.DepositInvoiceArgs{
+			Currency: "LNX",
+			Wallet:   "exchange",
+			Amount:   "0.0001",
+		}
+
+		invc, err := c.Invoice.GenerateInvoice(pld)
 		require.NotNil(t, err)
 		require.Nil(t, invc)
 	})
@@ -53,6 +82,7 @@ func TestGenerateInvoice(t *testing.T) {
 	t.Run("valid response data", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "/auth/w/deposit/invoice", r.RequestURI)
+			assert.Equal(t, "POST", r.Method)
 			respMock := []interface{}{
 				"invoicehash",
 				"invoice",
@@ -68,8 +98,15 @@ func TestGenerateInvoice(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(handler))
 		defer server.Close()
 
-		c := NewClientWithURL(server.URL)
-		invc, err := c.Invoice.GenerateInvoice("LNX", "exchange", "0.002")
+		c := rest.NewClientWithURL(server.URL)
+
+		pld := rest.DepositInvoiceArgs{
+			Currency: "LNX",
+			Wallet:   "exchange",
+			Amount:   "0.002",
+		}
+
+		invc, err := c.Invoice.GenerateInvoice(pld)
 		require.Nil(t, err)
 
 		expected := &invoice.Invoice{
