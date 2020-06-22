@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulse"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulseprofile"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -95,18 +97,21 @@ func TestPublicPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pp, err := c.Pulse.PublicPulseHistory(1, 0)
+		now := time.Now()
+		millis := now.UnixNano() / 1000000
+		end := bitfinex.Mts(millis)
+		pp, err := c.Pulse.PublicPulseHistory(1, end)
 		require.NotNil(t, err)
 		require.Nil(t, pp)
 	})
 
 	t.Run("valid response data no profile", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "/pulse/hist?end=1591691528075&limit=1", r.RequestURI)
+			assert.Equal(t, "/pulse/hist?end=1591614631576&limit=1", r.RequestURI)
 			limit := r.URL.Query().Get("limit")
 			end := r.URL.Query().Get("end")
 			assert.Equal(t, "1", limit)
-			assert.Equal(t, "1591691528075", end)
+			assert.Equal(t, "1591614631576", end)
 
 			respMock := []interface{}{
 				[]interface{}{
@@ -140,7 +145,8 @@ func TestPublicPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pph, err := c.Pulse.PublicPulseHistory(1, 1591691528075)
+		end := bitfinex.Mts(1591614631576)
+		pph, err := c.Pulse.PublicPulseHistory(1, end)
 		require.Nil(t, err)
 
 		expected := &pulse.Pulse{
@@ -258,12 +264,12 @@ func TestPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pp, err := c.Pulse.PulseHistory(0)
+		pp, err := c.Pulse.PulseHistory(false)
 		require.NotNil(t, err)
 		require.Nil(t, pp)
 	})
 
-	t.Run("isPublic 0", func(t *testing.T) {
+	t.Run("private pulse history", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			isPublic := r.URL.Query().Get("isPublic")
 			assert.Equal(t, "0", isPublic)
@@ -300,7 +306,7 @@ func TestPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pm, err := c.Pulse.PulseHistory(0)
+		pm, err := c.Pulse.PulseHistory(false)
 		require.Nil(t, err)
 
 		expected := &pulse.Pulse{
@@ -319,7 +325,7 @@ func TestPulseHistory(t *testing.T) {
 		assert.Equal(t, expected, pm[0])
 	})
 
-	t.Run("isPublic 1", func(t *testing.T) {
+	t.Run("public pulse history", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			isPublic := r.URL.Query().Get("isPublic")
 			assert.Equal(t, "1", isPublic)
@@ -373,7 +379,7 @@ func TestPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pm, err := c.Pulse.PulseHistory(1)
+		pm, err := c.Pulse.PulseHistory(true)
 		require.Nil(t, err)
 
 		expected := &pulse.Pulse{

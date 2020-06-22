@@ -10,7 +10,8 @@ import (
 func main() {
 	c := rest.NewClient()
 
-	profile, err := c.Pulse.PublicPulseProfile("Bitfinex")
+	nn := rest.Nickname("Bitfinex")
+	profile, err := c.Pulse.PublicPulseProfile(nn)
 	if err != nil {
 		log.Fatalf("%s", err)
 	}

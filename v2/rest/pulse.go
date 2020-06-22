@@ -18,14 +18,16 @@ type PulseService struct {
 	Synchronous
 }
 
+type Nickname string
+
 // PublicPulseProfile returns details for a specific Pulse profile
 // https://docs.bitfinex.com/reference#rest-public-pulse-profile
-func (ps *PulseService) PublicPulseProfile(nickname string) (*pulseprofile.PulseProfile, error) {
+func (ps *PulseService) PublicPulseProfile(nickname Nickname) (*pulseprofile.PulseProfile, error) {
 	if (len(nickname)) == 0 {
 		return nil, fmt.Errorf("nickname is required argument")
 	}
 
-	req := NewRequestWithMethod(path.Join("pulse", "profile", nickname), "GET")
+	req := NewRequestWithMethod(path.Join("pulse", "profile", string(nickname)), "GET")
 	raw, err := ps.Request(req)
 	if err != nil {
 		return nil, err
@@ -42,11 +44,11 @@ func (ps *PulseService) PublicPulseProfile(nickname string) (*pulseprofile.Pulse
 // PublicPulseHistory returns latest pulse messages. You can specify
 // an end timestamp to view older messages.
 // see https://docs.bitfinex.com/reference#rest-public-pulse-hist
-func (ps *PulseService) PublicPulseHistory(limit, end int) ([]*pulse.Pulse, error) {
+func (ps *PulseService) PublicPulseHistory(limit int, end bitfinex.Mts) ([]*pulse.Pulse, error) {
 	req := NewRequestWithMethod(path.Join("pulse", "hist"), "GET")
 	req.Params = make(url.Values)
 	req.Params.Add("limit", strconv.Itoa(limit))
-	req.Params.Add("end", strconv.Itoa(end))
+	req.Params.Add("end", strconv.FormatInt(int64(end), 10))
 
 	raw, err := ps.Request(req)
 	if err != nil {
@@ -92,17 +94,22 @@ func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error) {
 	return pm, nil
 }
 
-// PulseHistory allows you to retrieve your private pulse history or the public pulse history
-// with an additional UID_LIKED field
+// PulseHistory allows you to retrieve your pulse history. Call function with
+// "false" boolean value for private and with "true" for public pulse history.
 // see https://docs.bitfinex.com/reference#rest-auth-pulse-hist
-func (ps *PulseService) PulseHistory(isPublic int) ([]*pulse.Pulse, error) {
+func (ps *PulseService) PulseHistory(isPublic bool) ([]*pulse.Pulse, error) {
 	req, err := ps.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("pulse", "hist"))
 	if err != nil {
 		return nil, err
 	}
 
+	public := "0"
+	if isPublic {
+		public = "1"
+	}
+
 	req.Params = make(url.Values)
-	req.Params.Add("isPublic", strconv.Itoa(isPublic))
+	req.Params.Add("isPublic", public)
 
 	raw, err := ps.Request(req)
 	if err != nil {
