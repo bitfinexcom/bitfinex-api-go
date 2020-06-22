@@ -41,17 +41,13 @@ func ItfToStrSlice(in interface{}) ([]string, error) {
 func ToInt(in interface{}) int {
 	var out int
 
-	switch in.(type) {
+	switch v := in.(type) {
 	case string:
-		if str, ok := in.(string); ok {
-			if i, err := strconv.Atoi(str); err == nil {
-				out = i
-			}
+		if i, err := strconv.Atoi(v); err == nil {
+			out = i
 		}
 	case float64:
-		if flt64, ok := in.(float64); ok {
-			out = int(flt64)
-		}
+		out = int(v)
 	default:
 		if val, ok := in.(int); ok {
 			out = val

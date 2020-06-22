@@ -23,7 +23,7 @@ func main() {
 		NewClientWithURL("https://api.staging.bitfinex.com/v2/").
 		Credentials(key, secret)
 
-	pulseHist, err := c.Pulse.PulseHistory(1)
+	pulseHist, err := c.Pulse.PulseHistory(true)
 	if err != nil {
 		log.Fatalf("PulseHistory: %s", err)
 	}
