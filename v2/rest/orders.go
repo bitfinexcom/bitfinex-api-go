@@ -21,6 +21,10 @@ type CancelOrderMultiArgs struct {
 	All int             `json:"all,omitempty"`
 }
 
+type OrderMultiArgs struct {
+	Ops [][]interface{} `json:"ops"`
+}
+
 // Retrieves all of the active orders
 // See https://docs.bitfinex.com/reference#rest-auth-orders for more info
 func (s *OrderService) All() (*bitfinex.OrderSnapshot, error) {
@@ -199,6 +203,35 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) ([]interface{
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
 		bitfinex.PermissionWrite,
 		path.Join("order", "cancel", "multi"),
+		bytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.Request(req)
+}
+
+// CancelOrders cancels multiple orders simultaneously. Accepts a slice of order ID's to be canceled.
+// see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
+func (s *OrderService) CancelOrders(ids []int) ([]interface{}, error) {
+	pld := OrderMultiArgs{
+		Ops: [][]interface{}{
+			{
+				"oc_multi",
+				map[string][]int{"id": ids},
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(pld)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
+		bitfinex.PermissionWrite,
+		path.Join("order", "multi"),
 		bytes,
 	)
 	if err != nil {
