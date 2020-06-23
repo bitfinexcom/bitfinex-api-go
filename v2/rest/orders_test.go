@@ -106,3 +106,28 @@ func TestCancelOrderMulti(t *testing.T) {
 		assert.Equal(t, []float64{1568711312683}, rspFlt)
 	})
 }
+
+func TestCancelOrders(t *testing.T) {
+	t.Run("calls correct resource with correct payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
+			assert.Equal(t, "POST", r.Method)
+
+			respMock := []interface{}{1568711312683}
+			payload, _ := json.Marshal(respMock)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		rsp, err := c.Orders.CancelOrders([]int{1189428429, 1189428430})
+		require.Nil(t, err)
+
+		rspFlt, err := convert.F64Slice(rsp)
+		require.Nil(t, err)
+		assert.Equal(t, []float64{1568711312683}, rspFlt)
+	})
+}
