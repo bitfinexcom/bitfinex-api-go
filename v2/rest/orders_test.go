@@ -2,11 +2,16 @@ package rest
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOrdersAll(t *testing.T) {
@@ -59,4 +64,45 @@ func TestOrdersHistory(t *testing.T) {
 	if len(orders.Snapshot) != 3 {
 		t.Errorf("expected three orders but got %d", len(orders.Snapshot))
 	}
+}
+
+func TestCancelOrderMulti(t *testing.T) {
+	t.Run("calls correct resource with correct payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/order/cancel/multi", r.RequestURI)
+			assert.Equal(t, "POST", r.Method)
+
+			gotReqPld := CancelOrderMultiArgs{}
+			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
+			require.Nil(t, err)
+
+			expectedReqPld := CancelOrderMultiArgs{
+				ID:  []int{123},
+				GID: []int{234},
+				All: 1,
+			}
+			assert.Equal(t, expectedReqPld, gotReqPld)
+
+			respMock := []interface{}{1568711312683}
+			payload, _ := json.Marshal(respMock)
+			_, err = w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		pld := CancelOrderMultiArgs{
+			ID:  []int{123},
+			GID: []int{234},
+			All: 1,
+		}
+		rsp, err := c.Orders.CancelOrderMulti(pld)
+		require.Nil(t, err)
+
+		rspFlt, err := convert.F64Slice(rsp)
+		require.Nil(t, err)
+		assert.Equal(t, []float64{1568711312683}, rspFlt)
+	})
 }
