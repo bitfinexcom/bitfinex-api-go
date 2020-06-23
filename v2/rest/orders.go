@@ -1,15 +1,24 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"path"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // OrderService manages data flow for the Order API endpoint
 type OrderService struct {
 	requestFactory
 	Synchronous
+}
+
+type CancelOrderMultiArgs struct {
+	ID  []int           `json:"id,omitempty"`
+	GID []int           `json:"gid,omitempty"`
+	CID [][]interface{} `json:"cid,omitempty"`
+	All int             `json:"all,omitempty"`
 }
 
 // Retrieves all of the active orders
@@ -161,7 +170,7 @@ func (s *OrderService) SubmitUpdateOrder(order *bitfinex.OrderUpdateRequest) (*b
 
 // Submit a request to cancel an order with the given Id
 // see https://docs.bitfinex.com/reference#cancel-order for more info
-func (s *OrderService) SubmitCancelOrder(oc *bitfinex.OrderCancelRequest) (error) {
+func (s *OrderService) SubmitCancelOrder(oc *bitfinex.OrderCancelRequest) error {
 	bytes, err := oc.ToJSON()
 	if err != nil {
 		return err
@@ -175,4 +184,26 @@ func (s *OrderService) SubmitCancelOrder(oc *bitfinex.OrderCancelRequest) (error
 		return err
 	}
 	return nil
+}
+
+// CancelOrderMulti cancels multiple orders simultaneously. Orders can be canceled based on the Order ID,
+// the combination of Client Order ID and Client Order Date, or the Group Order ID. Alternatively, the body
+// param 'all' can be used with a value of 1 to cancel all orders.
+// see https://docs.bitfinex.com/reference#rest-auth-order-cancel-multi for more info
+func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) ([]interface{}, error) {
+	bytes, err := json.Marshal(args)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
+		bitfinex.PermissionWrite,
+		path.Join("order", "cancel", "multi"),
+		bytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.Request(req)
 }
