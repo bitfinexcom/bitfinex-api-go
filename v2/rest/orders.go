@@ -14,11 +14,15 @@ type OrderService struct {
 	Synchronous
 }
 
+type OrderIDs []int
+type GroupOrderIDs []int
+type ClientOrderIDs [][]interface{}
+
 type CancelOrderMultiArgs struct {
-	ID  []int           `json:"id,omitempty"`
-	GID []int           `json:"gid,omitempty"`
-	CID [][]interface{} `json:"cid,omitempty"`
-	All int             `json:"all,omitempty"`
+	OrderIDs       OrderIDs       `json:"id,omitempty"`
+	GroupOrderIDs  GroupOrderIDs  `json:"gid,omitempty"`
+	ClientOrderIDs ClientOrderIDs `json:"cid,omitempty"`
+	All            int            `json:"all,omitempty"`
 }
 
 type OrderMultiArgs struct {
@@ -214,7 +218,7 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) ([]interface{
 
 // CancelOrders cancels multiple orders simultaneously. Accepts a slice of order ID's to be canceled.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) CancelOrders(ids []int) ([]interface{}, error) {
+func (s *OrderService) CancelOrders(ids OrderIDs) ([]interface{}, error) {
 	pld := OrderMultiArgs{
 		Ops: [][]interface{}{
 			{
