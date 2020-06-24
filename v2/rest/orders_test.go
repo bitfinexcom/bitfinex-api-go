@@ -77,9 +77,9 @@ func TestCancelOrderMulti(t *testing.T) {
 			require.Nil(t, err)
 
 			expectedReqPld := CancelOrderMultiArgs{
-				ID:  []int{123},
-				GID: []int{234},
-				All: 1,
+				OrderIDs:      OrderIDs{123},
+				GroupOrderIDs: GroupOrderIDs{234},
+				All:           1,
 			}
 			assert.Equal(t, expectedReqPld, gotReqPld)
 
@@ -94,9 +94,9 @@ func TestCancelOrderMulti(t *testing.T) {
 
 		c := NewClientWithURL(server.URL)
 		pld := CancelOrderMultiArgs{
-			ID:  []int{123},
-			GID: []int{234},
-			All: 1,
+			OrderIDs:      OrderIDs{123},
+			GroupOrderIDs: GroupOrderIDs{234},
+			All:           1,
 		}
 		rsp, err := c.Orders.CancelOrderMulti(pld)
 		require.Nil(t, err)
@@ -123,7 +123,7 @@ func TestCancelOrders(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		rsp, err := c.Orders.CancelOrders([]int{1189428429, 1189428430})
+		rsp, err := c.Orders.CancelOrders(OrderIDs{1189428429, 1189428430})
 		require.Nil(t, err)
 
 		rspFlt, err := convert.F64Slice(rsp)
