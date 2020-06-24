@@ -27,7 +27,7 @@ func main() {
 
 	cancelAllOrders(c)
 	cancelByOrderIDs(c)
-	cancelByGroupIDs(c)
+	cancelByGroupOrderIDs(c)
 	cancelByClientOrderID(c)
 	cancelOrderMix(c)
 }
@@ -43,7 +43,7 @@ func cancelAllOrders(c *rest.Client) {
 }
 
 func cancelByOrderIDs(c *rest.Client) {
-	args := rest.CancelOrderMultiArgs{ID: []int{1189413241, 1189413242}}
+	args := rest.CancelOrderMultiArgs{OrderIDs: rest.OrderIDs{1189452509, 1189452510, 1189452511}}
 	resp, err := c.Orders.CancelOrderMulti(args)
 	if err != nil {
 		log.Fatalf("cancelByOrderIDs error: %s", err)
@@ -52,8 +52,8 @@ func cancelByOrderIDs(c *rest.Client) {
 	spew.Dump(resp)
 }
 
-func cancelByGroupIDs(c *rest.Client) {
-	args := rest.CancelOrderMultiArgs{GID: []int{888, 777}}
+func cancelByGroupOrderIDs(c *rest.Client) {
+	args := rest.CancelOrderMultiArgs{GroupOrderIDs: rest.GroupOrderIDs{888, 777}}
 	resp, err := c.Orders.CancelOrderMulti(args)
 	if err != nil {
 		log.Fatalf("cancelByGroupIDs error: %s", err)
@@ -64,9 +64,9 @@ func cancelByGroupIDs(c *rest.Client) {
 
 func cancelByClientOrderID(c *rest.Client) {
 	args := rest.CancelOrderMultiArgs{
-		CID: [][]interface{}{
-			{123, "2020-06-23"},
-			{321, "2020-06-23"},
+		ClientOrderIDs: rest.ClientOrderIDs{
+			{123, "2020-06-24"},
+			{321, "2020-06-24"},
 		},
 	}
 
@@ -80,10 +80,10 @@ func cancelByClientOrderID(c *rest.Client) {
 
 func cancelOrderMix(c *rest.Client) {
 	args := rest.CancelOrderMultiArgs{
-		ID:  []int{1189412946},
-		GID: []int{888},
-		CID: [][]interface{}{
-			{321, "2020-06-23"},
+		OrderIDs:      rest.OrderIDs{1189452432, 1189452435},
+		GroupOrderIDs: rest.GroupOrderIDs{888},
+		ClientOrderIDs: rest.ClientOrderIDs{
+			{321, "2020-06-24"},
 		},
 	}
 
