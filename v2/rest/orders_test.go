@@ -126,6 +126,28 @@ func TestCancelOrdersMultiOp(t *testing.T) {
 	})
 }
 
+func TestCancelOrderMultiOp(t *testing.T) {
+	t.Run("calls correct resource with correct payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
+			assert.Equal(t, "POST", r.Method)
+
+			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
+			payload, _ := json.Marshal(respMock)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		rsp, err := c.Orders.CancelOrderMultiOp(1189428429)
+		require.Nil(t, err)
+		assert.Equal(t, int64(1568711312683), rsp.MTS)
+	})
+}
+
 func TestOrderMultiOp(t *testing.T) {
 	t.Run("calls correct resource with correct payload", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
