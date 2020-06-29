@@ -198,7 +198,7 @@ func (s *OrderService) SubmitCancelOrder(oc *bitfinex.OrderCancelRequest) error 
 // the combination of Client Order ID and Client Order Date, or the Group Order ID. Alternatively, the body
 // param 'all' can be used with a value of 1 to cancel all orders.
 // see https://docs.bitfinex.com/reference#rest-auth-order-cancel-multi for more info
-func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) ([]interface{}, error) {
+func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) (*bitfinex.Notification, error) {
 	bytes, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
@@ -213,12 +213,17 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) ([]interface{
 		return nil, err
 	}
 
-	return s.Request(req)
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return bitfinex.NewNotificationFromRaw(raw)
 }
 
 // CancelOrders cancels multiple orders simultaneously. Accepts a slice of order ID's to be canceled.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) CancelOrders(ids OrderIDs) ([]interface{}, error) {
+func (s *OrderService) CancelOrders(ids OrderIDs) (*bitfinex.Notification, error) {
 	pld := OrderMultiArgs{
 		Ops: [][]interface{}{
 			{
@@ -242,5 +247,36 @@ func (s *OrderService) CancelOrders(ids OrderIDs) ([]interface{}, error) {
 		return nil, err
 	}
 
-	return s.Request(req)
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return bitfinex.NewNotificationFromRaw(raw)
+}
+
+// OrderMultiOp - send Multiple order-related operations. Please note the sent object has
+// only one property with a value of a slice of slices detailing each order operation.
+// see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
+func (s *OrderService) OrderMultiOp(args OrderMultiArgs) (*bitfinex.Notification, error) {
+	bytes, err := json.Marshal(args)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
+		bitfinex.PermissionWrite,
+		path.Join("order", "multi"),
+		bytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return bitfinex.NewNotificationFromRaw(raw)
 }
