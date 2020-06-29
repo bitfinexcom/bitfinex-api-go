@@ -221,9 +221,9 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) (*bitfinex.No
 	return bitfinex.NewNotificationFromRaw(raw)
 }
 
-// CancelOrders cancels multiple orders simultaneously. Accepts a slice of order ID's to be canceled.
+// CancelOrdersMultiOp cancels multiple orders simultaneously. Accepts a slice of order ID's to be canceled.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) CancelOrders(ids OrderIDs) (*bitfinex.Notification, error) {
+func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification, error) {
 	pld := OrderMultiArgs{
 		Ops: [][]interface{}{
 			{

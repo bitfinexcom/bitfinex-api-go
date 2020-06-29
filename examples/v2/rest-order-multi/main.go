@@ -26,14 +26,14 @@ func main() {
 		NewClient().
 		Credentials(key, secret)
 
-	cancelOrdersByID(c)
+	cancelOrdersMultiOp(c)
 	orderMultiOp(c)
 }
 
-func cancelOrdersByID(c *rest.Client) {
-	resp, err := c.Orders.CancelOrders(rest.OrderIDs{1189452506, 1189452507})
+func cancelOrdersMultiOp(c *rest.Client) {
+	resp, err := c.Orders.CancelOrdersMultiOp(rest.OrderIDs{1189452506, 1189452507})
 	if err != nil {
-		log.Fatalf("cancelAllOrders error: %s", err)
+		log.Fatalf("CancelOrdersMultiOp error: %s", err)
 	}
 
 	spew.Dump(resp)
