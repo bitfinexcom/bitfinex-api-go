@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -83,7 +82,7 @@ func TestCancelOrderMulti(t *testing.T) {
 			}
 			assert.Equal(t, expectedReqPld, gotReqPld)
 
-			respMock := []interface{}{1568711312683}
+			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
 			payload, _ := json.Marshal(respMock)
 			_, err = w.Write(payload)
 			require.Nil(t, err)
@@ -98,12 +97,10 @@ func TestCancelOrderMulti(t *testing.T) {
 			GroupOrderIDs: GroupOrderIDs{234},
 			All:           1,
 		}
+
 		rsp, err := c.Orders.CancelOrderMulti(pld)
 		require.Nil(t, err)
-
-		rspFlt, err := convert.F64Slice(rsp)
-		require.Nil(t, err)
-		assert.Equal(t, []float64{1568711312683}, rspFlt)
+		assert.Equal(t, int64(1568711312683), rsp.MTS)
 	})
 }
 
@@ -113,7 +110,7 @@ func TestCancelOrders(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
-			respMock := []interface{}{1568711312683}
+			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
 			payload, _ := json.Marshal(respMock)
 			_, err := w.Write(payload)
 			require.Nil(t, err)
@@ -125,9 +122,40 @@ func TestCancelOrders(t *testing.T) {
 		c := NewClientWithURL(server.URL)
 		rsp, err := c.Orders.CancelOrders(OrderIDs{1189428429, 1189428430})
 		require.Nil(t, err)
+		assert.Equal(t, int64(1568711312683), rsp.MTS)
+	})
+}
 
-		rspFlt, err := convert.F64Slice(rsp)
+func TestOrderMultiOp(t *testing.T) {
+	t.Run("calls correct resource with correct payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
+			assert.Equal(t, "POST", r.Method)
+
+			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
+			payload, _ := json.Marshal(respMock)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		pld := OrderMultiArgs{
+			Ops: [][]interface{}{
+				{
+					"oc",
+					map[string]int{"id": 1189502430},
+				},
+				{
+					"oc_multi",
+					map[string][]int{"id": OrderIDs{1189502431, 1189502432}},
+				},
+			},
+		}
+		rsp, err := c.Orders.OrderMultiOp(pld)
 		require.Nil(t, err)
-		assert.Equal(t, []float64{1568711312683}, rspFlt)
+		assert.Equal(t, int64(1568711312683), rsp.MTS)
 	})
 }
