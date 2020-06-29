@@ -104,7 +104,7 @@ func TestCancelOrderMulti(t *testing.T) {
 	})
 }
 
-func TestCancelOrders(t *testing.T) {
+func TestCancelOrdersMultiOp(t *testing.T) {
 	t.Run("calls correct resource with correct payload", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
@@ -120,7 +120,7 @@ func TestCancelOrders(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		rsp, err := c.Orders.CancelOrders(OrderIDs{1189428429, 1189428430})
+		rsp, err := c.Orders.CancelOrdersMultiOp(OrderIDs{1189428429, 1189428430})
 		require.Nil(t, err)
 		assert.Equal(t, int64(1568711312683), rsp.MTS)
 	})
