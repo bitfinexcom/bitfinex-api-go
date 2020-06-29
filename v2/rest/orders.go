@@ -255,6 +255,40 @@ func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification
 	return bitfinex.NewNotificationFromRaw(raw)
 }
 
+// CancelOrderMultiOp cancels order. Accepts orderID to be canceled.
+// see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
+func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, error) {
+	pld := OrderMultiArgs{
+		Ops: [][]interface{}{
+			{
+				"oc",
+				map[string]int{"id": orderID},
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(pld)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
+		bitfinex.PermissionWrite,
+		path.Join("order", "multi"),
+		bytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return bitfinex.NewNotificationFromRaw(raw)
+}
+
 // OrderMultiOp - send Multiple order-related operations. Please note the sent object has
 // only one property with a value of a slice of slices detailing each order operation.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
