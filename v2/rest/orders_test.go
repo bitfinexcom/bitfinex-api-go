@@ -192,6 +192,10 @@ func TestOrderNewMultiOp(t *testing.T) {
 					"price":  "12",
 					"symbol": "tBTCUSD",
 					"type":   "EXCHANGE LIMIT",
+					"flags":  float64(512),
+					"meta": map[string]interface{}{
+						"aff_code": "abc",
+					},
 				},
 			}
 			assert.Equal(t, expectedReqPld, gotReqPld.Ops[0])
@@ -207,15 +211,61 @@ func TestOrderNewMultiOp(t *testing.T) {
 
 		c := NewClientWithURL(server.URL)
 		o := bitfinex.OrderNewRequest{
-			CID:    119,
-			GID:    118,
-			Type:   "EXCHANGE LIMIT",
-			Symbol: "tBTCUSD",
-			Price:  12,
-			Amount: 0.002,
+			CID:           119,
+			GID:           118,
+			Type:          "EXCHANGE LIMIT",
+			Symbol:        "tBTCUSD",
+			Price:         12,
+			Amount:        0.002,
+			AffiliateCode: "abc",
+			Close:         true,
 		}
 
 		rsp, err := c.Orders.OrderNewMultiOp(o)
+		require.Nil(t, err)
+		assert.Equal(t, int64(1568711312683), rsp.MTS)
+	})
+}
+
+func TestOrderUpdateMultiOp(t *testing.T) {
+	t.Run("calls correct resource with correct payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
+			assert.Equal(t, "POST", r.Method)
+
+			gotReqPld := OrderMultiArgs{}
+			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
+			require.Nil(t, err)
+
+			expectedReqPld := []interface{}{
+				"ou",
+				map[string]interface{}{
+					"amount": "0.002",
+					"price":  "12",
+					"id":     float64(1189503586),
+					"flags":  float64(64),
+				},
+			}
+			assert.Equal(t, expectedReqPld, gotReqPld.Ops[0])
+
+			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
+			payload, _ := json.Marshal(respMock)
+			_, err = w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		o := bitfinex.OrderUpdateRequest{
+			ID:     1189503586,
+			Price:  12,
+			Amount: 0.002,
+			Hidden: true,
+		}
+
+		rsp, err := c.Orders.OrderUpdateMultiOp(o)
 		require.Nil(t, err)
 		assert.Equal(t, int64(1568711312683), rsp.MTS)
 	})
