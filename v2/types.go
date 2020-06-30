@@ -247,12 +247,7 @@ func (o *OrderNewRequest) EnrichedPayload() interface{} {
 }
 
 func (o *OrderNewRequest) ToJSON() ([]byte, error) {
-	pld := o.EnrichedPayload()
-
-	l, _ := json.Marshal(pld)
-	fmt.Println(string(l))
-
-	return json.Marshal(pld)
+	return json.Marshal(o.EnrichedPayload())
 }
 
 type OrderUpdateRequest struct {
@@ -280,8 +275,8 @@ func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("[0, \"ou\", null, %s]", string(aux))), nil
 }
 
-func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
-	aux := struct {
+func (o *OrderUpdateRequest) EnrichedPayload() interface{} {
+	pld := struct {
 		ID            int64                  `json:"id"`
 		GID           int64                  `json:"gid,omitempty"`
 		Price         float64                `json:"price,string,omitempty"`
@@ -308,17 +303,22 @@ func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
 	}
 
 	if o.Meta == nil {
-		aux.Meta = make(map[string]interface{})
+		pld.Meta = make(map[string]interface{})
 	}
 
 	if o.Hidden {
-		aux.Flags = aux.Flags + OrderFlagHidden
+		pld.Flags = pld.Flags + OrderFlagHidden
 	}
 
 	if o.PostOnly {
-		aux.Flags = aux.Flags + OrderFlagPostOnly
+		pld.Flags = pld.Flags + OrderFlagPostOnly
 	}
-	return json.Marshal(aux)
+
+	return pld
+}
+
+func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
+	return json.Marshal(o.EnrichedPayload())
 }
 
 // OrderCancelRequest represents an order cancel request.
