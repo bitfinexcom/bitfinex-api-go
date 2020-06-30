@@ -189,8 +189,9 @@ func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("[0, \"on\", null, %s]", string(jsonOrder))), nil
 }
 
-func (o *OrderNewRequest) ToJSON() ([]byte, error) {
-	aux := struct {
+// EnrichedPayload returns enriched representation of order struct for submission
+func (o *OrderNewRequest) EnrichedPayload() interface{} {
+	pld := struct {
 		GID           int64                  `json:"gid"`
 		CID           int64                  `json:"cid"`
 		Type          string                 `json:"type"`
@@ -219,33 +220,39 @@ func (o *OrderNewRequest) ToJSON() ([]byte, error) {
 	}
 
 	if o.Hidden {
-		aux.Flags = aux.Flags + OrderFlagHidden
+		pld.Flags = pld.Flags + OrderFlagHidden
 	}
 
 	if o.PostOnly {
-		aux.Flags = aux.Flags + OrderFlagPostOnly
+		pld.Flags = pld.Flags + OrderFlagPostOnly
 	}
 
 	if o.OcoOrder {
-		aux.Flags = aux.Flags + OrderFlagOCO
+		pld.Flags = pld.Flags + OrderFlagOCO
 	}
 
 	if o.Close {
-		aux.Flags = aux.Flags + OrderFlagClose
+		pld.Flags = pld.Flags + OrderFlagClose
 	}
 
 	if o.Meta == nil {
-		aux.Meta = make(map[string]interface{})
+		pld.Meta = make(map[string]interface{})
 	}
 
 	if o.AffiliateCode != "" {
-		aux.Meta["aff_code"] = o.AffiliateCode
+		pld.Meta["aff_code"] = o.AffiliateCode
 	}
 
-	l, _ := json.Marshal(aux)
+	return pld
+}
+
+func (o *OrderNewRequest) ToJSON() ([]byte, error) {
+	pld := o.EnrichedPayload()
+
+	l, _ := json.Marshal(pld)
 	fmt.Println(string(l))
 
-	return json.Marshal(aux)
+	return json.Marshal(pld)
 }
 
 type OrderUpdateRequest struct {
