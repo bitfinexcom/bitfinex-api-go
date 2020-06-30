@@ -110,9 +110,24 @@ func TestCancelOrdersMultiOp(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
+			gotReqPld := OrderMultiArgs{}
+			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
+			require.Nil(t, err)
+
+			expectedReqPld := []interface{}{
+				"oc_multi",
+				map[string]interface{}{
+					"id": []interface{}{
+						float64(1189428429),
+						float64(1189428430),
+					},
+				},
+			}
+			assert.Equal(t, expectedReqPld, gotReqPld.Ops[0])
+
 			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
 			payload, _ := json.Marshal(respMock)
-			_, err := w.Write(payload)
+			_, err = w.Write(payload)
 			require.Nil(t, err)
 		}
 
@@ -132,9 +147,19 @@ func TestCancelOrderMultiOp(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
+			gotReqPld := OrderMultiArgs{}
+			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
+			require.Nil(t, err)
+
+			expectedReqPld := []interface{}{
+				"oc",
+				map[string]interface{}{"id": float64(1189428429)},
+			}
+			assert.Equal(t, expectedReqPld, gotReqPld.Ops[0])
+
 			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
 			payload, _ := json.Marshal(respMock)
-			_, err := w.Write(payload)
+			_, err = w.Write(payload)
 			require.Nil(t, err)
 		}
 
@@ -143,6 +168,54 @@ func TestCancelOrderMultiOp(t *testing.T) {
 
 		c := NewClientWithURL(server.URL)
 		rsp, err := c.Orders.CancelOrderMultiOp(1189428429)
+		require.Nil(t, err)
+		assert.Equal(t, int64(1568711312683), rsp.MTS)
+	})
+}
+
+func TestOrderNewMultiOp(t *testing.T) {
+	t.Run("calls correct resource with correct payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
+			assert.Equal(t, "POST", r.Method)
+
+			gotReqPld := OrderMultiArgs{}
+			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
+			require.Nil(t, err)
+
+			expectedReqPld := []interface{}{
+				"on",
+				map[string]interface{}{
+					"amount": "0.002",
+					"cid":    float64(119),
+					"gid":    float64(118),
+					"price":  "12",
+					"symbol": "tBTCUSD",
+					"type":   "EXCHANGE LIMIT",
+				},
+			}
+			assert.Equal(t, expectedReqPld, gotReqPld.Ops[0])
+
+			respMock := []interface{}{1568711312683, nil, nil, nil, nil, nil, nil, nil}
+			payload, _ := json.Marshal(respMock)
+			_, err = w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		o := bitfinex.OrderNewRequest{
+			CID:    119,
+			GID:    118,
+			Type:   "EXCHANGE LIMIT",
+			Symbol: "tBTCUSD",
+			Price:  12,
+			Amount: 0.002,
+		}
+
+		rsp, err := c.Orders.OrderNewMultiOp(o)
 		require.Nil(t, err)
 		assert.Equal(t, int64(1568711312683), rsp.MTS)
 	})
@@ -164,16 +237,14 @@ func TestOrderMultiOp(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pld := OrderMultiArgs{
-			Ops: [][]interface{}{
-				{
-					"oc",
-					map[string]int{"id": 1189502430},
-				},
-				{
-					"oc_multi",
-					map[string][]int{"id": OrderIDs{1189502431, 1189502432}},
-				},
+		pld := OrderOps{
+			{
+				"oc",
+				map[string]int{"id": 1189502430},
+			},
+			{
+				"oc_multi",
+				map[string][]int{"id": OrderIDs{1189502431, 1189502432}},
 			},
 		}
 		rsp, err := c.Orders.OrderMultiOp(pld)
