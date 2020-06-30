@@ -29,6 +29,7 @@ func main() {
 	cancelOrdersMultiOp(c)
 	cancelOrderMultiOp(c)
 	orderNewMultiOp(c)
+	orderUpdateMultiOp(c)
 	orderMultiOp(c)
 }
 
@@ -63,6 +64,21 @@ func orderNewMultiOp(c *rest.Client) {
 	resp, err := c.Orders.OrderNewMultiOp(o)
 	if err != nil {
 		log.Fatalf("OrderNewMultiOp error: %s", err)
+	}
+
+	spew.Dump(resp)
+}
+
+func orderUpdateMultiOp(c *rest.Client) {
+	o := bitfinex.OrderUpdateRequest{
+		ID:     1189503586,
+		Price:  12,
+		Amount: 0.002,
+	}
+
+	resp, err := c.Orders.OrderUpdateMultiOp(o)
+	if err != nil {
+		log.Fatalf("OrderUpdateMultiOp error: %s", err)
 	}
 
 	spew.Dump(resp)
