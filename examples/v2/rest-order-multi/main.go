@@ -28,6 +28,7 @@ func main() {
 
 	cancelOrdersMultiOp(c)
 	cancelOrderMultiOp(c)
+	orderNewMultiOp(c)
 	orderMultiOp(c)
 }
 
@@ -49,35 +50,51 @@ func cancelOrderMultiOp(c *rest.Client) {
 	spew.Dump(resp)
 }
 
+func orderNewMultiOp(c *rest.Client) {
+	o := bitfinex.OrderNewRequest{
+		CID:    119,
+		GID:    118,
+		Type:   "EXCHANGE LIMIT",
+		Symbol: "tBTCUSD",
+		Price:  12,
+		Amount: 0.002,
+	}
+
+	resp, err := c.Orders.OrderNewMultiOp(o)
+	if err != nil {
+		log.Fatalf("OrderNewMultiOp error: %s", err)
+	}
+
+	spew.Dump(resp)
+}
+
 func orderMultiOp(c *rest.Client) {
-	pld := rest.OrderMultiArgs{
-		Ops: [][]interface{}{
-			{
-				"on",
-				bitfinex.OrderNewRequest{
-					CID:    987,
-					GID:    876,
-					Type:   "EXCHANGE LIMIT",
-					Symbol: "tBTCUSD",
-					Price:  13,
-					Amount: 0.001,
-				},
+	pld := rest.OrderOps{
+		{
+			"on",
+			bitfinex.OrderNewRequest{
+				CID:    987,
+				GID:    876,
+				Type:   "EXCHANGE LIMIT",
+				Symbol: "tBTCUSD",
+				Price:  13,
+				Amount: 0.001,
 			},
-			{
-				"oc",
-				map[string]int{"id": 1189502430},
-			},
-			{
-				"oc_multi",
-				map[string][]int{"id": rest.OrderIDs{1189502431, 1189502432}},
-			},
-			{
-				"ou",
-				bitfinex.OrderUpdateRequest{
-					ID:     1189502433,
-					Price:  15,
-					Amount: 0.002,
-				},
+		},
+		{
+			"oc",
+			map[string]int{"id": 1189502587},
+		},
+		{
+			"oc_multi",
+			map[string][]int{"id": rest.OrderIDs{1189502588, 1189503341}},
+		},
+		{
+			"ou",
+			bitfinex.OrderUpdateRequest{
+				ID:     1189503342,
+				Price:  15,
+				Amount: 0.002,
 			},
 		},
 	}
