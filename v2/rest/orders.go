@@ -17,16 +17,16 @@ type OrderService struct {
 type OrderIDs []int
 type GroupOrderIDs []int
 type ClientOrderIDs [][]interface{}
+type OrderOps [][]interface{}
+type OrderMultiArgs struct {
+	Ops OrderOps `json:"ops"`
+}
 
 type CancelOrderMultiArgs struct {
 	OrderIDs       OrderIDs       `json:"id,omitempty"`
 	GroupOrderIDs  GroupOrderIDs  `json:"gid,omitempty"`
 	ClientOrderIDs ClientOrderIDs `json:"cid,omitempty"`
 	All            int            `json:"all,omitempty"`
-}
-
-type OrderMultiArgs struct {
-	Ops [][]interface{} `json:"ops"`
 }
 
 // Retrieves all of the active orders
@@ -225,7 +225,7 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) (*bitfinex.No
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification, error) {
 	pld := OrderMultiArgs{
-		Ops: [][]interface{}{
+		Ops: OrderOps{
 			{
 				"oc_multi",
 				map[string][]int{"id": ids},
@@ -259,7 +259,7 @@ func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, error) {
 	pld := OrderMultiArgs{
-		Ops: [][]interface{}{
+		Ops: OrderOps{
 			{
 				"oc",
 				map[string]int{"id": orderID},
@@ -289,11 +289,46 @@ func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, 
 	return bitfinex.NewNotificationFromRaw(raw)
 }
 
+// OrderNewMultiOp creates new order. Accepts instance of bitfinex.OrderNewRequest
+// see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
+func (s *OrderService) OrderNewMultiOp(order bitfinex.OrderNewRequest) (*bitfinex.Notification, error) {
+	pld := OrderMultiArgs{
+		Ops: OrderOps{
+			{
+				"on",
+				order.EnrichedPayload(),
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(pld)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
+		bitfinex.PermissionWrite,
+		path.Join("order", "multi"),
+		bytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return bitfinex.NewNotificationFromRaw(raw)
+}
+
 // OrderMultiOp - send Multiple order-related operations. Please note the sent object has
 // only one property with a value of a slice of slices detailing each order operation.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) OrderMultiOp(args OrderMultiArgs) (*bitfinex.Notification, error) {
-	bytes, err := json.Marshal(args)
+func (s *OrderService) OrderMultiOp(ops OrderOps) (*bitfinex.Notification, error) {
+	pld := OrderMultiArgs{Ops: ops}
+	bytes, err := json.Marshal(pld)
 	if err != nil {
 		return nil, err
 	}
