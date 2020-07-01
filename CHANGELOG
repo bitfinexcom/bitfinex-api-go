@@ -1,3 +1,16 @@
+2.2.9
+
+- Adds new rest v2 functions
+    - Orders.CancelOrderMulti
+    - Orders.CancelOrdersMultiOp
+    - Orders.CancelOrderMultiOp
+    - Orders.OrderNewMultiOp
+    - Orders.OrderUpdateMultiOp
+    - Orders.OrderMultiOp
+    - Invoice.GenerateInvoice
+    - Funding.KeepFunding
+    - Market.AveragePrice
+
 2.2.8
 
 - Adds new rest v2 functions
