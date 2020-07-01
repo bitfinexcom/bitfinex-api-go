@@ -1,12 +1,20 @@
 package rest
 
 import (
+	"encoding/json"
+	"fmt"
 	"path"
 
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
-// LedgerService manages the Ledgers endpoint.
+// KeepFundingRequest - data structure for constructing keep funding request payload
+type KeepFundingRequest struct {
+	Type string `json:"type"`
+	ID   int    `json:"id"`
+}
+
+// FundingService manages the Funding endpoint.
 type FundingService struct {
 	requestFactory
 	Synchronous
@@ -171,5 +179,34 @@ func (fs *FundingService) CancelOffer(fc *bitfinex.FundingOfferCancelRequest) (*
 	if err != nil {
 		return nil, err
 	}
+	return bitfinex.NewNotificationFromRaw(raw)
+}
+
+// KeepFunding - toggle to keep funding taken. Specify loan for unused funding and credit for used funding.
+// see https://docs.bitfinex.com/reference#rest-auth-keep-funding for more info
+func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*bitfinex.Notification, error) {
+	if args.Type != "credit" && args.Type != "loan" {
+		return nil, fmt.Errorf("Expected type: credit or loan, got: %s", args.Type)
+	}
+
+	bytes, err := json.Marshal(args)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := fs.requestFactory.NewAuthenticatedRequestWithBytes(
+		bitfinex.PermissionWrite,
+		path.Join("funding", "keep"),
+		bytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := fs.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
 	return bitfinex.NewNotificationFromRaw(raw)
 }
