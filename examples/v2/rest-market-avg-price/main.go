@@ -10,7 +10,7 @@ import (
 func main() {
 	c := rest.NewClient()
 
-	args := rest.AveragePriceArgs{
+	args := rest.AveragePriceRequest{
 		Symbol: "fUSD",
 		Amount: "100",
 		Period: 2,

@@ -29,7 +29,7 @@ func TestMarketAveragePrice(t *testing.T) {
 		defer server.Close()
 
 		c := rest.NewClientWithURL(server.URL)
-		args := rest.AveragePriceArgs{
+		args := rest.AveragePriceRequest{
 			Symbol:    "fUSD",
 			Amount:    "100",
 			RateLimit: "1000.5",

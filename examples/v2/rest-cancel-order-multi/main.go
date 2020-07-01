@@ -33,7 +33,7 @@ func main() {
 }
 
 func cancelAllOrders(c *rest.Client) {
-	args := rest.CancelOrderMultiArgs{All: 1}
+	args := rest.CancelOrderMultiRequest{All: 1}
 	resp, err := c.Orders.CancelOrderMulti(args)
 	if err != nil {
 		log.Fatalf("cancelAllOrders error: %s", err)
@@ -43,7 +43,7 @@ func cancelAllOrders(c *rest.Client) {
 }
 
 func cancelByOrderIDs(c *rest.Client) {
-	args := rest.CancelOrderMultiArgs{OrderIDs: rest.OrderIDs{1189452509, 1189452510, 1189452511}}
+	args := rest.CancelOrderMultiRequest{OrderIDs: rest.OrderIDs{1189452509, 1189452510, 1189452511}}
 	resp, err := c.Orders.CancelOrderMulti(args)
 	if err != nil {
 		log.Fatalf("cancelByOrderIDs error: %s", err)
@@ -53,7 +53,7 @@ func cancelByOrderIDs(c *rest.Client) {
 }
 
 func cancelByGroupOrderIDs(c *rest.Client) {
-	args := rest.CancelOrderMultiArgs{GroupOrderIDs: rest.GroupOrderIDs{888, 777}}
+	args := rest.CancelOrderMultiRequest{GroupOrderIDs: rest.GroupOrderIDs{888, 777}}
 	resp, err := c.Orders.CancelOrderMulti(args)
 	if err != nil {
 		log.Fatalf("cancelByGroupIDs error: %s", err)
@@ -63,7 +63,7 @@ func cancelByGroupOrderIDs(c *rest.Client) {
 }
 
 func cancelByClientOrderID(c *rest.Client) {
-	args := rest.CancelOrderMultiArgs{
+	args := rest.CancelOrderMultiRequest{
 		ClientOrderIDs: rest.ClientOrderIDs{
 			{123, "2020-06-24"},
 			{321, "2020-06-24"},
@@ -79,7 +79,7 @@ func cancelByClientOrderID(c *rest.Client) {
 }
 
 func cancelOrderMix(c *rest.Client) {
-	args := rest.CancelOrderMultiArgs{
+	args := rest.CancelOrderMultiRequest{
 		OrderIDs:      rest.OrderIDs{1189452432, 1189452435},
 		GroupOrderIDs: rest.GroupOrderIDs{888},
 		ClientOrderIDs: rest.ClientOrderIDs{

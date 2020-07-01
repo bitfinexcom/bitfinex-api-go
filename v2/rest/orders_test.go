@@ -71,11 +71,11 @@ func TestCancelOrderMulti(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/cancel/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
-			gotReqPld := CancelOrderMultiArgs{}
+			gotReqPld := CancelOrderMultiRequest{}
 			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
 			require.Nil(t, err)
 
-			expectedReqPld := CancelOrderMultiArgs{
+			expectedReqPld := CancelOrderMultiRequest{
 				OrderIDs:      OrderIDs{123},
 				GroupOrderIDs: GroupOrderIDs{234},
 				All:           1,
@@ -92,7 +92,7 @@ func TestCancelOrderMulti(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pld := CancelOrderMultiArgs{
+		pld := CancelOrderMultiRequest{
 			OrderIDs:      OrderIDs{123},
 			GroupOrderIDs: GroupOrderIDs{234},
 			All:           1,
@@ -110,7 +110,7 @@ func TestCancelOrdersMultiOp(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
-			gotReqPld := OrderMultiArgs{}
+			gotReqPld := OrderMultiOpsRequest{}
 			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
 			require.Nil(t, err)
 
@@ -147,7 +147,7 @@ func TestCancelOrderMultiOp(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
-			gotReqPld := OrderMultiArgs{}
+			gotReqPld := OrderMultiOpsRequest{}
 			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
 			require.Nil(t, err)
 
@@ -179,7 +179,7 @@ func TestOrderNewMultiOp(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
-			gotReqPld := OrderMultiArgs{}
+			gotReqPld := OrderMultiOpsRequest{}
 			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
 			require.Nil(t, err)
 
@@ -233,7 +233,7 @@ func TestOrderUpdateMultiOp(t *testing.T) {
 			assert.Equal(t, "/auth/w/order/multi", r.RequestURI)
 			assert.Equal(t, "POST", r.Method)
 
-			gotReqPld := OrderMultiArgs{}
+			gotReqPld := OrderMultiOpsRequest{}
 			err := json.NewDecoder(r.Body).Decode(&gotReqPld)
 			require.Nil(t, err)
 

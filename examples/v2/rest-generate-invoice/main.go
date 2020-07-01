@@ -23,7 +23,7 @@ func main() {
 		NewClientWithURL("https://api.staging.bitfinex.com/v2/").
 		Credentials(key, secret)
 
-	args := rest.DepositInvoiceArgs{
+	args := rest.DepositInvoiceRequest{
 		Currency: "LNX",
 		Wallet:   "exchange",
 		Amount:   "0.002",
