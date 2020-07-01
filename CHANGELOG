@@ -10,6 +10,7 @@
     - Invoice.GenerateInvoice
     - Funding.KeepFunding
     - Market.AveragePrice
+    - Market.ForeignExchangeRate
 
 2.2.8
 
