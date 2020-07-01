@@ -287,6 +287,18 @@ In case if API will wrong response code ErrorResponse will be returned to caller
 func (r *ErrorResponse) Error() string
 ```
 
+#### type ForeignExchangeRateRequest
+
+```go
+type ForeignExchangeRateRequest struct {
+	FirstCurrency  string `json:"ccy1"`
+	SecondCurrency string `json:"ccy2"`
+}
+```
+
+ForeignExchangeRateRequest data structure for constructing average price query
+params
+
 #### type FundingService
 
 ```go
@@ -462,11 +474,19 @@ type MarketService struct {
 #### func (*MarketService) AveragePrice
 
 ```go
-func (ms *MarketService) AveragePrice(payload AveragePriceRequest) ([]float64, error)
+func (ms *MarketService) AveragePrice(pld AveragePriceRequest) ([]float64, error)
 ```
 AveragePrice Calculate the average execution price for Trading or rate for
 Margin funding. See:
 https://docs.bitfinex.com/reference#rest-public-calc-market-average-price
+
+#### func (*MarketService) ForeignExchangeRate
+
+```go
+func (ms *MarketService) ForeignExchangeRate(pld ForeignExchangeRateRequest) ([]float64, error)
+```
+ForeignExchangeRate - Calculate the exchange rate between two currencies See:
+https://docs.bitfinex.com/reference#rest-public-calc-foreign-exchange-rate
 
 #### type Nickname
 
