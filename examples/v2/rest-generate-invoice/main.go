@@ -20,7 +20,7 @@ func main() {
 	secret := os.Getenv("BFX_API_SECRET")
 
 	c := rest.
-		NewClientWithURL("https://api.staging.bitfinex.com/v2/").
+		NewClient().
 		Credentials(key, secret)
 
 	args := rest.DepositInvoiceRequest{

@@ -20,7 +20,7 @@ func main() {
 	secret := os.Getenv("BFX_API_SECRET")
 
 	c := rest.
-		NewClientWithURL("https://api.staging.bitfinex.com/v2/").
+		NewClient().
 		Credentials(key, secret)
 
 	deleted, err := c.Pulse.DeletePulse("437b5b44-0f7d-4638-baff-3bbf6966482d")
