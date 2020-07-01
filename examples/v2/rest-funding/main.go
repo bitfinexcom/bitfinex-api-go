@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
-	"os"
+	"github.com/davecgh/go-spew/spew"
 )
-
 
 // Set BFX_APIKEY and BFX_SECRET as :
 //
@@ -76,12 +78,23 @@ func main() {
 		fmt.Println(item)
 	}
 
+	// keep funding
+	resp, err := c.Funding.KeepFunding(rest.KeepFundingRequest{
+		Type: "credit",
+		ID:   12345, // Insert correct ID
+	})
+	if err != nil {
+		log.Fatalf("KeepFunding error: %s", err)
+	}
+
+	spew.Dump(resp)
+
 	/********* submit a new funding offer ***********/
 	fo, err := c.Funding.SubmitOffer(&bitfinex.FundingOfferRequest{
-		Type: "LIMIT",
+		Type:   "LIMIT",
 		Symbol: "fUSD",
 		Amount: 1000,
-		Rate: 0.012,
+		Rate:   0.012,
 		Period: 7,
 		Hidden: true,
 	})
