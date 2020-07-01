@@ -11,6 +11,19 @@ const (
 )
 ```
 
+#### type AveragePriceRequest
+
+```go
+type AveragePriceRequest struct {
+	Symbol    string
+	Amount    string
+	RateLimit string
+	Period    int
+}
+```
+
+AveragePriceRequest data structure for constructing average price query params
+
 #### type BookService
 
 ```go
@@ -28,6 +41,20 @@ func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, price
 Retrieve all books for the given symbol with the given precision at the given
 price level see https://docs.bitfinex.com/reference#rest-public-books for more
 info
+
+#### type CancelOrderMultiRequest
+
+```go
+type CancelOrderMultiRequest struct {
+	OrderIDs       OrderIDs       `json:"id,omitempty"`
+	GroupOrderIDs  GroupOrderIDs  `json:"gid,omitempty"`
+	ClientOrderIDs ClientOrderIDs `json:"cid,omitempty"`
+	All            int            `json:"all,omitempty"`
+}
+```
+
+CancelOrderMultiRequest - data structure for constructing cancel order multi
+request payload
 
 #### type CandleService
 
@@ -93,6 +120,7 @@ type Client struct {
 	Funding     FundingService
 	Pulse       PulseService
 	Invoice     InvoiceService
+	Market      MarketService
 
 	Synchronous
 }
@@ -193,6 +221,13 @@ url and data (map[string]interface{}) as the body For example permissionType =
 "r" and refUrl = "/orders" then the target endpoint will be
 https://api.bitfinex.com/v2/auth/r/orders/:Symbol
 
+#### type ClientOrderIDs
+
+```go
+type ClientOrderIDs [][]interface{}
+```
+
+
 #### type CurrenciesService
 
 ```go
@@ -210,6 +245,19 @@ func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]
 ```
 Retreive currency and symbol service configuration data see
 https://docs.bitfinex.com/reference#rest-public-conf for more info
+
+#### type DepositInvoiceRequest
+
+```go
+type DepositInvoiceRequest struct {
+	Currency string `json:"currency,omitempty"`
+	Wallet   string `json:"wallet,omitempty"`
+	Amount   string `json:"amount,omitempty"`
+}
+```
+
+DepositInvoiceRequest - data structure for constructing deposit invoice request
+payload
 
 #### type DerivativesService
 
@@ -247,7 +295,7 @@ type FundingService struct {
 }
 ```
 
-LedgerService manages the Ledgers endpoint.
+FundingService manages the Funding endpoint.
 
 #### func (*FundingService) CancelOffer
 
@@ -272,6 +320,15 @@ func (fs *FundingService) CreditsHistory(symbol string) (*bitfinex.FundingCredit
 ```
 Retreive all of the past in-active credits used in positions see
 https://docs.bitfinex.com/reference#rest-auth-funding-credits-hist for more info
+
+#### func (*FundingService) KeepFunding
+
+```go
+func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*bitfinex.Notification, error)
+```
+KeepFunding - toggle to keep funding taken. Specify loan for unused funding and
+credit for used funding. see
+https://docs.bitfinex.com/reference#rest-auth-keep-funding for more info
 
 #### func (*FundingService) Loans
 
@@ -321,6 +378,13 @@ func (fs *FundingService) Trades(symbol string) (*bitfinex.FundingTradeSnapshot,
 Retreive all of the matched funding trades see
 https://docs.bitfinex.com/reference#rest-auth-funding-trades-hist for more info
 
+#### type GroupOrderIDs
+
+```go
+type GroupOrderIDs []int
+```
+
+
 #### type HttpTransport
 
 ```go
@@ -345,14 +409,28 @@ type InvoiceService struct {
 }
 ```
 
+InvoiceService manages Invoice endpoint
 
 #### func (*InvoiceService) GenerateInvoice
 
 ```go
-func (is *InvoiceService) GenerateInvoice(currency, wallet, amount string) (*invoice.Invoice, error)
+func (is *InvoiceService) GenerateInvoice(payload DepositInvoiceRequest) (*invoice.Invoice, error)
 ```
-GenerateInvoice generates a Lightning Network deposit invoice
+GenerateInvoice generates a Lightning Network deposit invoice Accepts
+DepositInvoiceRequest type as argument
 https://docs.bitfinex.com/reference#rest-auth-deposit-invoice
+
+#### type KeepFundingRequest
+
+```go
+type KeepFundingRequest struct {
+	Type string `json:"type"`
+	ID   int    `json:"id"`
+}
+```
+
+KeepFundingRequest - data structure for constructing keep funding request
+payload
 
 #### type LedgerService
 
@@ -371,6 +449,56 @@ func (s *LedgerService) Ledgers(currency string, start int64, end int64, max int
 ```
 Retrieves all of the past ledger entreies see
 https://docs.bitfinex.com/reference#ledgers for more info
+
+#### type MarketService
+
+```go
+type MarketService struct {
+	Synchronous
+}
+```
+
+
+#### func (*MarketService) AveragePrice
+
+```go
+func (ms *MarketService) AveragePrice(payload AveragePriceRequest) ([]float64, error)
+```
+AveragePrice Calculate the average execution price for Trading or rate for
+Margin funding. See:
+https://docs.bitfinex.com/reference#rest-public-calc-market-average-price
+
+#### type Nickname
+
+```go
+type Nickname string
+```
+
+
+#### type OrderIDs
+
+```go
+type OrderIDs []int
+```
+
+
+#### type OrderMultiOpsRequest
+
+```go
+type OrderMultiOpsRequest struct {
+	Ops OrderOps `json:"ops"`
+}
+```
+
+OrderMultiOpsRequest - data structure for constructing order multi ops request
+payload
+
+#### type OrderOps
+
+```go
+type OrderOps [][]interface{}
+```
+
 
 #### type OrderService
 
@@ -397,6 +525,34 @@ func (s *OrderService) AllHistory() (*bitfinex.OrderSnapshot, error)
 ```
 Retrieves all past orders See https://docs.bitfinex.com/reference#orders-history
 for more info
+
+#### func (*OrderService) CancelOrderMulti
+
+```go
+func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*bitfinex.Notification, error)
+```
+CancelOrderMulti cancels multiple orders simultaneously. Orders can be canceled
+based on the Order ID, the combination of Client Order ID and Client Order Date,
+or the Group Order ID. Alternatively, the body param 'all' can be used with a
+value of 1 to cancel all orders. see
+https://docs.bitfinex.com/reference#rest-auth-order-cancel-multi for more info
+
+#### func (*OrderService) CancelOrderMultiOp
+
+```go
+func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, error)
+```
+CancelOrderMultiOp cancels order. Accepts orderID to be canceled. see
+https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
+
+#### func (*OrderService) CancelOrdersMultiOp
+
+```go
+func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification, error)
+```
+CancelOrdersMultiOp cancels multiple orders simultaneously. Accepts a slice of
+order ID's to be canceled. see
+https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 
 #### func (*OrderService) GetByOrderId
 
@@ -430,6 +586,24 @@ func (s *OrderService) GetHistoryBySymbol(symbol string) (*bitfinex.OrderSnapsho
 Retrieves all past orders with the given symbol See
 https://docs.bitfinex.com/reference#orders-history for more info
 
+#### func (*OrderService) OrderMultiOp
+
+```go
+func (s *OrderService) OrderMultiOp(ops OrderOps) (*bitfinex.Notification, error)
+```
+OrderMultiOp - send Multiple order-related operations. Please note the sent
+object has only one property with a value of a slice of slices detailing each
+order operation. see https://docs.bitfinex.com/reference#rest-auth-order-multi
+for more info
+
+#### func (*OrderService) OrderNewMultiOp
+
+```go
+func (s *OrderService) OrderNewMultiOp(order bitfinex.OrderNewRequest) (*bitfinex.Notification, error)
+```
+OrderNewMultiOp creates new order. Accepts instance of bitfinex.OrderNewRequest
+see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
+
 #### func (*OrderService) OrderTrades
 
 ```go
@@ -437,6 +611,15 @@ func (s *OrderService) OrderTrades(symbol string, orderID int64) (*bitfinex.Trad
 ```
 Retrieves the trades generated by an order See
 https://docs.bitfinex.com/reference#orders-history for more info
+
+#### func (*OrderService) OrderUpdateMultiOp
+
+```go
+func (s *OrderService) OrderUpdateMultiOp(order bitfinex.OrderUpdateRequest) (*bitfinex.Notification, error)
+```
+OrderUpdateMultiOp updates order. Accepts instance of
+bitfinex.OrderUpdateRequest see
+https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 
 #### func (*OrderService) SubmitCancelOrder
 
@@ -533,7 +716,7 @@ if it was see https://docs.bitfinex.com/reference#rest-auth-pulse-del
 #### func (*PulseService) PublicPulseHistory
 
 ```go
-func (ps *PulseService) PublicPulseHistory(limit, end int) ([]*pulse.Pulse, error)
+func (ps *PulseService) PublicPulseHistory(limit int, end bitfinex.Mts) ([]*pulse.Pulse, error)
 ```
 PublicPulseHistory returns latest pulse messages. You can specify an end
 timestamp to view older messages. see
@@ -542,7 +725,7 @@ https://docs.bitfinex.com/reference#rest-public-pulse-hist
 #### func (*PulseService) PublicPulseProfile
 
 ```go
-func (ps *PulseService) PublicPulseProfile(nickname string) (*pulseprofile.PulseProfile, error)
+func (ps *PulseService) PublicPulseProfile(nickname Nickname) (*pulseprofile.PulseProfile, error)
 ```
 PublicPulseProfile returns details for a specific Pulse profile
 https://docs.bitfinex.com/reference#rest-public-pulse-profile
@@ -550,10 +733,10 @@ https://docs.bitfinex.com/reference#rest-public-pulse-profile
 #### func (*PulseService) PulseHistory
 
 ```go
-func (ps *PulseService) PulseHistory(isPublic int) ([]*pulse.Pulse, error)
+func (ps *PulseService) PulseHistory(isPublic bool) ([]*pulse.Pulse, error)
 ```
-PulseHistory allows you to retrieve your private pulse history or the public
-pulse history with an additional UID_LIKED field see
+PulseHistory allows you to retrieve your pulse history. Call function with
+"false" boolean value for private and with "true" for public pulse history. see
 https://docs.bitfinex.com/reference#rest-auth-pulse-hist
 
 #### type Request
