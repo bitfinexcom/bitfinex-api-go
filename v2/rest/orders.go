@@ -364,7 +364,29 @@ func (s *OrderService) OrderUpdateMultiOp(order bitfinex.OrderUpdateRequest) (*b
 // only one property with a value of a slice of slices detailing each order operation.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) OrderMultiOp(ops OrderOps) (*bitfinex.Notification, error) {
-	pld := OrderMultiOpsRequest{Ops: ops}
+	enrichedOrderOps := OrderOps{}
+
+	for _, v := range ops {
+		if v[0] == "on" {
+			o, ok := v[1].(bitfinex.OrderNewRequest)
+			if !ok {
+				return nil, fmt.Errorf("Invalid type for `on` operation. Expected: bitfinex.OrderNewRequest")
+			}
+			v[1] = o.EnrichedPayload()
+		}
+
+		if v[0] == "ou" {
+			o, ok := v[1].(bitfinex.OrderUpdateRequest)
+			if !ok {
+				return nil, fmt.Errorf("Invalid type for `ou` operation. Expected: bitfinex.OrderUpdateRequest")
+			}
+			v[1] = o.EnrichedPayload()
+		}
+
+		enrichedOrderOps = append(enrichedOrderOps, v)
+	}
+
+	pld := OrderMultiOpsRequest{Ops: enrichedOrderOps}
 	bytes, err := json.Marshal(pld)
 	if err != nil {
 		return nil, err
