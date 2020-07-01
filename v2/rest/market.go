@@ -13,8 +13,8 @@ type MarketService struct {
 	Synchronous
 }
 
-// AveragePriceArgs data structure constructing average price query params
-type AveragePriceArgs struct {
+// AveragePriceRequest data structure for constructing average price query params
+type AveragePriceRequest struct {
 	Symbol    string
 	Amount    string
 	RateLimit string
@@ -23,7 +23,7 @@ type AveragePriceArgs struct {
 
 // AveragePrice Calculate the average execution price for Trading or rate for Margin funding.
 // See: https://docs.bitfinex.com/reference#rest-public-calc-market-average-price
-func (ms *MarketService) AveragePrice(payload AveragePriceArgs) ([]float64, error) {
+func (ms *MarketService) AveragePrice(payload AveragePriceRequest) ([]float64, error) {
 	req := NewRequestWithMethod(path.Join("calc", "trade", "avg"), "POST")
 	req.Params = make(url.Values)
 	req.Params.Add("symbol", payload.Symbol)

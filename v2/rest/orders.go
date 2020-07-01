@@ -18,11 +18,14 @@ type OrderIDs []int
 type GroupOrderIDs []int
 type ClientOrderIDs [][]interface{}
 type OrderOps [][]interface{}
-type OrderMultiArgs struct {
+
+// OrderMultiOpsRequest - data structure for constructing order multi ops request payload
+type OrderMultiOpsRequest struct {
 	Ops OrderOps `json:"ops"`
 }
 
-type CancelOrderMultiArgs struct {
+// CancelOrderMultiRequest - data structure for constructing cancel order multi request payload
+type CancelOrderMultiRequest struct {
 	OrderIDs       OrderIDs       `json:"id,omitempty"`
 	GroupOrderIDs  GroupOrderIDs  `json:"gid,omitempty"`
 	ClientOrderIDs ClientOrderIDs `json:"cid,omitempty"`
@@ -198,7 +201,7 @@ func (s *OrderService) SubmitCancelOrder(oc *bitfinex.OrderCancelRequest) error 
 // the combination of Client Order ID and Client Order Date, or the Group Order ID. Alternatively, the body
 // param 'all' can be used with a value of 1 to cancel all orders.
 // see https://docs.bitfinex.com/reference#rest-auth-order-cancel-multi for more info
-func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) (*bitfinex.Notification, error) {
+func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*bitfinex.Notification, error) {
 	bytes, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
@@ -224,7 +227,7 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiArgs) (*bitfinex.No
 // CancelOrdersMultiOp cancels multiple orders simultaneously. Accepts a slice of order ID's to be canceled.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification, error) {
-	pld := OrderMultiArgs{
+	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
 				"oc_multi",
@@ -258,7 +261,7 @@ func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification
 // CancelOrderMultiOp cancels order. Accepts orderID to be canceled.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, error) {
-	pld := OrderMultiArgs{
+	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
 				"oc",
@@ -292,7 +295,7 @@ func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, 
 // OrderNewMultiOp creates new order. Accepts instance of bitfinex.OrderNewRequest
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) OrderNewMultiOp(order bitfinex.OrderNewRequest) (*bitfinex.Notification, error) {
-	pld := OrderMultiArgs{
+	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
 				"on",
@@ -326,7 +329,7 @@ func (s *OrderService) OrderNewMultiOp(order bitfinex.OrderNewRequest) (*bitfine
 // OrderUpdateMultiOp updates order. Accepts instance of bitfinex.OrderUpdateRequest
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) OrderUpdateMultiOp(order bitfinex.OrderUpdateRequest) (*bitfinex.Notification, error) {
-	pld := OrderMultiArgs{
+	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
 				"ou",
@@ -361,7 +364,7 @@ func (s *OrderService) OrderUpdateMultiOp(order bitfinex.OrderUpdateRequest) (*b
 // only one property with a value of a slice of slices detailing each order operation.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 func (s *OrderService) OrderMultiOp(ops OrderOps) (*bitfinex.Notification, error) {
-	pld := OrderMultiArgs{Ops: ops}
+	pld := OrderMultiOpsRequest{Ops: ops}
 	bytes, err := json.Marshal(pld)
 	if err != nil {
 		return nil, err

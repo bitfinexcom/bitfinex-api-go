@@ -11,13 +11,14 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
+// InvoiceService manages Invoice endpoint
 type InvoiceService struct {
 	requestFactory
 	Synchronous
 }
 
-// DepositInvoiceArgs data structure constructing deposit invoice payload
-type DepositInvoiceArgs struct {
+// DepositInvoiceRequest - data structure for constructing deposit invoice request payload
+type DepositInvoiceRequest struct {
 	Currency string `json:"currency,omitempty"`
 	Wallet   string `json:"wallet,omitempty"`
 	Amount   string `json:"amount,omitempty"`
@@ -81,9 +82,9 @@ func validAmount(currency, amount string) error {
 }
 
 // GenerateInvoice generates a Lightning Network deposit invoice
-// Accepts DepositInvoiceArgs type as argument
+// Accepts DepositInvoiceRequest type as argument
 // https://docs.bitfinex.com/reference#rest-auth-deposit-invoice
-func (is *InvoiceService) GenerateInvoice(payload DepositInvoiceArgs) (*invoice.Invoice, error) {
+func (is *InvoiceService) GenerateInvoice(payload DepositInvoiceRequest) (*invoice.Invoice, error) {
 	if err := validCurrency(payload.Currency); err != nil {
 		return nil, err
 	}

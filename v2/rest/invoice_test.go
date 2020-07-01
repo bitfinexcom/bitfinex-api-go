@@ -16,7 +16,7 @@ func TestGenerateInvoice(t *testing.T) {
 	t.Run("unsupported currency", func(t *testing.T) {
 		c := rest.NewClient()
 
-		args := rest.DepositInvoiceArgs{
+		args := rest.DepositInvoiceRequest{
 			Currency: "ETH",
 			Wallet:   "exchange",
 			Amount:   "0.0001",
@@ -30,7 +30,7 @@ func TestGenerateInvoice(t *testing.T) {
 	t.Run("amount too small", func(t *testing.T) {
 		c := rest.NewClient()
 
-		args := rest.DepositInvoiceArgs{
+		args := rest.DepositInvoiceRequest{
 			Currency: "LNX",
 			Wallet:   "exchange",
 			Amount:   "0.0000001",
@@ -44,7 +44,7 @@ func TestGenerateInvoice(t *testing.T) {
 	t.Run("amount too large", func(t *testing.T) {
 		c := rest.NewClient()
 
-		args := rest.DepositInvoiceArgs{
+		args := rest.DepositInvoiceRequest{
 			Currency: "LNX",
 			Wallet:   "exchange",
 			Amount:   "0.03",
@@ -68,7 +68,7 @@ func TestGenerateInvoice(t *testing.T) {
 
 		c := rest.NewClientWithURL(server.URL)
 
-		pld := rest.DepositInvoiceArgs{
+		pld := rest.DepositInvoiceRequest{
 			Currency: "LNX",
 			Wallet:   "exchange",
 			Amount:   "0.0001",
@@ -100,7 +100,7 @@ func TestGenerateInvoice(t *testing.T) {
 
 		c := rest.NewClientWithURL(server.URL)
 
-		pld := rest.DepositInvoiceArgs{
+		pld := rest.DepositInvoiceRequest{
 			Currency: "LNX",
 			Wallet:   "exchange",
 			Amount:   "0.002",
