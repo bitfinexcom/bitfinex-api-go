@@ -3,12 +3,13 @@ package websocket
 import (
 	"context"
 	"fmt"
+
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 type FlagRequest struct {
 	Event string `json:"event"`
-	Flags int `json:"flags"`
+	Flags int    `json:"flags"`
 }
 
 // API for end-users to interact with Bitfinex.
@@ -214,6 +215,24 @@ func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *bitfinex.
 
 // Submit a request to cancel and existing funding offer
 func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *bitfinex.FundingOfferCancelRequest) error {
+	socket, err := c.GetAuthenticatedSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, fundingOffer)
+}
+
+// CloseFundingLoan - cancels funding loan by ID. Emits an error if not authenticated.
+func (c *Client) CloseFundingLoan(ctx context.Context, fundingOffer *bitfinex.FundingLoanCancelRequest) error {
+	socket, err := c.GetAuthenticatedSocket()
+	if err != nil {
+		return err
+	}
+	return socket.Asynchronous.Send(ctx, fundingOffer)
+}
+
+// CloseFundingCredit - cancels funding credit by ID. Emits an error if not authenticated.
+func (c *Client) CloseFundingCredit(ctx context.Context, fundingOffer *bitfinex.FundingCreditCancelRequest) error {
 	socket, err := c.GetAuthenticatedSocket()
 	if err != nil {
 		return err
