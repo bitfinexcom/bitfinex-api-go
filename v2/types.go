@@ -659,7 +659,7 @@ func NewTradeSnapshotFromRaw(pair string, raw [][]float64) (*TradeSnapshot, erro
 	}
 	snapshot := make([]*Trade, 0)
 	for _, flt := range raw {
-		t, err := NewTradeFromRaw(pair, ToInterface(flt))
+		t, err := NewTradeFromRaw(pair, convert.ToInterface(flt))
 		if err == nil {
 			snapshot = append(snapshot, t)
 		}
@@ -987,6 +987,52 @@ const (
 	OfferStatusPartiallyFilled OfferStatus = "PARTIALLY FILLED"
 	OfferStatusCanceled        OfferStatus = "CANCELED"
 )
+
+type FundingLoanCancelRequest struct {
+	Id int64
+}
+
+func (o *FundingLoanCancelRequest) ToJSON() ([]byte, error) {
+	aux := struct {
+		Id int64 `json:"id"`
+	}{
+		Id: o.Id,
+	}
+	return json.Marshal(aux)
+}
+
+// MarshalJSON converts the funding loan cancel request into the format required by the
+// bitfinex websocket service.
+func (o *FundingLoanCancelRequest) MarshalJSON() ([]byte, error) {
+	aux, err := o.ToJSON()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("[0, \"flc\", null, %s]", string(aux))), nil
+}
+
+type FundingCreditCancelRequest struct {
+	Id int64
+}
+
+func (o *FundingCreditCancelRequest) ToJSON() ([]byte, error) {
+	aux := struct {
+		Id int64 `json:"id"`
+	}{
+		Id: o.Id,
+	}
+	return json.Marshal(aux)
+}
+
+// MarshalJSON converts the funding loan cancel request into the format required by the
+// bitfinex websocket service.
+func (o *FundingCreditCancelRequest) MarshalJSON() ([]byte, error) {
+	aux, err := o.ToJSON()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("[0, \"fcc\", null, %s]", string(aux))), nil
+}
 
 type FundingOfferCancelRequest struct {
 	Id int64
@@ -1516,7 +1562,7 @@ func NewTickerSnapshotFromRaw(symbol string, raw [][]float64) (*TickerSnapshot, 
 	}
 	snap := make([]*Ticker, 0)
 	for _, f := range raw {
-		c, err := NewTickerFromRaw(symbol, ToInterface(f))
+		c, err := NewTickerFromRaw(symbol, convert.ToInterface(f))
 		if err == nil {
 			snap = append(snap, c)
 		}
@@ -1627,7 +1673,7 @@ func NewBookUpdateSnapshotFromRaw(symbol, precision string, raw [][]float64, raw
 	}
 	snap := make([]*BookUpdate, len(raw))
 	for i, f := range raw {
-		b, err := NewBookUpdateFromRaw(symbol, precision, ToInterface(f), raw_numbers.([]interface{})[i])
+		b, err := NewBookUpdateFromRaw(symbol, precision, convert.ToInterface(f), raw_numbers.([]interface{})[i])
 		if err != nil {
 			return nil, err
 		}
@@ -1713,31 +1759,13 @@ type CandleSnapshot struct {
 	Snapshot []*Candle
 }
 
-func ToFloat64Slice(slice []interface{}) []float64 {
-	data := make([]float64, 0, len(slice))
-	for _, i := range slice {
-		if f, ok := i.(float64); ok {
-			data = append(data, f)
-		}
-	}
-	return data
-}
-
-func ToInterface(flt []float64) []interface{} {
-	data := make([]interface{}, len(flt))
-	for j, f := range flt {
-		data[j] = f
-	}
-	return data
-}
-
 func NewCandleSnapshotFromRaw(symbol string, resolution CandleResolution, raw [][]float64) (*CandleSnapshot, error) {
 	if len(raw) <= 0 {
 		return nil, fmt.Errorf("data slice too short for candle snapshot: %#v", raw)
 	}
 	snap := make([]*Candle, 0)
 	for _, f := range raw {
-		c, err := NewCandleFromRaw(symbol, resolution, ToInterface(f))
+		c, err := NewCandleFromRaw(symbol, resolution, convert.ToInterface(f))
 		if err == nil {
 			snap = append(snap, c)
 		}
@@ -2003,80 +2031,4 @@ const (
 type Stat struct {
 	Period int64
 	Volume float64
-}
-
-type DerivativeStatusSnapshot struct {
-	Snapshot []*DerivativeStatus
-}
-
-type StatusType string
-
-const (
-	DerivativeStatusType StatusType = "deriv"
-)
-
-type DerivativeStatus struct {
-	Symbol               string
-	MTS                  int64
-	Price                float64
-	SpotPrice            float64
-	InsuranceFundBalance float64
-	FundingAccrued       float64
-	FundingStep          float64
-}
-
-func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*DerivativeStatus, error) {
-	if len(raw) == 11 {
-		ds := &DerivativeStatus{
-			Symbol: symbol,
-			MTS:    convert.I64ValOrZero(raw[0]),
-			// placeholder
-			Price:     convert.F64ValOrZero(raw[2]),
-			SpotPrice: convert.F64ValOrZero(raw[3]),
-			// placeholder
-			InsuranceFundBalance: convert.F64ValOrZero(raw[5]),
-			// placeholder
-			// placeholder
-			FundingAccrued: convert.F64ValOrZero(raw[8]),
-			FundingStep:    convert.F64ValOrZero(raw[9]),
-			// placeholder
-		}
-		return ds, nil
-	} else {
-		return nil, fmt.Errorf("data slice too short for derivative status: %#v", raw)
-	}
-}
-
-func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
-	if len(raw) == 12 {
-		ds := &DerivativeStatus{
-			Symbol: convert.SValOrEmpty(raw[0]),
-			MTS:    convert.I64ValOrZero(raw[1]),
-			// placeholder
-			Price:     convert.F64ValOrZero(raw[3]),
-			SpotPrice: convert.F64ValOrZero(raw[4]),
-			// placeholder
-			InsuranceFundBalance: convert.F64ValOrZero(raw[6]),
-			// placeholder
-			// placeholder
-			FundingAccrued: convert.F64ValOrZero(raw[9]),
-			FundingStep:    convert.F64ValOrZero(raw[10]),
-			// placeholder
-		}
-		return ds, nil
-	} else {
-		return nil, fmt.Errorf("data slice too short for derivative status: %#v", raw)
-	}
-}
-
-func NewDerivativeSnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
-	snapshot := make([]*DerivativeStatus, len(raw))
-	for i, rStatus := range raw {
-		pStatus, err := NewDerivativeStatusFromRaw(rStatus)
-		if err != nil {
-			return nil, err
-		}
-		snapshot[i] = pStatus
-	}
-	return &DerivativeStatusSnapshot{Snapshot: snapshot}, nil
 }
