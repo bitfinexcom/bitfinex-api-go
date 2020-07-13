@@ -65,6 +65,14 @@ func ToInterfaceArray(i []interface{}) [][]interface{} {
 	return newArr
 }
 
+func ToInterface(flt []float64) []interface{} {
+	data := make([]interface{}, len(flt))
+	for j, f := range flt {
+		data[j] = f
+	}
+	return data
+}
+
 func ToFloat64Array(i [][]interface{}) ([][]float64, error) {
 	newArr := make([][]float64, len(i))
 	for index, item := range i {
