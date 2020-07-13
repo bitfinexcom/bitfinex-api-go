@@ -61,3 +61,10 @@ func TestToInt(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 }
+
+func TestToInterface(t *testing.T) {
+	payload := []float64{1.1234, 2.1234}
+	expected := []interface{}{1.1234, 2.1234}
+	got := convert.ToInterface(payload)
+	assert.Equal(t, expected, got)
+}
