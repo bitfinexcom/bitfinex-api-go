@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/derivatives"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -184,7 +185,7 @@ func (f *StatsFactory) Build(sub *subscription, objType string, raw []interface{
 		return nil, fmt.Errorf("unable to parse key to symbol %s", sub.Request.Key)
 	}
 	symbol := splits[1] + ":" + splits[2]
-	candle, err := bitfinex.NewDerivativeStatusFromWsRaw(symbol, raw)
+	candle, err := derivatives.NewDerivativeStatusFromWsRaw(symbol, raw)
 	return candle, err
 }
 
