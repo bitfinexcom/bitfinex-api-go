@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/op/go-logging"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
 
-	"github.com/bitfinexcom/bitfinex-api-go/utils"
+	"github.com/gorilla/websocket"
+	"github.com/op/go-logging"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
 
 	"crypto/hmac"
 	"crypto/sha512"
@@ -72,7 +73,7 @@ type Asynchronous interface {
 
 type SocketId int
 type Socket struct {
-	Id                 SocketId
+	Id SocketId
 	Asynchronous
 	IsConnected        bool
 	ResetSubscriptions []*subscription
@@ -104,7 +105,7 @@ func (w *WebsocketAsynchronousFactory) Create() Asynchronous {
 // Client provides a unified interface for users to interact with the Bitfinex V2 Websocket API.
 // nolint:megacheck,structcheck
 type Client struct {
-	asyncFactory       AsynchronousFactory // for re-creating transport during reconnects
+	asyncFactory AsynchronousFactory // for re-creating transport during reconnects
 
 	timeout            int64 // read timeout
 	apiKey             string
@@ -118,22 +119,22 @@ type Client struct {
 	log                *logging.Logger
 
 	// connection & operational behavior
-	parameters         *Parameters
+	parameters *Parameters
 
 	// subscription manager
-	subscriptions      *subscriptions
-	factories          map[string]messageFactory
-	orderbooks         map[string]*Orderbook
+	subscriptions *subscriptions
+	factories     map[string]messageFactory
+	orderbooks    map[string]*Orderbook
 
 	// close signal sent to user on shutdown
-	shutdown           chan bool
+	shutdown chan bool
 
 	// downstream listener channel to deliver API objects
-	listener           chan interface{}
+	listener chan interface{}
 
 	// race management
-	mtx                *sync.RWMutex
-	waitGroup          sync.WaitGroup
+	mtx       *sync.RWMutex
+	waitGroup sync.WaitGroup
 }
 
 // Credentials assigns authentication credentials to a connection request.
@@ -221,7 +222,6 @@ func (c *Client) Connect() error {
 	return c.connectSocket(SocketId(len(c.sockets)))
 }
 
-
 // Returns true if the underlying asynchronous transport is connected to an endpoint.
 func (c *Client) IsConnected() bool {
 	c.mtx.RLock()
@@ -277,9 +277,9 @@ func (c *Client) Unsubscribe(ctx context.Context, id string) error {
 func (c *Client) listenDisconnect() {
 	for {
 		select {
-		case <- c.shutdown:
+		case <-c.shutdown:
 			return
-		case hbErr := <- c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
+		case hbErr := <-c.subscriptions.ListenDisconnect(): // subscription heartbeat timeout
 			c.log.Warningf("heartbeat disconnect: %s", hbErr.Error.Error())
 			c.mtx.Lock()
 			if socket, ok := c.sockets[hbErr.Subscription.SocketId]; ok {
@@ -373,11 +373,11 @@ func (c *Client) connectSocket(socketId SocketId) error {
 	async := c.asyncFactory.Create()
 	// create new socket instance
 	socket := &Socket{
-		Id: socketId,
-		Asynchronous: async,
-		IsConnected: false,
+		Id:                 socketId,
+		Asynchronous:       async,
+		IsConnected:        false,
 		ResetSubscriptions: nil,
-		IsAuthenticated: false,
+		IsAuthenticated:    false,
 	}
 	oldSocket, _ := c.socketById(socketId)
 	if oldSocket != nil {
@@ -418,7 +418,7 @@ func (c *Client) reconnectSocket(socket *Socket) error {
 func (c *Client) listenUpstream(socket *Socket) {
 	for {
 		select {
-		case err := <- socket.Asynchronous.Done():
+		case err := <-socket.Asynchronous.Done():
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				err := c.reconnect(socket, err)
 				if err != nil {
@@ -427,7 +427,7 @@ func (c *Client) listenUpstream(socket *Socket) {
 				}
 			}
 			return
-		case msg := <- socket.Asynchronous.Listen():
+		case msg := <-socket.Asynchronous.Listen():
 			if msg != nil {
 				err := c.handleMessage(socket.Id, msg)
 				if err != nil {
