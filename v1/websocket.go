@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/bitfinexcom/bitfinex-api-go/utils"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
 
 	"github.com/gorilla/websocket"
 )
