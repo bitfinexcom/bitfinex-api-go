@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -237,17 +238,17 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		pc := bitfinex.PositionCancel(*o)
 		return &pc
 	case "ws":
-		o, err := bitfinex.NewWalletSnapshotFromRaw(raw)
+		o, err := wallet.SnapshotFromRaw(raw, wallet.FromWsRaw)
 		if err != nil {
 			return err
 		}
 		return o
 	case "wu":
-		o, err := bitfinex.NewWalletFromRaw(raw)
+		o, err := wallet.FromWsRaw(raw)
 		if err != nil {
 			return err
 		}
-		wu := bitfinex.WalletUpdate(*o)
+		wu := wallet.Update(*o)
 		return &wu
 	case "os":
 		o, err := bitfinex.NewOrderSnapshotFromRaw(raw)
