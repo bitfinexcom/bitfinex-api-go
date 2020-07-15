@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -15,9 +16,9 @@ type listener struct {
 	ticks                chan *bitfinex.Ticker
 	subscriptionEvents   chan *websocket.SubscribeEvent
 	unsubscriptionEvents chan *websocket.UnsubscribeEvent
-	walletUpdates        chan *bitfinex.WalletUpdate
+	walletUpdates        chan *wallet.Update
 	balanceUpdates       chan *bitfinex.BalanceUpdate
-	walletSnapshot       chan *bitfinex.WalletSnapshot
+	walletSnapshot       chan *wallet.Snapshot
 	positionSnapshot     chan *bitfinex.PositionSnapshot
 	notifications        chan *bitfinex.Notification
 	positions            chan *bitfinex.PositionUpdate
@@ -39,9 +40,9 @@ func newListener() *listener {
 		ticks:                make(chan *bitfinex.Ticker, 10),
 		subscriptionEvents:   make(chan *websocket.SubscribeEvent, 10),
 		unsubscriptionEvents: make(chan *websocket.UnsubscribeEvent, 10),
-		walletUpdates:        make(chan *bitfinex.WalletUpdate, 10),
+		walletUpdates:        make(chan *wallet.Update, 10),
 		balanceUpdates:       make(chan *bitfinex.BalanceUpdate, 10),
-		walletSnapshot:       make(chan *bitfinex.WalletSnapshot, 10),
+		walletSnapshot:       make(chan *wallet.Snapshot, 10),
 		positionSnapshot:     make(chan *bitfinex.PositionSnapshot, 10),
 		errors:               make(chan error, 10),
 		notifications:        make(chan *bitfinex.Notification, 10),
@@ -85,7 +86,7 @@ func (l *listener) nextAuthEvent() (*websocket.AuthEvent, error) {
 	}
 }
 
-func (l *listener) nextWalletUpdate() (*bitfinex.WalletUpdate, error) {
+func (l *listener) nextWalletUpdate() (*wallet.Update, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -113,7 +114,7 @@ func (l *listener) nextBalanceUpdate() (*bitfinex.BalanceUpdate, error) {
 	}
 }
 
-func (l *listener) nextWalletSnapshot() (*bitfinex.WalletSnapshot, error) {
+func (l *listener) nextWalletSnapshot() (*wallet.Snapshot, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -348,8 +349,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.unsubscriptionEvents <- msg.(*websocket.UnsubscribeEvent)
 				case *websocket.AuthEvent:
 					l.authEvents <- msg.(*websocket.AuthEvent)
-				case *bitfinex.WalletUpdate:
-					l.walletUpdates <- msg.(*bitfinex.WalletUpdate)
+				case *wallet.Update:
+					l.walletUpdates <- msg.(*wallet.Update)
 				case *bitfinex.BalanceUpdate:
 					l.balanceUpdates <- msg.(*bitfinex.BalanceUpdate)
 				case *bitfinex.Notification:
@@ -374,8 +375,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.funding <- msg.(*bitfinex.FundingInfo)
 				case *bitfinex.PositionSnapshot:
 					l.positionSnapshot <- msg.(*bitfinex.PositionSnapshot)
-				case *bitfinex.WalletSnapshot:
-					l.walletSnapshot <- msg.(*bitfinex.WalletSnapshot)
+				case *wallet.Snapshot:
+					l.walletSnapshot <- msg.(*wallet.Snapshot)
 				default:
 					log.Printf("COULD NOT TYPE MSG ^")
 				}
