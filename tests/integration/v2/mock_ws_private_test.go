@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -113,19 +114,19 @@ func TestWalletBalanceUpdates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "exchange", Currency: "BTC", Balance: 30, BalanceAvailable: 30}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "exchange", Currency: "BTC", Balance: 30, BalanceAvailable: 30}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "exchange", Currency: "USD", Balance: 80000, BalanceAvailable: 80000}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "exchange", Currency: "USD", Balance: 80000, BalanceAvailable: 80000}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "exchange", Currency: "ETH", Balance: 100, BalanceAvailable: 100}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "exchange", Currency: "ETH", Balance: 100, BalanceAvailable: 100}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "funding", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "funding", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "funding", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "funding", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "margin", Currency: "USD", Balance: 10000, BalanceAvailable: 10000}), fmt.Sprint(*wu))
 	bu, err := listener.nextBalanceUpdate()
 	if err != nil {
 		t.Fatal(err)
@@ -257,15 +258,15 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ews := make([]*bitfinex.Wallet, 7)
-	ews[0] = &bitfinex.Wallet{Type: "exchange", Currency: "BTC", Balance: 30}
-	ews[1] = &bitfinex.Wallet{Type: "exchange", Currency: "USD", Balance: 80000}
-	ews[2] = &bitfinex.Wallet{Type: "exchange", Currency: "ETH", Balance: 100}
-	ews[3] = &bitfinex.Wallet{Type: "margin", Currency: "BTC", Balance: 10}
-	ews[4] = &bitfinex.Wallet{Type: "margin", Currency: "USD", Balance: 9987.16871968}
-	ews[5] = &bitfinex.Wallet{Type: "funding", Currency: "BTC", Balance: 10}
-	ews[6] = &bitfinex.Wallet{Type: "funding", Currency: "USD", Balance: 10000}
-	wsnap := &bitfinex.WalletSnapshot{
+	ews := make([]*wallet.Wallet, 7)
+	ews[0] = &wallet.Wallet{Type: "exchange", Currency: "BTC", Balance: 30}
+	ews[1] = &wallet.Wallet{Type: "exchange", Currency: "USD", Balance: 80000}
+	ews[2] = &wallet.Wallet{Type: "exchange", Currency: "ETH", Balance: 100}
+	ews[3] = &wallet.Wallet{Type: "margin", Currency: "BTC", Balance: 10}
+	ews[4] = &wallet.Wallet{Type: "margin", Currency: "USD", Balance: 9987.16871968}
+	ews[5] = &wallet.Wallet{Type: "funding", Currency: "BTC", Balance: 10}
+	ews[6] = &wallet.Wallet{Type: "funding", Currency: "USD", Balance: 10000}
+	wsnap := &wallet.Snapshot{
 		Snapshot: ews,
 	}
 	assertSlice(t, wsnap, w)
@@ -341,9 +342,9 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9999.60287096}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "margin", Currency: "USD", Balance: 9999.60287096}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9998.16773008}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "margin", Currency: "USD", Balance: 9998.16773008}), fmt.Sprint(*wu))
 
 	// margin info update for executed trades
 	async.Publish(`[0,"miu",["base",[-2.76536085,0,19150.16773008,19147.40236923]]]`)
@@ -368,9 +369,9 @@ func TestFills(t *testing.T) {
 	async.Publish(`[0,"wu",["margin","BTC",10,0,10]]`)
 	async.Publish(`[0,"wu",["margin","USD",9998.16773008,0,9998.16773008]]`)
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "margin", Currency: "BTC", Balance: 10, BalanceAvailable: 10}), fmt.Sprint(*wu))
 	wu, _ = listener.nextWalletUpdate()
-	assert(t, fmt.Sprint(bitfinex.WalletUpdate{Type: "margin", Currency: "USD", Balance: 9998.16773008, BalanceAvailable: 9998.16773008}), fmt.Sprint(*wu))
+	assert(t, fmt.Sprint(wallet.Update{Type: "margin", Currency: "USD", Balance: 9998.16773008, BalanceAvailable: 9998.16773008}), fmt.Sprint(*wu))
 
 	// funding update for executed trades
 	async.Publish(`[0,"fiu",["sym","ftBTCUSD",[0,0,0,0]]]`)
@@ -564,9 +565,9 @@ func TestUpdateOrder(t *testing.T) {
 
 	// publish update request
 	req := &bitfinex.OrderUpdateRequest{
-		ID: on.ID,
+		ID:     on.ID,
 		Amount: 0.04,
-		Price: 1200,
+		Price:  1200,
 	}
 	pre := async.SentCount()
 	err = ws.SubmitUpdateOrder(context.Background(), req)
@@ -589,7 +590,7 @@ func TestUpdateOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.OrderUpdate{ID:1234567, GID:0, CID:123, Symbol:"tBTCUSD", MTSCreated:1547469854025, MTSUpdated:1547469854121, Amount:0.04, AmountOrig:0.04, Type:"LIMIT", TypePrev:"", Flags:0, Status:"ACTIVE", Price:1200, PriceAvg:0, PriceTrailing:0, PriceAuxLimit:0, Notify:false, Hidden:false, PlacedID:0}), fmt.Sprint(*ou))
+	assert(t, fmt.Sprint(bitfinex.OrderUpdate{ID: 1234567, GID: 0, CID: 123, Symbol: "tBTCUSD", MTSCreated: 1547469854025, MTSUpdated: 1547469854121, Amount: 0.04, AmountOrig: 0.04, Type: "LIMIT", TypePrev: "", Flags: 0, Status: "ACTIVE", Price: 1200, PriceAvg: 0, PriceTrailing: 0, PriceAuxLimit: 0, Notify: false, Hidden: false, PlacedID: 0}), fmt.Sprint(*ou))
 }
 
 func TestUsesAuthenticatedSocket(t *testing.T) {
@@ -630,7 +631,7 @@ func TestUsesAuthenticatedSocket(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(i)+`,"key":"trade:15m:`+ticker+`","subId":"`+id+`"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(i) + `,"key":"trade:15m:` + ticker + `","subId":"` + id + `"}`)
 	}
 	authSocket, err := ws.GetAuthenticatedSocket()
 	if err != nil {
