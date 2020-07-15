@@ -781,66 +781,6 @@ func NewTradeExecutionFromRaw(raw []interface{}) (o *TradeExecution, err error) 
 	return
 }
 
-type Wallet struct {
-	Type              string
-	Currency          string
-	Balance           float64
-	UnsettledInterest float64
-	BalanceAvailable  float64
-}
-
-func NewWalletFromRaw(raw []interface{}) (o *Wallet, err error) {
-	if len(raw) == 4 {
-		o = &Wallet{
-			Type:              convert.SValOrEmpty(raw[0]),
-			Currency:          convert.SValOrEmpty(raw[1]),
-			Balance:           convert.F64ValOrZero(raw[2]),
-			UnsettledInterest: convert.F64ValOrZero(raw[3]),
-		}
-	} else if len(raw) < 5 {
-		return o, fmt.Errorf("data slice too short for wallet: %#v", raw)
-	} else {
-		o = &Wallet{
-			Type:              convert.SValOrEmpty(raw[0]),
-			Currency:          convert.SValOrEmpty(raw[1]),
-			Balance:           convert.F64ValOrZero(raw[2]),
-			UnsettledInterest: convert.F64ValOrZero(raw[3]),
-			BalanceAvailable:  convert.F64ValOrZero(raw[4]),
-		}
-	}
-	return
-}
-
-type WalletUpdate Wallet
-type WalletSnapshot struct {
-	Snapshot []*Wallet
-}
-
-func NewWalletSnapshotFromRaw(raw []interface{}) (s *WalletSnapshot, err error) {
-	if len(raw) == 0 {
-		return
-	}
-
-	ws := make([]*Wallet, 0)
-	switch raw[0].(type) {
-	case []interface{}:
-		for _, v := range raw {
-			if l, ok := v.([]interface{}); ok {
-				o, err := NewWalletFromRaw(l)
-				if err != nil {
-					return s, err
-				}
-				ws = append(ws, o)
-			}
-		}
-	default:
-		return s, fmt.Errorf("not an wallet snapshot")
-	}
-	s = &WalletSnapshot{Snapshot: ws}
-
-	return
-}
-
 type BalanceInfo struct {
 	TotalAUM float64
 	NetAUM   float64
@@ -2032,3 +1972,5 @@ type Stat struct {
 	Period int64
 	Volume float64
 }
+
+type StatusType string
