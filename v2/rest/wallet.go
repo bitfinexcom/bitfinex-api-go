@@ -1,8 +1,10 @@
 package rest
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"strconv"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // WalletService manages data flow for the Wallet API endpoint
@@ -13,7 +15,7 @@ type WalletService struct {
 
 // Retrieves all of the wallets for the account
 // see https://docs.bitfinex.com/reference#rest-auth-wallets for more info
-func (s *WalletService) Wallet() (*bitfinex.WalletSnapshot, error) {
+func (s *WalletService) Wallet() (*wallet.Snapshot, error) {
 	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, "wallets")
 	if err != nil {
 		return nil, err
@@ -23,7 +25,7 @@ func (s *WalletService) Wallet() (*bitfinex.WalletSnapshot, error) {
 		return nil, err
 	}
 
-	os, err := bitfinex.NewWalletSnapshotFromRaw(raw)
+	os, err := wallet.SnapshotFromRaw(raw, wallet.FromRaw)
 	if err != nil {
 		return nil, err
 	}
@@ -35,11 +37,11 @@ func (s *WalletService) Wallet() (*bitfinex.WalletSnapshot, error) {
 // see https://docs.bitfinex.com/reference#transfer-between-wallets for more info
 func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount float64) (*bitfinex.Notification, error) {
 	body := map[string]interface{}{
-		"from": from,
-		"to": to,
-		"currency": currency,
+		"from":        from,
+		"to":          to,
+		"currency":    currency,
 		"currency_to": currencyTo,
-		"amount": strconv.FormatFloat(amount, 'f', -1, 64),
+		"amount":      strconv.FormatFloat(amount, 'f', -1, 64),
 	}
 	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, "transfer", body)
 	if err != nil {
@@ -54,8 +56,8 @@ func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount 
 
 func (ws *WalletService) depositAddress(wallet string, method string, renew int) (*bitfinex.Notification, error) {
 	body := map[string]interface{}{
-		"wallet": wallet,
-		"method": method,
+		"wallet":   wallet,
+		"method":   method,
 		"op_renew": renew,
 	}
 	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, "deposit/address", body)
@@ -85,9 +87,9 @@ func (ws *WalletService) CreateDepositAddress(wallet, method string) (*bitfinex.
 // See https://docs.bitfinex.com/reference#withdraw for more info
 func (ws *WalletService) Withdraw(wallet, method string, amount float64, address string) (*bitfinex.Notification, error) {
 	body := map[string]interface{}{
-		"wallet": wallet,
-		"method": method,
-		"amount": strconv.FormatFloat(amount, 'f', -1, 64),
+		"wallet":  wallet,
+		"method":  method,
+		"amount":  strconv.FormatFloat(amount, 'f', -1, 64),
 		"address": address,
 	}
 	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, "withdraw", body)
