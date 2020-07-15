@@ -343,8 +343,7 @@ func (c *Client) reconnect(socket *Socket, err error) error {
 		c.log.Debugf("socket (id=%d) waiting %s until reconnect...", socket.Id, c.parameters.ReconnectInterval)
 		time.Sleep(c.parameters.ReconnectInterval)
 		c.log.Infof("socket (id=%d) reconnect attempt %d/%d", socket.Id, reconnectTry+1, c.parameters.ReconnectAttempts)
-		err := c.reconnectSocket(socket)
-		if err == nil {
+		if err := c.reconnectSocket(socket); err == nil {
 			c.log.Debugf("reconnect OK")
 			return nil
 		}
