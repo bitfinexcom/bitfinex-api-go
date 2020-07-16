@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/derivatives"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
@@ -152,20 +153,16 @@ func (f *CandlesFactory) Build(sub *subscription, objType string, raw []interfac
 	if err != nil {
 		return nil, err
 	}
-	candle, err := bitfinex.NewCandleFromRaw(sym, res, raw)
+	candle, err := candle.FromRaw(sym, res, raw)
 	return candle, err
 }
 
 func (f *CandlesFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := convert.ToFloat64Array(raw)
-	if err != nil {
-		return nil, err
-	}
 	sym, res, err := extractSymbolResolutionFromKey(sub.Request.Key)
 	if err != nil {
 		return nil, err
 	}
-	snap, err := bitfinex.NewCandleSnapshotFromRaw(sym, res, converted)
+	snap, err := candle.SnapshotFromRaw(sym, res, raw)
 	return snap, err
 }
 
@@ -185,8 +182,8 @@ func (f *StatsFactory) Build(sub *subscription, objType string, raw []interface{
 		return nil, fmt.Errorf("unable to parse key to symbol %s", sub.Request.Key)
 	}
 	symbol := splits[1] + ":" + splits[2]
-	candle, err := derivatives.NewDerivativeStatusFromWsRaw(symbol, raw)
-	return candle, err
+	d, err := derivatives.FromWsRaw(symbol, raw)
+	return d, err
 }
 
 func (f *StatsFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
