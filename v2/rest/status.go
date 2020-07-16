@@ -31,7 +31,7 @@ func (ss *StatusService) get(sType string, key string) (*derivatives.DerivativeS
 	for i, r := range raw {
 		trueRaw[i] = r.([]interface{})
 	}
-	s, err := derivatives.NewDerivativeSnapshotFromRaw(trueRaw)
+	s, err := derivatives.SnapshotFromRaw(trueRaw)
 	if err != nil {
 		return nil, err
 	}
