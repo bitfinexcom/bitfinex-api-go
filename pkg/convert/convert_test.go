@@ -68,3 +68,17 @@ func TestToInterface(t *testing.T) {
 	got := convert.ToInterface(payload)
 	assert.Equal(t, expected, got)
 }
+
+func TestF64ValOrZero(t *testing.T) {
+	t.Run("converts int to float64", func(t *testing.T) {
+		var expected float64 = 910
+		got := convert.F64ValOrZero(910)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("converts float64 to float64", func(t *testing.T) {
+		var expected float64 = 910.1234
+		got := convert.F64ValOrZero(float64(910.1234))
+		assert.Equal(t, expected, got)
+	})
+}
