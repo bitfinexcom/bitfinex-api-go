@@ -106,11 +106,17 @@ func IValOrZero(i interface{}) int {
 	return 0
 }
 
-func F64ValOrZero(i interface{}) float64 {
-	if r, ok := i.(float64); ok {
-		return r
+func F64ValOrZero(in interface{}) (out float64) {
+	switch v := in.(type) {
+	case int:
+		out = float64(v)
+	default:
+		if v, ok := in.(float64); ok {
+			out = v
+		}
 	}
-	return 0.0
+
+	return out
 }
 
 func SiMapOrEmpty(i interface{}) map[string]interface{} {
