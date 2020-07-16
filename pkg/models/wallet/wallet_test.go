@@ -12,9 +12,9 @@ func TestNewWalletFromRaw(t *testing.T) {
 	t.Run("insufficient arguments", func(t *testing.T) {
 		payload := []interface{}{"exchange"}
 
-		invc, err := wallet.FromRaw(payload)
+		w, err := wallet.FromRaw(payload)
 		require.NotNil(t, err)
-		require.Nil(t, invc)
+		require.Nil(t, w)
 	})
 
 	t.Run("valid arguments", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestWalletSnapshotFromRaw(t *testing.T) {
 					Type:              "exchange",
 					Currency:          "SAN",
 					Balance:           20.76,
-					UnsettledInterest: 0,
+					UnsettledInterest: 2,
 				},
 			},
 		}, ss)
@@ -160,7 +160,7 @@ func TestWalletSnapshotFromRaw(t *testing.T) {
 					Type:              "exchange",
 					Currency:          "SAN",
 					Balance:           20.76,
-					UnsettledInterest: 0,
+					UnsettledInterest: 2,
 					BalanceAvailable:  12.12345,
 				},
 			},
