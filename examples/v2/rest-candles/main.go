@@ -2,66 +2,59 @@ package main
 
 import (
 	"log"
+	"time"
+
 	bfx "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
-	"time"
+	"github.com/davecgh/go-spew/spew"
 )
-
 
 func main() {
 	c := rest.NewClient()
 
+	last(c)
+	history(c)
+	historyWithQuery(c)
+}
 
-	log.Printf("1) Query Last Candle")
-	candle, err := c.Candles.Last(bfx.TradingPrefix+bfx.BTCUSD, bfx.FiveMinutes)
-
+func last(c *rest.Client) {
+	candle, err := c.Candles.Last(bfx.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
 	if err != nil {
-		log.Fatalf("getting candle: %s", err)
+		log.Fatalf("last: %s", err)
 	}
 
-	log.Printf("last candle: %#v\n", candle)
+	spew.Dump(candle)
+}
 
+func history(c *rest.Client) {
+	candles, err := c.Candles.History(bfx.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
+	if err != nil {
+		log.Fatalf("history: %s", err)
+	}
+
+	spew.Dump(candles)
+}
+
+func historyWithQuery(c *rest.Client) {
 	now := time.Now()
 	millis := now.UnixNano() / 1000000
-
 	prior := now.Add(time.Duration(-24) * time.Hour)
 	millisStart := prior.UnixNano() / 1000000
-
-
-	log.Printf("2) Query Candle History with no params")
-	candles, err := c.Candles.History(bfx.TradingPrefix+bfx.BTCUSD, bfx.FiveMinutes)
-
-	if err != nil {
-		log.Fatalf("getting candles: %s", err)
-	}
-
-	log.Printf("length of candles is: %v", len(candles.Snapshot))
-
-	log.Printf("first candle is: %#v\n", candles.Snapshot[0])
-	log.Printf("last candle is: %#v\n", candles.Snapshot[len(candles.Snapshot)-1])
-
 	start := bfx.Mts(millisStart)
 	end := bfx.Mts(millis)
 
-	log.Printf("3) Query Candle History with params")
-	candlesMore, err := c.Candles.HistoryWithQuery(
+	candles, err := c.Candles.HistoryWithQuery(
 		bfx.TradingPrefix+bfx.BTCUSD,
 		bfx.FiveMinutes,
 		start,
 		end,
 		200,
 		bfx.OldestFirst,
-		)
+	)
 
 	if err != nil {
-		log.Fatalf("getting candles: %s", err)
+		log.Fatalf("historyWithQuery: %s", err)
 	}
 
-	log.Printf("length of candles is: %v", len(candlesMore.Snapshot))
-	log.Printf("first candle is: %#v\n", candlesMore.Snapshot[0])
-	log.Printf("last candle is: %#v\n", candlesMore.Snapshot[len(candlesMore.Snapshot)-1])
-
-
-
+	spew.Dump(candles)
 }
-
