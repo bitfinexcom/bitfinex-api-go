@@ -8,7 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
-// Set BFX_APIKEY and BFX_SECRET as :
+// Set BFX_API_KEY and BFX_API_SECRET as :
 //
 // export BFX_API_KEY=YOUR_API_KEY
 // export BFX_API_SECRET=YOUR_API_SECRET
