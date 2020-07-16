@@ -24,7 +24,7 @@ type DerivativeStatus struct {
 	OpenInterest         float64
 }
 
-func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*DerivativeStatus, error) {
+func FromWsRaw(symbol string, raw []interface{}) (*DerivativeStatus, error) {
 	if len(raw) < 18 {
 		return nil, fmt.Errorf("unexpected data slice length for derivative status: %#v", raw)
 	}
@@ -54,7 +54,7 @@ func NewDerivativeStatusFromWsRaw(symbol string, raw []interface{}) (*Derivative
 	return ds, nil
 }
 
-func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
+func FromRaw(raw []interface{}) (*DerivativeStatus, error) {
 	if len(raw) < 19 {
 		return nil, fmt.Errorf("unexpected data slice length for derivative status: %#v", raw)
 	}
@@ -84,10 +84,10 @@ func NewDerivativeStatusFromRaw(raw []interface{}) (*DerivativeStatus, error) {
 	return ds, nil
 }
 
-func NewDerivativeSnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
+func SnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
 	snapshot := make([]*DerivativeStatus, len(raw))
 	for i, rStatus := range raw {
-		pStatus, err := NewDerivativeStatusFromRaw(rStatus)
+		pStatus, err := FromRaw(rStatus)
 		if err != nil {
 			return nil, err
 		}
