@@ -82,3 +82,17 @@ func TestF64ValOrZero(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 }
+
+func TestI64ValOrZero(t *testing.T) {
+	t.Run("converts int to int64", func(t *testing.T) {
+		var expected int64 = 910
+		got := convert.I64ValOrZero(910)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("converts float64 to int64", func(t *testing.T) {
+		var expected int64 = 1594891800000
+		got := convert.I64ValOrZero(1.5948918e+12)
+		assert.Equal(t, expected, got)
+	})
+}
