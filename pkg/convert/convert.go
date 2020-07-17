@@ -92,11 +92,17 @@ func FloatToJsonNumber(i interface{}) json.Number {
 	return json.Number(strconv.FormatFloat(i.(float64), 'f', -1, 64))
 }
 
-func I64ValOrZero(i interface{}) int64 {
-	if r, ok := i.(float64); ok {
-		return int64(r)
+func I64ValOrZero(in interface{}) (out int64) {
+	switch v := in.(type) {
+	case int:
+		out = int64(v)
+	default:
+		if v, ok := in.(float64); ok {
+			out = int64(v)
+		}
 	}
-	return 0
+
+	return out
 }
 
 func IValOrZero(i interface{}) int {
