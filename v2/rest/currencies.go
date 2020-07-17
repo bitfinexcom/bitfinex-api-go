@@ -1,50 +1,55 @@
 package rest
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"path"
 	"strings"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/currency"
 )
 
-// TradeService manages the Trade endpoint.
+// CurrenciesService manages the conf endpoint.
 type CurrenciesService struct {
 	requestFactory
 	Synchronous
 }
 
-// Retreive currency and symbol service configuration data
+// Conf - retreive currency and symbol service configuration data
 // see https://docs.bitfinex.com/reference#rest-public-conf for more info
-func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]bitfinex.CurrencyConf, error) {
+func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]currency.Conf, error) {
 	segments := make([]string, 0)
 	if label {
-		segments = append(segments, string(bitfinex.CurrencyLabelMap))
+		segments = append(segments, string(currency.LabelMap))
 	}
 	if symbol {
-		segments = append(segments, string(bitfinex.CurrencySymbolMap))
+		segments = append(segments, string(currency.SymbolMap))
 	}
 	if unit {
-		segments = append(segments, string(bitfinex.CurrencyUnitMap))
+		segments = append(segments, string(currency.UnitMap))
 	}
 	if explorer {
-		segments = append(segments, string(bitfinex.CurrencyExplorerMap))
+		segments = append(segments, string(currency.ExplorerMap))
 	}
 	if pairs {
-		segments = append(segments, string(bitfinex.CurrencyExchangeMap))
+		segments = append(segments, string(currency.ExchangeMap))
 	}
-	req := NewRequestWithMethod(path.Join("conf", strings.Join(segments,",")), "GET")
+
+	req := NewRequestWithMethod(path.Join("conf", strings.Join(segments, ",")), "GET")
 	raw, err := cs.Request(req)
 	if err != nil {
 		return nil, err
 	}
+
 	// add mapping to raw data
-	parsedRaw := make([]bitfinex.RawCurrencyConf, len(raw))
+	parsedRaw := make([]currency.RawConf, len(raw))
 	for index, d := range raw {
-		parsedRaw = append(parsedRaw, bitfinex.RawCurrencyConf{Mapping: segments[index], Data: d})
+		parsedRaw = append(parsedRaw, currency.RawConf{Mapping: segments[index], Data: d})
 	}
+
 	// parse to config object
-	configs, err := bitfinex.NewCurrencyConfFromRaw(parsedRaw)
+	configs, err := currency.ConfFromRaw(parsedRaw)
 	if err != nil {
 		return nil, err
 	}
+
 	return configs, nil
 }
