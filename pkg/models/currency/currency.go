@@ -2,7 +2,7 @@ package currency
 
 import "strings"
 
-type CurrencyConf struct {
+type Conf struct {
 	Currency  string
 	Label     string
 	Symbol    string
@@ -18,22 +18,22 @@ type ExplorerConf struct {
 	TransactionUri string
 }
 
-type CurrencyConfigMapping string
+type ConfigMapping string
 
 const (
-	CurrencyLabelMap    CurrencyConfigMapping = "pub:map:currency:label"
-	CurrencySymbolMap   CurrencyConfigMapping = "pub:map:currency:sym"
-	CurrencyUnitMap     CurrencyConfigMapping = "pub:map:currency:unit"
-	CurrencyExplorerMap CurrencyConfigMapping = "pub:map:currency:explorer"
-	CurrencyExchangeMap CurrencyConfigMapping = "pub:list:pair:exchange"
+	LabelMap    ConfigMapping = "pub:map:currency:label"
+	SymbolMap   ConfigMapping = "pub:map:currency:sym"
+	UnitMap     ConfigMapping = "pub:map:currency:unit"
+	ExplorerMap ConfigMapping = "pub:map:currency:explorer"
+	ExchangeMap ConfigMapping = "pub:list:pair:exchange"
 )
 
-type RawCurrencyConf struct {
+type RawConf struct {
 	Mapping string
 	Data    interface{}
 }
 
-func parseCurrencyLabelMap(config map[string]CurrencyConf, raw []interface{}) {
+func parseLabelMap(config map[string]Conf, raw []interface{}) {
 	for _, rawLabel := range raw {
 		data := rawLabel.([]interface{})
 		cur := data[0].(string)
@@ -43,7 +43,7 @@ func parseCurrencyLabelMap(config map[string]CurrencyConf, raw []interface{}) {
 			config[cur] = val
 		} else {
 			// create new empty config instance
-			cfg := CurrencyConf{}
+			cfg := Conf{}
 			cfg.Label = data[1].(string)
 			cfg.Currency = cur
 			config[cur] = cfg
@@ -51,7 +51,7 @@ func parseCurrencyLabelMap(config map[string]CurrencyConf, raw []interface{}) {
 	}
 }
 
-func parseCurrencySymbMap(config map[string]CurrencyConf, raw []interface{}) {
+func parseSymbMap(config map[string]Conf, raw []interface{}) {
 	for _, rawLabel := range raw {
 		data := rawLabel.([]interface{})
 		cur := data[0].(string)
@@ -61,7 +61,7 @@ func parseCurrencySymbMap(config map[string]CurrencyConf, raw []interface{}) {
 			config[cur] = val
 		} else {
 			// create new empty config instance
-			cfg := CurrencyConf{}
+			cfg := Conf{}
 			cfg.Symbol = data[1].(string)
 			cfg.Currency = cur
 			config[cur] = cfg
@@ -69,7 +69,7 @@ func parseCurrencySymbMap(config map[string]CurrencyConf, raw []interface{}) {
 	}
 }
 
-func parseCurrencyUnitMap(config map[string]CurrencyConf, raw []interface{}) {
+func parseUnitMap(config map[string]Conf, raw []interface{}) {
 	for _, rawLabel := range raw {
 		data := rawLabel.([]interface{})
 		cur := data[0].(string)
@@ -79,7 +79,7 @@ func parseCurrencyUnitMap(config map[string]CurrencyConf, raw []interface{}) {
 			config[cur] = val
 		} else {
 			// create new empty config instance
-			cfg := CurrencyConf{}
+			cfg := Conf{}
 			cfg.Unit = data[1].(string)
 			cfg.Currency = cur
 			config[cur] = cfg
@@ -87,17 +87,17 @@ func parseCurrencyUnitMap(config map[string]CurrencyConf, raw []interface{}) {
 	}
 }
 
-func parseCurrencyExplorerMap(config map[string]CurrencyConf, raw []interface{}) {
+func parseExplorerMap(config map[string]Conf, raw []interface{}) {
 	for _, rawLabel := range raw {
 		data := rawLabel.([]interface{})
 		cur := data[0].(string)
 		explorers := data[1].([]interface{})
-		var cfg CurrencyConf
+		var cfg Conf
 		if val, ok := config[cur]; ok {
 			cfg = val
 		} else {
 			// create new empty config instance
-			cc := CurrencyConf{}
+			cc := Conf{}
 			cc.Currency = cur
 			cfg = cc
 		}
@@ -111,7 +111,7 @@ func parseCurrencyExplorerMap(config map[string]CurrencyConf, raw []interface{})
 	}
 }
 
-func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{}) {
+func parseExchangeMap(config map[string]Conf, raw []interface{}) {
 	for _, rs := range raw {
 		symbol := rs.(string)
 		var base, quote string
@@ -138,30 +138,30 @@ func parseCurrencyExchangeMap(config map[string]CurrencyConf, raw []interface{})
 	}
 }
 
-func NewCurrencyConfFromRaw(raw []RawCurrencyConf) ([]CurrencyConf, error) {
-	configMap := make(map[string]CurrencyConf)
+func ConfFromRaw(raw []RawConf) ([]Conf, error) {
+	configMap := make(map[string]Conf)
 	for _, r := range raw {
-		switch CurrencyConfigMapping(r.Mapping) {
-		case CurrencyLabelMap:
+		switch ConfigMapping(r.Mapping) {
+		case LabelMap:
 			data := r.Data.([]interface{})
-			parseCurrencyLabelMap(configMap, data)
-		case CurrencySymbolMap:
+			parseLabelMap(configMap, data)
+		case SymbolMap:
 			data := r.Data.([]interface{})
-			parseCurrencySymbMap(configMap, data)
-		case CurrencyUnitMap:
+			parseSymbMap(configMap, data)
+		case UnitMap:
 			data := r.Data.([]interface{})
-			parseCurrencyUnitMap(configMap, data)
-		case CurrencyExplorerMap:
+			parseUnitMap(configMap, data)
+		case ExplorerMap:
 			data := r.Data.([]interface{})
-			parseCurrencyExplorerMap(configMap, data)
-		case CurrencyExchangeMap:
+			parseExplorerMap(configMap, data)
+		case ExchangeMap:
 			data := r.Data.([]interface{})
-			parseCurrencyExchangeMap(configMap, data)
+			parseExchangeMap(configMap, data)
 		}
 	}
 
 	// convert map to array
-	configs := make([]CurrencyConf, 0)
+	configs := make([]Conf, 0)
 	for _, v := range configMap {
 		configs = append(configs, v)
 	}
