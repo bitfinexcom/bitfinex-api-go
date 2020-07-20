@@ -8,6 +8,7 @@ import (
 	"math"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 )
 
 // Prefixes for available pairs
@@ -503,115 +504,6 @@ type OrderNew Order
 
 // OrderCancel gets sent out after an Order was cancelled successfully.
 type OrderCancel Order
-
-type PositionStatus string
-
-const (
-	PositionStatusActive PositionStatus = "ACTIVE"
-	PositionStatusClosed PositionStatus = "CLOSED"
-)
-
-type Position struct {
-	Id                   int64
-	Symbol               string
-	Status               PositionStatus
-	Amount               float64
-	BasePrice            float64
-	MarginFunding        float64
-	MarginFundingType    int64
-	ProfitLoss           float64
-	ProfitLossPercentage float64
-	LiquidationPrice     float64
-	Leverage             float64
-}
-
-func NewPositionFromRaw(raw []interface{}) (o *Position, err error) {
-	if len(raw) == 6 {
-		o = &Position{
-			Symbol:            convert.SValOrEmpty(raw[0]),
-			Status:            PositionStatus(convert.SValOrEmpty(raw[1])),
-			Amount:            convert.F64ValOrZero(raw[2]),
-			BasePrice:         convert.F64ValOrZero(raw[3]),
-			MarginFunding:     convert.F64ValOrZero(raw[4]),
-			MarginFundingType: convert.I64ValOrZero(raw[5]),
-		}
-	} else if len(raw) < 10 {
-		return o, fmt.Errorf("data slice too short for position: %#v", raw)
-	} else if len(raw) == 10 {
-		o = &Position{
-			Symbol:               convert.SValOrEmpty(raw[0]),
-			Status:               PositionStatus(convert.SValOrEmpty(raw[1])),
-			Amount:               convert.F64ValOrZero(raw[2]),
-			BasePrice:            convert.F64ValOrZero(raw[3]),
-			MarginFunding:        convert.F64ValOrZero(raw[4]),
-			MarginFundingType:    convert.I64ValOrZero(raw[5]),
-			ProfitLoss:           convert.F64ValOrZero(raw[6]),
-			ProfitLossPercentage: convert.F64ValOrZero(raw[7]),
-			LiquidationPrice:     convert.F64ValOrZero(raw[8]),
-			Leverage:             convert.F64ValOrZero(raw[9]),
-		}
-	} else {
-		o = &Position{
-			Symbol:               convert.SValOrEmpty(raw[0]),
-			Status:               PositionStatus(convert.SValOrEmpty(raw[1])),
-			Amount:               convert.F64ValOrZero(raw[2]),
-			BasePrice:            convert.F64ValOrZero(raw[3]),
-			MarginFunding:        convert.F64ValOrZero(raw[4]),
-			MarginFundingType:    convert.I64ValOrZero(raw[5]),
-			ProfitLoss:           convert.F64ValOrZero(raw[6]),
-			ProfitLossPercentage: convert.F64ValOrZero(raw[7]),
-			LiquidationPrice:     convert.F64ValOrZero(raw[8]),
-			Leverage:             convert.F64ValOrZero(raw[9]),
-			Id:                   int64(convert.F64ValOrZero(raw[11])),
-		}
-	}
-	return
-}
-
-type PositionSnapshot struct {
-	Snapshot []*Position
-}
-type PositionNew Position
-type PositionUpdate Position
-type PositionCancel Position
-
-func NewPositionSnapshotFromRaw(raw []interface{}) (s *PositionSnapshot, err error) {
-	if len(raw) == 0 {
-		return
-	}
-
-	ps := make([]*Position, 0)
-	switch raw[0].(type) {
-	case []interface{}:
-		for _, v := range raw {
-			if l, ok := v.([]interface{}); ok {
-				p, err := NewPositionFromRaw(l)
-				if err != nil {
-					return s, err
-				}
-				ps = append(ps, p)
-			}
-		}
-	default:
-		return s, fmt.Errorf("not a position snapshot")
-	}
-	s = &PositionSnapshot{Snapshot: ps}
-
-	return
-}
-
-type ClaimPositionRequest struct {
-	Id int64
-}
-
-func (o *ClaimPositionRequest) ToJSON() ([]byte, error) {
-	aux := struct {
-		Id int64 `json:"id"`
-	}{
-		Id: o.Id,
-	}
-	return json.Marshal(aux)
-}
 
 // Trade represents a trade on the public data feed.
 type Trade struct {
@@ -1459,11 +1351,11 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 		case "acc_tf":
 			o.NotifyInfo = raw[4]
 		case "pm-req":
-			p, err := NewPositionFromRaw(nraw)
+			p, err := position.FromRaw(nraw)
 			if err != nil {
 				return o, err
 			}
-			cp := PositionCancel(*p)
+			cp := position.Cancel(*p)
 			o.NotifyInfo = &cp
 		default:
 			o.NotifyInfo = raw[4]
@@ -1471,110 +1363,6 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 	}
 
 	return
-}
-
-type Ticker struct {
-	Symbol          string
-	Frr             float64
-	Bid             float64
-	BidPeriod       int64
-	BidSize         float64
-	Ask             float64
-	AskPeriod       int64
-	AskSize         float64
-	DailyChange     float64
-	DailyChangePerc float64
-	LastPrice       float64
-	Volume          float64
-	High            float64
-	Low             float64
-}
-
-type TickerUpdate Ticker
-type TickerSnapshot struct {
-	Snapshot []*Ticker
-}
-
-func NewTickerSnapshotFromRaw(symbol string, raw [][]float64) (*TickerSnapshot, error) {
-	if len(raw) <= 0 {
-		return nil, fmt.Errorf("data slice too short for ticker snapshot: %#v", raw)
-	}
-	snap := make([]*Ticker, 0)
-	for _, f := range raw {
-		c, err := NewTickerFromRaw(symbol, convert.ToInterface(f))
-		if err == nil {
-			snap = append(snap, c)
-		}
-	}
-	return &TickerSnapshot{Snapshot: snap}, nil
-}
-
-func NewTickerFromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
-	if len(raw) < 10 {
-		return t, fmt.Errorf("data slice too short for ticker, expected %d got %d: %#v", 10, len(raw), raw)
-	}
-	// funding currency ticker
-	// ignore bid/ask period for now
-	if len(raw) == 13 {
-		t = &Ticker{
-			Symbol:          symbol,
-			Bid:             convert.F64ValOrZero(raw[1]),
-			BidSize:         convert.F64ValOrZero(raw[2]),
-			Ask:             convert.F64ValOrZero(raw[4]),
-			AskSize:         convert.F64ValOrZero(raw[5]),
-			DailyChange:     convert.F64ValOrZero(raw[7]),
-			DailyChangePerc: convert.F64ValOrZero(raw[8]),
-			LastPrice:       convert.F64ValOrZero(raw[9]),
-			Volume:          convert.F64ValOrZero(raw[10]),
-			High:            convert.F64ValOrZero(raw[11]),
-			Low:             convert.F64ValOrZero(raw[12]),
-		}
-		return t, nil
-	} else if len(raw) == 16 {
-		// on funding currencies (ex. fUSD)
-		// SYMBOL, FRR, BID, BID_PERIOD, BID_SIZE, ASK, ASK_PERIOD, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE,
-		// LAST_PRICE, VOLUME, HIGH, LOW, _PLACEHOLDER, _PLACEHOLDER, FRR_AMOUNT_AVAILABLE
-		t = &Ticker{
-			Symbol:          symbol,
-			Frr:             convert.F64ValOrZero(raw[0]),
-			Bid:             convert.F64ValOrZero(raw[1]),
-			BidPeriod:       convert.I64ValOrZero(raw[2]),
-			BidSize:         convert.F64ValOrZero(raw[3]),
-			Ask:             convert.F64ValOrZero(raw[4]),
-			AskPeriod:       convert.I64ValOrZero(raw[5]),
-			AskSize:         convert.F64ValOrZero(raw[6]),
-			DailyChange:     convert.F64ValOrZero(raw[7]),
-			DailyChangePerc: convert.F64ValOrZero(raw[8]),
-			LastPrice:       convert.F64ValOrZero(raw[9]),
-			Volume:          convert.F64ValOrZero(raw[10]),
-			High:            convert.F64ValOrZero(raw[11]),
-			Low:             convert.F64ValOrZero(raw[12]),
-		}
-		return t, nil
-	}
-
-	// all other tickers
-	// on trading pairs (ex. tBTCUSD)
-	// SYMBOL, BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE, LAST_PRICE, VOLUME, HIGH, LOW
-	t = &Ticker{
-		Symbol:          symbol,
-		Bid:             convert.F64ValOrZero(raw[0]),
-		BidSize:         convert.F64ValOrZero(raw[1]),
-		Ask:             convert.F64ValOrZero(raw[2]),
-		AskSize:         convert.F64ValOrZero(raw[3]),
-		DailyChange:     convert.F64ValOrZero(raw[4]),
-		DailyChangePerc: convert.F64ValOrZero(raw[5]),
-		LastPrice:       convert.F64ValOrZero(raw[6]),
-		Volume:          convert.F64ValOrZero(raw[7]),
-		High:            convert.F64ValOrZero(raw[8]),
-		Low:             convert.F64ValOrZero(raw[9]),
-	}
-
-	return t, nil
-}
-
-func NewTickerFromRestRaw(raw []interface{}) (t *Ticker, err error) {
-	return NewTickerFromRaw(raw[0].(string), raw[1:])
 }
 
 type bookAction byte
