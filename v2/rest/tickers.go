@@ -1,38 +1,19 @@
 package rest
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"net/url"
 	"strings"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 )
 
-// TradeService manages the Trade endpoint.
+// TickerService manages the Ticker endpoint.
 type TickerService struct {
 	requestFactory
 	Synchronous
 }
 
-// Retrieves the ticker for the given symbol
-// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
-func (s *TickerService) Get(symbol string) (*bitfinex.Ticker, error) {
-	req := NewRequestWithMethod("tickers", "GET")
-	req.Params = make(url.Values)
-	req.Params.Add("symbols", symbol)
-	raw, err := s.Request(req)
-	if err != nil {
-		return nil, err
-	}
-
-	ticker, err := bitfinex.NewTickerFromRestRaw(raw[0].([]interface{}))
-	if err != nil {
-		return nil, err
-	}
-	return ticker, nil
-}
-
-// Retrieves the tickers for the given symbols
-// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
-func (s *TickerService) GetMulti(symbols []string) (*[]bitfinex.Ticker, error) {
+func (s *TickerService) getTickers(symbols []string) ([]*ticker.Ticker, error) {
 	req := NewRequestWithMethod("tickers", "GET")
 	req.Params = make(url.Values)
 	req.Params.Add("symbols", strings.Join(symbols, ","))
@@ -41,35 +22,37 @@ func (s *TickerService) GetMulti(symbols []string) (*[]bitfinex.Ticker, error) {
 		return nil, err
 	}
 
-	tickers := make([]bitfinex.Ticker, 0)
-	for _, ticker := range raw {
-		t, err := bitfinex.NewTickerFromRestRaw(ticker.([]interface{}))
+	tickers := make([]*ticker.Ticker, 0)
+	for _, traw := range raw {
+		t, err := ticker.FromRestRaw(traw.([]interface{}))
 		if err != nil {
 			return nil, err
 		}
-		tickers = append(tickers, *t)
+		tickers = append(tickers, t)
 	}
-	return &tickers, nil
+
+	return tickers, nil
 }
 
-// Retrieves all tickers for all symbols
+// Get - retrieves the ticker for the given symbol
 // see https://docs.bitfinex.com/reference#rest-public-ticker for more info
-func (s *TickerService) All() (*[]bitfinex.Ticker, error) {
-	req := NewRequestWithMethod("tickers", "GET")
-	req.Params = make(url.Values)
-	req.Params.Add("symbols", "ALL")
-	raw, err := s.Request(req)
+func (s *TickerService) Get(symbol string) (*ticker.Ticker, error) {
+	t, err := s.getTickers([]string{symbol})
 	if err != nil {
 		return nil, err
 	}
 
-	tickers := make([]bitfinex.Ticker, 0)
-	for _, ticker := range raw {
-		t, err := bitfinex.NewTickerFromRestRaw(ticker.([]interface{}))
-		if err != nil {
-			return nil, err
-		}
-		tickers = append(tickers, *t)
-	}
-	return &tickers, nil
+	return t[0], nil
+}
+
+// GetMulti - retrieves the tickers for the given symbols
+// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
+func (s *TickerService) GetMulti(symbols []string) ([]*ticker.Ticker, error) {
+	return s.getTickers(symbols)
+}
+
+// All - retrieves all tickers for all symbols
+// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
+func (s *TickerService) All() ([]*ticker.Ticker, error) {
+	return s.getTickers([]string{"ALL"})
 }
