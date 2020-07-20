@@ -26,6 +26,7 @@ func SnapshotFromRaw(symbol string, resolution bitfinex.CandleResolution, raw []
 	if len(raw) <= 0 {
 		return nil, fmt.Errorf("data slice too short for candle snapshot: %#v", raw)
 	}
+
 	snap := make([]*Candle, 0)
 	for _, f := range raw {
 		c, err := FromRaw(symbol, resolution, f)
@@ -33,6 +34,7 @@ func SnapshotFromRaw(symbol string, resolution bitfinex.CandleResolution, raw []
 			snap = append(snap, c)
 		}
 	}
+
 	return &Snapshot{Snapshot: snap}, nil
 }
 
