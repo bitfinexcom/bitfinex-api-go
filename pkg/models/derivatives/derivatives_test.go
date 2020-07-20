@@ -10,7 +10,7 @@ import (
 
 func TestNewDerivativeStatusFromWsRaw(t *testing.T) {
 	t.Run("insufficient arguments", func(t *testing.T) {
-		payload := []interface{}{float64(1591614631576)}
+		payload := []interface{}{1591614631576}
 
 		d, err := derivatives.FromWsRaw("tBTCF0:USTF0", payload)
 		require.NotNil(t, err)
@@ -19,7 +19,7 @@ func TestNewDerivativeStatusFromWsRaw(t *testing.T) {
 
 	t.Run("valid arguments", func(t *testing.T) {
 		payload := []interface{}{
-			float64(1591614631576),
+			1591614631576,
 			nil,
 			9271.1234567,
 			9275.3,
@@ -50,6 +50,7 @@ func TestNewDerivativeStatusFromWsRaw(t *testing.T) {
 			InsuranceFundBalance: 1.39147227686063e+06,
 			FundingAccrued:       -0.00011968,
 			FundingStep:          3144,
+			FundingEventMTS:      1594656000000,
 			MarkPrice:            9276.06,
 			OpenInterest:         3813.72957182,
 		}
@@ -69,7 +70,7 @@ func TestNewDerivativeStatusFromRaw(t *testing.T) {
 	t.Run("valid arguments", func(t *testing.T) {
 		payload := []interface{}{
 			"tBTCF0:USTF0",
-			float64(1591614631576),
+			1591614631576,
 			nil,
 			9271.1234567,
 			9275.3,
@@ -99,6 +100,7 @@ func TestNewDerivativeStatusFromRaw(t *testing.T) {
 			SpotPrice:            9275.3,
 			InsuranceFundBalance: 1.39147227686063e+06,
 			FundingAccrued:       -0.00011968,
+			FundingEventMTS:      1594656000000,
 			FundingStep:          3144,
 			MarkPrice:            9276.06,
 			OpenInterest:         3813.72957182,
@@ -119,7 +121,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 		payload := [][]interface{}{
 			{
 				"tBTCF0:USTF0",
-				float64(1591614631576),
+				1591614631576,
 				nil,
 				9271.1234567,
 				9275.3,
@@ -140,7 +142,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 			},
 			{
 				"tBTCF0:USTF0",
-				float64(1591614631576),
+				1591614631576,
 				nil,
 				9271.1234567,
 				9275.3,
@@ -173,6 +175,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 					InsuranceFundBalance: 1.39147227686063e+06,
 					FundingAccrued:       -0.00011968,
 					FundingStep:          3144,
+					FundingEventMTS:      1594656000000,
 					MarkPrice:            9276.06,
 					OpenInterest:         3813.72957182,
 				},
@@ -184,6 +187,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 					InsuranceFundBalance: 1.39147227686063e+06,
 					FundingAccrued:       -0.00011968,
 					FundingStep:          3200,
+					FundingEventMTS:      1594656000000,
 					MarkPrice:            9276.06,
 					OpenInterest:         3813.72957182,
 				},
