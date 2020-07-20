@@ -57,7 +57,7 @@ func FromWsRaw(raw []interface{}) (w *Wallet, err error) {
 
 func SnapshotFromRaw(raw []interface{}, transformer transformerFn) (s *Snapshot, err error) {
 	if len(raw) == 0 {
-		return
+		return s, fmt.Errorf("data slice too short for wallet: %#v", raw)
 	}
 
 	ws := make([]*Wallet, 0)
