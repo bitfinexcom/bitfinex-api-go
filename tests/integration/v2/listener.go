@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -13,15 +15,15 @@ import (
 type listener struct {
 	infoEvents           chan *websocket.InfoEvent
 	authEvents           chan *websocket.AuthEvent
-	ticks                chan *bitfinex.Ticker
+	ticks                chan *ticker.Ticker
 	subscriptionEvents   chan *websocket.SubscribeEvent
 	unsubscriptionEvents chan *websocket.UnsubscribeEvent
 	walletUpdates        chan *wallet.Update
 	balanceUpdates       chan *bitfinex.BalanceUpdate
 	walletSnapshot       chan *wallet.Snapshot
-	positionSnapshot     chan *bitfinex.PositionSnapshot
+	positionSnapshot     chan *position.Snapshot
 	notifications        chan *bitfinex.Notification
-	positions            chan *bitfinex.PositionUpdate
+	positions            chan *position.Update
 	tradeUpdates         chan *bitfinex.TradeExecutionUpdate
 	tradeExecutions      chan *bitfinex.TradeExecution
 	cancels              chan *bitfinex.OrderCancel
@@ -37,16 +39,16 @@ func newListener() *listener {
 	return &listener{
 		infoEvents:           make(chan *websocket.InfoEvent, 10),
 		authEvents:           make(chan *websocket.AuthEvent, 10),
-		ticks:                make(chan *bitfinex.Ticker, 10),
+		ticks:                make(chan *ticker.Ticker, 10),
 		subscriptionEvents:   make(chan *websocket.SubscribeEvent, 10),
 		unsubscriptionEvents: make(chan *websocket.UnsubscribeEvent, 10),
 		walletUpdates:        make(chan *wallet.Update, 10),
 		balanceUpdates:       make(chan *bitfinex.BalanceUpdate, 10),
 		walletSnapshot:       make(chan *wallet.Snapshot, 10),
-		positionSnapshot:     make(chan *bitfinex.PositionSnapshot, 10),
+		positionSnapshot:     make(chan *position.Snapshot, 10),
 		errors:               make(chan error, 10),
 		notifications:        make(chan *bitfinex.Notification, 10),
-		positions:            make(chan *bitfinex.PositionUpdate, 10),
+		positions:            make(chan *position.Update, 10),
 		tradeUpdates:         make(chan *bitfinex.TradeExecutionUpdate, 10),
 		tradeExecutions:      make(chan *bitfinex.TradeExecution, 10),
 		cancels:              make(chan *bitfinex.OrderCancel, 10),
@@ -128,7 +130,7 @@ func (l *listener) nextWalletSnapshot() (*wallet.Snapshot, error) {
 	}
 }
 
-func (l *listener) nextPositionSnapshot() (*bitfinex.PositionSnapshot, error) {
+func (l *listener) nextPositionSnapshot() (*position.Snapshot, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -170,7 +172,7 @@ func (l *listener) nextUnsubscriptionEvent() (*websocket.UnsubscribeEvent, error
 	}
 }
 
-func (l *listener) nextTick() (*bitfinex.Ticker, error) {
+func (l *listener) nextTick() (*ticker.Ticker, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -212,7 +214,7 @@ func (l *listener) nextTradeExecution() (*bitfinex.TradeExecution, error) {
 	}
 }
 
-func (l *listener) nextPositionUpdate() (*bitfinex.PositionUpdate, error) {
+func (l *listener) nextPositionUpdate() (*position.Update, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -339,8 +341,8 @@ func (l *listener) run(ch <-chan interface{}) {
 				switch msg.(type) {
 				case error:
 					l.errors <- msg.(error)
-				case *bitfinex.Ticker:
-					l.ticks <- msg.(*bitfinex.Ticker)
+				case *ticker.Ticker:
+					l.ticks <- msg.(*ticker.Ticker)
 				case *websocket.InfoEvent:
 					l.infoEvents <- msg.(*websocket.InfoEvent)
 				case *websocket.SubscribeEvent:
@@ -359,8 +361,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.tradeUpdates <- msg.(*bitfinex.TradeExecutionUpdate)
 				case *bitfinex.TradeExecution:
 					l.tradeExecutions <- msg.(*bitfinex.TradeExecution)
-				case *bitfinex.PositionUpdate:
-					l.positions <- msg.(*bitfinex.PositionUpdate)
+				case *position.Update:
+					l.positions <- msg.(*position.Update)
 				case *bitfinex.OrderCancel:
 					l.cancels <- msg.(*bitfinex.OrderCancel)
 				case *bitfinex.MarginInfoBase:
@@ -373,8 +375,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.orderUpdate <- msg.(*bitfinex.OrderUpdate)
 				case *bitfinex.FundingInfo:
 					l.funding <- msg.(*bitfinex.FundingInfo)
-				case *bitfinex.PositionSnapshot:
-					l.positionSnapshot <- msg.(*bitfinex.PositionSnapshot)
+				case *position.Snapshot:
+					l.positionSnapshot <- msg.(*position.Snapshot)
 				case *wallet.Snapshot:
 					l.walletSnapshot <- msg.(*wallet.Snapshot)
 				default:
