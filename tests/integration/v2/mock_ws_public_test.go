@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -62,7 +63,7 @@ func TestTicker(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, &bitfinex.Ticker{
+	assert(t, &ticker.Ticker{
 		Symbol:          "tBTCUSD",
 		Bid:             14957,
 		Ask:             14958,
@@ -199,27 +200,27 @@ func TestCreateNewSocket(t *testing.T) {
 	tickers := []string{"tBTCUSD", "tETHUSD", "tBTCUSD", "tVETUSD", "tDGBUSD", "tEOSUSD", "tTRXUSD", "tEOSETH", "tBTCETH",
 		"tBTCEOS", "tXRPUSD", "tXRPBTC", "tTRXETH", "tTRXBTC", "tLTCUSD", "tLTCBTC", "tLTCETH"}
 	for i, ticker := range tickers {
-		id := i*10
+		id := i * 10
 		// subscribe to 15m candles
 		id1, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.FifteenMinutes)
 		if err != nil {
 			t.Fatal(err)
 		}
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(id)+`,"key":"trade:15m:`+ticker+`","subId":"`+id1+`"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id) + `,"key":"trade:15m:` + ticker + `","subId":"` + id1 + `"}`)
 		// subscribe to 1hr candles
 		id2, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.OneHour)
 		if err != nil {
 			t.Fatal(err)
 		}
 		// subscribe ack
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(id+1)+`,"key":"trade:1hr:`+ticker+`","subId":"`+id2+`"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id+1) + `,"key":"trade:1hr:` + ticker + `","subId":"` + id2 + `"}`)
 		// subscribe to 30min candles
 		id3, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.OneHour)
 		if err != nil {
 			t.Fatal(err)
 		}
 		// subscribe ack
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":`+string(id+2)+`,"key":"trade:30m:`+ticker+`","subId":"`+id3+`"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id+2) + `,"key":"trade:30m:` + ticker + `","subId":"` + id3 + `"}`)
 	}
 	conCount := ws.ConnectionCount()
 	if conCount != 6 {
