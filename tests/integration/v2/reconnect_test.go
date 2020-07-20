@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -422,7 +423,7 @@ func TestHeartbeatNoTimeoutDataBlah(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	expTicker := bitfinex.Ticker{
+	expTicker := ticker.Ticker{
 		Symbol:          "tBTCUSD",
 		Bid:             14957,
 		BidSize:         68.17328796,
