@@ -9,6 +9,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/derivatives"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -28,15 +29,11 @@ func newTickerFactory(subs *subscriptions) *TickerFactory {
 }
 
 func (f *TickerFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error) {
-	return bitfinex.NewTickerFromRaw(sub.Request.Symbol, raw)
+	return ticker.FromRaw(sub.Request.Symbol, raw)
 }
 
 func (f *TickerFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := convert.ToFloat64Array(raw)
-	if err != nil {
-		return nil, err
-	}
-	return bitfinex.NewTickerSnapshotFromRaw(sub.Request.Symbol, converted)
+	return ticker.SnapshotFromRaw(sub.Request.Symbol, raw)
 }
 
 type TradeFactory struct {
