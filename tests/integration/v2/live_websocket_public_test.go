@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -79,9 +80,9 @@ func TestPublicTicker(t *testing.T) {
 					subs <- m
 				case *websocket.InfoEvent:
 					infos <- m
-				case *bitfinex.TickerSnapshot:
+				case *ticker.Snapshot:
 					tick <- m
-				case *bitfinex.Ticker:
+				case *ticker.Ticker:
 					tick <- m
 				default:
 					t.Logf("test recv: %#v", msg)
