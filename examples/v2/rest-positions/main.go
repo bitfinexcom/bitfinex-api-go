@@ -2,34 +2,48 @@ package main
 
 import (
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"log"
 	"os"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+	"github.com/davecgh/go-spew/spew"
 )
 
+// Set BFX_API_KEY and BFX_API_SECRET:
+//
+// export BFX_API_KEY=<your-api-key>
+// export BFX_API_SECRET=<your-api-secret>
+//
+// you can obtain it from https://www.bitfinex.com/api
 
 func main() {
-	key := os.Getenv("BFX_KEY")
-	secret := os.Getenv("BFX_SECRET")
-	uri := "https://api.bitfinex.com/v2/"
+	key := os.Getenv("BFX_API_KEY")
+	secret := os.Getenv("BFX_API_SECRET")
+	c := rest.NewClient(uri).Credentials(key, secret)
 
-	c := rest.NewClientWithURL(uri).Credentials(key, secret)
-	// get active positions
-	positions, err := c.Positions.All()
+	all(c)
+	claim(c)
+}
+
+func all(c *rest.Client) {
+	p, err := c.Positions.All()
 	if err != nil {
-		log.Fatalf("getting wallet %s", err)
+		log.Fatalf("All: %s", err)
 	}
-	for _, p := range positions.Snapshot {
-		fmt.Println(p)
+
+	for _, ps := range p.Snapshot {
+		fmt.Println(ps)
 	}
-	// claim active position
-	pClaim, err := c.Positions.Claim(&bitfinex.ClaimPositionRequest{
+}
+
+func claim(c *rest.Client) {
+	pc, err := c.Positions.Claim(&position.ClaimRequest{
 		Id: 36228736,
 	})
 	if err != nil {
-		panic(err)
+		log.Fatalf("Claim: %s", err)
 	}
-	fmt.Println(pClaim.NotifyInfo.(*bitfinex.PositionCancel))
-}
 
+	spew.Dump(pc)
+}
