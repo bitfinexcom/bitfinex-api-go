@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -243,14 +244,14 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	eps := make([]*bitfinex.Position, 1)
-	eps[0] = &bitfinex.Position{
+	eps := make([]*position.Position, 1)
+	eps[0] = &position.Position{
 		Symbol:    "tBTCUSD",
 		Status:    "ACTIVE",
 		Amount:    7,
 		BasePrice: 916.52002351,
 	}
-	snap := &bitfinex.PositionSnapshot{
+	snap := &position.Snapshot{
 		Snapshot: eps,
 	}
 	assertSlice(t, snap, ps)
@@ -298,9 +299,9 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 0.21679716, BasePrice: 915.9}), fmt.Sprint(*pu))
+	assert(t, fmt.Sprint(position.Update{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 0.21679716, BasePrice: 915.9}), fmt.Sprint(*pu))
 	pu, _ = listener.nextPositionUpdate()
-	assert(t, fmt.Sprint(bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085}), fmt.Sprint(*pu))
+	assert(t, fmt.Sprint(position.Update{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085}), fmt.Sprint(*pu))
 
 	// full fill--order terminal state message
 	async.Publish(`[0,"oc",[1234567,0,123,"tBTCUSD",1514909325236,1514909325631,0,1,"MARKET",null,null,null,0,"EXECUTED @ 916.2(0.78): was PARTIALLY FILLED @ 915.9(0.22)",null,null,915.5,916.13496085,null,null,null,null,null,0,0,0]]`)
@@ -363,7 +364,7 @@ func TestFills(t *testing.T) {
 	// position update for executed trades
 	async.Publish(`[0,"pu",["tBTCUSD","ACTIVE",1,916.13496085,0,0,-2.76536085,-0.30185082,0,43.7962]]`)
 	pu, _ = listener.nextPositionUpdate()
-	assert(t, fmt.Sprint(bitfinex.PositionUpdate{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085, ProfitLoss: -2.76536085, ProfitLossPercentage: -0.30185082, Leverage: 43.7962}), fmt.Sprint(*pu))
+	assert(t, fmt.Sprint(position.Update{Symbol: "tBTCUSD", Status: "ACTIVE", Amount: 1, BasePrice: 916.13496085, ProfitLoss: -2.76536085, ProfitLossPercentage: -0.30185082, Leverage: 43.7962}), fmt.Sprint(*pu))
 
 	// wallet margin update for executed trades
 	async.Publish(`[0,"wu",["margin","BTC",10,0,10]]`)
