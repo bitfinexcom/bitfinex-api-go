@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -10,41 +11,44 @@ type PositionService struct {
 	Synchronous
 }
 
-// Retrieves all of the active positions
+// All - retrieves all of the active positions
 // see https://docs.bitfinex.com/reference#rest-auth-positions for more info
-func (s *PositionService) All() (*bitfinex.PositionSnapshot, error) {
+func (s *PositionService) All() (*position.Snapshot, error) {
 	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, "positions")
 	if err != nil {
 		return nil, err
 	}
+
 	raw, err := s.Request(req)
-
 	if err != nil {
 		return nil, err
 	}
 
-	os, err := bitfinex.NewPositionSnapshotFromRaw(raw)
+	pss, err := position.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
 
-	return os, nil
+	return pss, nil
 }
 
-// Submits a request to claim an active position with the given id
+// Claim - submits a request to claim an active position with the given id
 // see https://docs.bitfinex.com/reference#claim-position for more info
-func (s *PositionService) Claim(cp *bitfinex.ClaimPositionRequest) (*bitfinex.Notification, error) {
+func (s *PositionService) Claim(cp *position.ClaimRequest) (*bitfinex.Notification, error) {
 	bytes, err := cp.ToJSON()
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, "position/claim", bytes)
 	if err != nil {
 		return nil, err
 	}
+
 	raw, err := s.Request(req)
 	if err != nil {
 		return nil, err
 	}
+
 	return bitfinex.NewNotificationFromRaw(raw)
 }
