@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -130,20 +131,23 @@ func (fs *FundingService) CreditsHistory(symbol string) (*bitfinex.FundingCredit
 
 // Retreive all of the matched funding trades
 // see https://docs.bitfinex.com/reference#rest-auth-funding-trades-hist for more info
-func (fs *FundingService) Trades(symbol string) (*bitfinex.FundingTradeSnapshot, error) {
+func (fs *FundingService) Trades(symbol string) (*fundingtrade.Snapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/trades", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
+
 	raw, err := fs.Request(req)
 	if err != nil {
 		return nil, err
 	}
-	loans, err := bitfinex.NewFundingTradeSnapshotFromRaw(raw)
+
+	fts, err := fundingtrade.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
-	return loans, nil
+
+	return fts, nil
 }
 
 // Submits a request to create a new funding offer
