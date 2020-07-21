@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
@@ -298,25 +299,25 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		return tu
 	case "fte":
-		o, err := bitfinex.NewFundingTradeFromRaw(raw)
+		o, err := fundingtrade.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fte := bitfinex.FundingTradeExecution(*o)
+		fte := fundingtrade.Execution(*o)
 		return &fte
 	case "ftu":
-		o, err := bitfinex.NewFundingTradeFromRaw(raw)
+		o, err := fundingtrade.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		ftu := bitfinex.FundingTradeUpdate(*o)
+		ftu := fundingtrade.Update(*o)
 		return &ftu
 	case "hfts":
-		o, err := bitfinex.NewFundingTradeSnapshotFromRaw(raw)
+		fts, err := fundingtrade.SnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		nfts := bitfinex.HistoricalFundingTradeSnapshot(*o)
+		nfts := fundingtrade.HistoricalSnapshot(*fts)
 		return &nfts
 	case "n":
 		o, err := bitfinex.NewNotificationFromRaw(raw)
