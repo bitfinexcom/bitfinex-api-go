@@ -819,29 +819,6 @@ const (
 	OfferStatusCanceled        OfferStatus = "CANCELED"
 )
 
-type FundingLoanCancelRequest struct {
-	Id int64
-}
-
-func (o *FundingLoanCancelRequest) ToJSON() ([]byte, error) {
-	aux := struct {
-		Id int64 `json:"id"`
-	}{
-		Id: o.Id,
-	}
-	return json.Marshal(aux)
-}
-
-// MarshalJSON converts the funding loan cancel request into the format required by the
-// bitfinex websocket service.
-func (o *FundingLoanCancelRequest) MarshalJSON() ([]byte, error) {
-	aux, err := o.ToJSON()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(fmt.Sprintf("[0, \"flc\", null, %s]", string(aux))), nil
-}
-
 type FundingCreditCancelRequest struct {
 	Id int64
 }
@@ -1103,101 +1080,6 @@ func NewFundingCreditSnapshotFromRaw(raw []interface{}) (snap *FundingCreditSnap
 	}
 	snap = &FundingCreditSnapshot{
 		Snapshot: fcs,
-	}
-
-	return
-}
-
-type LoanStatus string
-
-const (
-	LoanStatusActive          LoanStatus = "ACTIVE"
-	LoanStatusExecuted        LoanStatus = "EXECUTED"
-	LoanStatusPartiallyFilled LoanStatus = "PARTIALLY FILLED"
-	LoanStatusCanceled        LoanStatus = "CANCELED"
-)
-
-type Loan struct {
-	ID            int64
-	Symbol        string
-	Side          string
-	MTSCreated    int64
-	MTSUpdated    int64
-	Amount        float64
-	Flags         interface{}
-	Status        LoanStatus
-	Rate          float64
-	Period        int64
-	MTSOpened     int64
-	MTSLastPayout int64
-	Notify        bool
-	Hidden        bool
-	Insure        bool
-	Renew         bool
-	RateReal      float64
-	NoClose       bool
-}
-
-func NewLoanFromRaw(raw []interface{}) (o *Loan, err error) {
-	if len(raw) < 21 {
-		return o, fmt.Errorf("data slice too short (len=%d) for loan: %#v", len(raw), raw)
-	}
-
-	o = &Loan{
-		ID:            convert.I64ValOrZero(raw[0]),
-		Symbol:        convert.SValOrEmpty(raw[1]),
-		Side:          convert.SValOrEmpty(raw[2]),
-		MTSCreated:    convert.I64ValOrZero(raw[3]),
-		MTSUpdated:    convert.I64ValOrZero(raw[4]),
-		Amount:        convert.F64ValOrZero(raw[5]),
-		Flags:         raw[6],
-		Status:        LoanStatus(convert.SValOrEmpty(raw[7])),
-		Rate:          convert.F64ValOrZero(raw[11]),
-		Period:        convert.I64ValOrZero(raw[12]),
-		MTSOpened:     convert.I64ValOrZero(raw[13]),
-		MTSLastPayout: convert.I64ValOrZero(raw[14]),
-		Notify:        convert.BValOrFalse(raw[15]),
-		Hidden:        convert.BValOrFalse(raw[16]),
-		Insure:        convert.BValOrFalse(raw[17]),
-		Renew:         convert.BValOrFalse(raw[18]),
-		RateReal:      convert.F64ValOrZero(raw[19]),
-		NoClose:       convert.BValOrFalse(raw[20]),
-	}
-
-	return o, nil
-}
-
-type HistoricalLoan Loan
-type FundingLoanNew Loan
-type FundingLoanUpdate Loan
-type FundingLoanCancel Loan
-
-type FundingLoanSnapshot struct {
-	Snapshot []*Loan
-}
-
-func NewFundingLoanSnapshotFromRaw(raw []interface{}) (snap *FundingLoanSnapshot, err error) {
-	if len(raw) == 0 {
-		return
-	}
-
-	fls := make([]*Loan, 0)
-	switch raw[0].(type) {
-	case []interface{}:
-		for _, v := range raw {
-			if l, ok := v.([]interface{}); ok {
-				o, err := NewLoanFromRaw(l)
-				if err != nil {
-					return snap, err
-				}
-				fls = append(fls, o)
-			}
-		}
-	default:
-		return snap, fmt.Errorf("not a funding loan snapshot")
-	}
-	snap = &FundingLoanSnapshot{
-		Snapshot: fls,
 	}
 
 	return
