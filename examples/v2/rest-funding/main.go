@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -32,7 +32,7 @@ func main() {
 	keepFunding(c)
 
 	/********* submit a new funding offer ***********/
-	fo, err := c.Funding.SubmitOffer(&bitfinex.FundingOfferRequest{
+	fo, err := c.Funding.SubmitOffer(&fundingoffer.SubmitRequest{
 		Type:   "LIMIT",
 		Symbol: "fUSD",
 		Amount: 1000,
@@ -43,11 +43,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	newOffer := fo.NotifyInfo.(*bitfinex.FundingOfferNew)
+	newOffer := fo.NotifyInfo.(*fundingoffer.New)
 
 	/********* cancel funding offer ***********/
-	fc, err := c.Funding.CancelOffer(&bitfinex.FundingOfferCancelRequest{
-		Id: newOffer.ID,
+	fc, err := c.Funding.CancelOffer(&fundingoffer.CancelRequest{
+		ID: newOffer.ID,
 	})
 	if err != nil {
 		panic(err)
