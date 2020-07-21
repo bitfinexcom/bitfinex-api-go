@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -223,12 +224,12 @@ func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *bitfinex
 }
 
 // CloseFundingLoan - cancels funding loan by ID. Emits an error if not authenticated.
-func (c *Client) CloseFundingLoan(ctx context.Context, fundingOffer *bitfinex.FundingLoanCancelRequest) error {
+func (c *Client) CloseFundingLoan(ctx context.Context, flcr *fundingloan.CancelRequest) error {
 	socket, err := c.GetAuthenticatedSocket()
 	if err != nil {
 		return err
 	}
-	return socket.Asynchronous.Send(ctx, fundingOffer)
+	return socket.Asynchronous.Send(ctx, flcr)
 }
 
 // CloseFundingCredit - cancels funding credit by ID. Emits an error if not authenticated.
