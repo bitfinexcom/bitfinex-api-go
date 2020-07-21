@@ -96,3 +96,41 @@ func TestI64ValOrZero(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 }
+
+func TestBValOrFalse(t *testing.T) {
+	t.Run("converts to truthy bool", func(t *testing.T) {
+		expected := true
+		got := convert.BValOrFalse(true)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("converts to falsy bool", func(t *testing.T) {
+		expected := false
+		got := convert.BValOrFalse(false)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("converts 1 to truthy bool", func(t *testing.T) {
+		expected := true
+		got := convert.BValOrFalse(1)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("converts \"1\" to truthy bool", func(t *testing.T) {
+		expected := true
+		got := convert.BValOrFalse("1")
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("converts 0 to falsy bool", func(t *testing.T) {
+		expected := false
+		got := convert.BValOrFalse(0)
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("converts \"0\" to falsy bool", func(t *testing.T) {
+		expected := false
+		got := convert.BValOrFalse("0")
+		assert.Equal(t, expected, got)
+	})
+}
