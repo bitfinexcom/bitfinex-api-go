@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
@@ -386,31 +387,31 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		fcc := bitfinex.FundingCreditCancel(*o)
 		return &fcc
 	case "fls":
-		o, err := bitfinex.NewFundingLoanSnapshotFromRaw(raw)
+		o, err := fundingloan.SnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
 		return o
 	case "fln":
-		o, err := bitfinex.NewLoanFromRaw(raw)
+		o, err := fundingloan.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fln := bitfinex.FundingLoanNew(*o)
+		fln := fundingloan.New(*o)
 		return &fln
 	case "flu":
-		o, err := bitfinex.NewLoanFromRaw(raw)
+		o, err := fundingloan.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		flu := bitfinex.FundingLoanUpdate(*o)
+		flu := fundingloan.Update(*o)
 		return &flu
 	case "flc":
-		o, err := bitfinex.NewLoanFromRaw(raw)
+		o, err := fundingloan.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		flc := bitfinex.FundingLoanCancel(*o)
+		flc := fundingloan.Cancel(*o)
 		return &flc
 	//case "uac":
 	case "hb":
