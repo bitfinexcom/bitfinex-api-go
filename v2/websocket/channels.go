@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
@@ -327,31 +328,31 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		return o
 	case "fos":
-		o, err := bitfinex.NewFundingOfferSnapshotFromRaw(raw)
+		o, err := fundingoffer.SnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
 		return o
 	case "fon":
-		o, err := bitfinex.NewOfferFromRaw(raw)
+		o, err := fundingoffer.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fon := bitfinex.FundingOfferNew(*o)
+		fon := fundingoffer.New(*o)
 		return &fon
 	case "fou":
-		o, err := bitfinex.NewOfferFromRaw(raw)
+		o, err := fundingoffer.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		fou := bitfinex.FundingOfferUpdate(*o)
+		fou := fundingoffer.Update(*o)
 		return &fou
 	case "foc":
-		o, err := bitfinex.NewOfferFromRaw(raw)
+		o, err := fundingoffer.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		foc := bitfinex.FundingOfferCancel(*o)
+		foc := fundingoffer.Cancel(*o)
 		return &foc
 	case "fiu":
 		o, err := bitfinex.NewFundingInfoFromRaw(raw)
