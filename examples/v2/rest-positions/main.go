@@ -20,7 +20,7 @@ import (
 func main() {
 	key := os.Getenv("BFX_API_KEY")
 	secret := os.Getenv("BFX_API_SECRET")
-	c := rest.NewClient(uri).Credentials(key, secret)
+	c := rest.NewClient().Credentials(key, secret)
 
 	all(c)
 	claim(c)
