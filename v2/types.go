@@ -8,6 +8,7 @@ import (
 	"math"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 )
 
@@ -810,15 +811,6 @@ func NewFundingInfoFromRaw(raw []interface{}) (o *FundingInfo, err error) {
 	return
 }
 
-type OfferStatus string
-
-const (
-	OfferStatusActive          OfferStatus = "ACTIVE"
-	OfferStatusExecuted        OfferStatus = "EXECUTED"
-	OfferStatusPartiallyFilled OfferStatus = "PARTIALLY FILLED"
-	OfferStatusCanceled        OfferStatus = "CANCELED"
-)
-
 type FundingCreditCancelRequest struct {
 	Id int64
 }
@@ -841,152 +833,6 @@ func (o *FundingCreditCancelRequest) MarshalJSON() ([]byte, error) {
 	}
 	return []byte(fmt.Sprintf("[0, \"fcc\", null, %s]", string(aux))), nil
 }
-
-type FundingOfferCancelRequest struct {
-	Id int64
-}
-
-func (o *FundingOfferCancelRequest) ToJSON() ([]byte, error) {
-	aux := struct {
-		Id int64 `json:"id"`
-	}{
-		Id: o.Id,
-	}
-	return json.Marshal(aux)
-}
-
-// MarshalJSON converts the order cancel object into the format required by the
-// bitfinex websocket service.
-func (o *FundingOfferCancelRequest) MarshalJSON() ([]byte, error) {
-	aux, err := o.ToJSON()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(fmt.Sprintf("[0, \"foc\", null, %s]", string(aux))), nil
-}
-
-type FundingOfferRequest struct {
-	Type   string
-	Symbol string
-	Amount float64
-	Rate   float64
-	Period int64
-	Hidden bool
-}
-
-func (o *FundingOfferRequest) ToJSON() ([]byte, error) {
-	aux := struct {
-		Type   string  `json:"type"`
-		Symbol string  `json:"symbol"`
-		Amount float64 `json:"amount,string"`
-		Rate   float64 `json:"rate,string"`
-		Period int64   `json:"period"`
-		Flags  int     `json:"flags,omitempty"`
-	}{
-		Type:   o.Type,
-		Symbol: o.Symbol,
-		Amount: o.Amount,
-		Rate:   o.Rate,
-		Period: o.Period,
-	}
-	if o.Hidden {
-		aux.Flags = aux.Flags + OrderFlagHidden
-	}
-	return json.Marshal(aux)
-}
-
-// MarshalJSON converts the order cancel object into the format required by the
-// bitfinex websocket service.
-func (o *FundingOfferRequest) MarshalJSON() ([]byte, error) {
-	aux, err := o.ToJSON()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(fmt.Sprintf("[0, \"fon\", null, %s]", string(aux))), nil
-}
-
-type Offer struct {
-	ID         int64
-	Symbol     string
-	MTSCreated int64
-	MTSUpdated int64
-	Amount     float64
-	AmountOrig float64
-	Type       string
-	Flags      interface{}
-	Status     OfferStatus
-	Rate       float64
-	Period     int64
-	Notify     bool
-	Hidden     bool
-	Insure     bool
-	Renew      bool
-	RateReal   float64
-}
-
-func NewOfferFromRaw(raw []interface{}) (o *Offer, err error) {
-	if len(raw) < 21 {
-		return o, fmt.Errorf("data slice too short for offer: %#v", raw)
-	}
-
-	o = &Offer{
-		ID:         convert.I64ValOrZero(raw[0]),
-		Symbol:     convert.SValOrEmpty(raw[1]),
-		MTSCreated: convert.I64ValOrZero(raw[2]),
-		MTSUpdated: convert.I64ValOrZero(raw[3]),
-		Amount:     convert.F64ValOrZero(raw[4]),
-		AmountOrig: convert.F64ValOrZero(raw[5]),
-		Type:       convert.SValOrEmpty(raw[6]),
-		Flags:      raw[9],
-		Status:     OfferStatus(convert.SValOrEmpty(raw[10])),
-		Rate:       convert.F64ValOrZero(raw[14]),
-		Period:     convert.I64ValOrZero(raw[15]),
-		Notify:     convert.BValOrFalse(raw[16]),
-		Hidden:     convert.BValOrFalse(raw[17]),
-		Insure:     convert.BValOrFalse(raw[18]),
-		Renew:      convert.BValOrFalse(raw[19]),
-		RateReal:   convert.F64ValOrZero(raw[20]),
-	}
-
-	return
-}
-
-type FundingOfferNew Offer
-type FundingOfferUpdate Offer
-type FundingOfferCancel Offer
-type FundingOfferSnapshot struct {
-	Snapshot []*Offer
-}
-
-func NewFundingOfferSnapshotFromRaw(raw []interface{}) (snap *FundingOfferSnapshot, err error) {
-	if len(raw) == 0 {
-		return
-	}
-
-	fos := make([]*Offer, 0)
-	switch raw[0].(type) {
-	case []interface{}:
-		for _, v := range raw {
-			if l, ok := v.([]interface{}); ok {
-				o, err := NewOfferFromRaw(l)
-				if err != nil {
-					return snap, err
-				}
-				fos = append(fos, o)
-			}
-		}
-	default:
-		return snap, fmt.Errorf("not a funding offer snapshot")
-	}
-
-	snap = &FundingOfferSnapshot{
-		Snapshot: fos,
-	}
-
-	return
-}
-
-type HistoricalOffer Offer
 
 type CreditStatus string
 
@@ -1151,18 +997,18 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 			orderCancel := OrderCancel(*oc)
 			o.NotifyInfo = &orderCancel
 		case "fon-req":
-			fon, err := NewOfferFromRaw(nraw)
+			fon, err := fundingoffer.FromRaw(nraw)
 			if err != nil {
 				return o, err
 			}
-			fundingOffer := FundingOfferNew(*fon)
+			fundingOffer := fundingoffer.New(*fon)
 			o.NotifyInfo = &fundingOffer
 		case "foc-req":
-			foc, err := NewOfferFromRaw(nraw)
+			foc, err := fundingoffer.FromRaw(nraw)
 			if err != nil {
 				return o, err
 			}
-			fundingOffer := FundingOfferCancel(*foc)
+			fundingOffer := fundingoffer.Cancel(*foc)
 			o.NotifyInfo = &fundingOffer
 		case "uca":
 			o.NotifyInfo = raw[4]
