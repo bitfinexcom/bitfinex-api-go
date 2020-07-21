@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
@@ -59,7 +60,7 @@ func (fs *FundingService) OfferHistory(symbol string) (*bitfinex.FundingOfferSna
 
 // Retreive all of the active funding loans
 // see https://docs.bitfinex.com/reference#rest-auth-funding-loans for more info
-func (fs *FundingService) Loans(symbol string) (*bitfinex.FundingLoanSnapshot, error) {
+func (fs *FundingService) Loans(symbol string) (*fundingloan.Snapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/loans", symbol))
 	if err != nil {
 		return nil, err
@@ -68,7 +69,7 @@ func (fs *FundingService) Loans(symbol string) (*bitfinex.FundingLoanSnapshot, e
 	if err != nil {
 		return nil, err
 	}
-	loans, err := bitfinex.NewFundingLoanSnapshotFromRaw(raw)
+	loans, err := fundingloan.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func (fs *FundingService) Loans(symbol string) (*bitfinex.FundingLoanSnapshot, e
 
 // Retreive all of the past in-active funding loans
 // see https://docs.bitfinex.com/reference#rest-auth-funding-loans-hist for more info
-func (fs *FundingService) LoansHistory(symbol string) (*bitfinex.FundingLoanSnapshot, error) {
+func (fs *FundingService) LoansHistory(symbol string) (*fundingloan.Snapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/loans", symbol, "hist"))
 	if err != nil {
 		return nil, err
@@ -86,7 +87,7 @@ func (fs *FundingService) LoansHistory(symbol string) (*bitfinex.FundingLoanSnap
 	if err != nil {
 		return nil, err
 	}
-	loans, err := bitfinex.NewFundingLoanSnapshotFromRaw(raw)
+	loans, err := fundingloan.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
