@@ -8,8 +8,6 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 )
 
-type OfferStatus string
-
 type Offer struct {
 	ID         int64
 	Symbol     string
@@ -19,7 +17,7 @@ type Offer struct {
 	AmountOrig float64
 	Type       string
 	Flags      interface{}
-	Status     OfferStatus
+	Status     string
 	Rate       float64
 	Period     int64
 	Notify     bool
@@ -106,7 +104,7 @@ func FromRaw(raw []interface{}) (o *Offer, err error) {
 		AmountOrig: convert.F64ValOrZero(raw[5]),
 		Type:       convert.SValOrEmpty(raw[6]),
 		Flags:      raw[9],
-		Status:     OfferStatus(convert.SValOrEmpty(raw[10])),
+		Status:     convert.SValOrEmpty(raw[10]),
 		Rate:       convert.F64ValOrZero(raw[14]),
 		Period:     convert.I64ValOrZero(raw[15]),
 		Notify:     convert.BValOrFalse(raw[16]),

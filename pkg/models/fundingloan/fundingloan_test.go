@@ -208,7 +208,7 @@ func TestFundingLoanSnapshotFromRaw(t *testing.T) {
 	})
 }
 
-func TestFundingLOanCancelRequest(t *testing.T) {
+func TestFundingLoanCancelRequest(t *testing.T) {
 	t.Run("MarshalJSON", func(t *testing.T) {
 		flcr := fundingloan.CancelRequest{ID: 123}
 		got, err := flcr.MarshalJSON()
