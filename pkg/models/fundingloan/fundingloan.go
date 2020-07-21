@@ -46,14 +46,14 @@ type Loan struct {
 }
 
 type CancelRequest struct {
-	Id int64
+	ID int64
 }
 
 func (cr *CancelRequest) ToJSON() ([]byte, error) {
 	resp := struct {
 		ID int64 `json:"id"`
 	}{
-		ID: cr.Id,
+		ID: cr.ID,
 	}
 	return json.Marshal(resp)
 }
