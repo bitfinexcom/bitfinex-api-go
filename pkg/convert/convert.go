@@ -132,11 +132,22 @@ func SiMapOrEmpty(i interface{}) map[string]interface{} {
 	return make(map[string]interface{})
 }
 
-func BValOrFalse(i interface{}) bool {
-	if r, ok := i.(bool); ok {
-		return r
+func BValOrFalse(in interface{}) (out bool) {
+	switch v := in.(type) {
+	case int:
+		if v == 1 {
+			out = true
+		}
+	case string:
+		if v == "1" {
+			out = true
+		}
+	default:
+		if v, ok := in.(bool); ok {
+			out = v
+		}
 	}
-	return false
+	return
 }
 
 func SValOrEmpty(i interface{}) string {
