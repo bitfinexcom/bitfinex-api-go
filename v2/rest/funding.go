@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
@@ -24,7 +25,7 @@ type FundingService struct {
 
 // Retreive all of the active fundign offers
 // see https://docs.bitfinex.com/reference#rest-auth-funding-offers for more info
-func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot, error) {
+func (fs *FundingService) Offers(symbol string) (*fundingoffer.Snapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol))
 	if err != nil {
 		return nil, err
@@ -33,7 +34,7 @@ func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot,
 	if err != nil {
 		return nil, err
 	}
-	offers, err := bitfinex.NewFundingOfferSnapshotFromRaw(raw)
+	offers, err := fundingoffer.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +43,7 @@ func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot,
 
 // Retreive all of the past in-active funding offers
 // see https://docs.bitfinex.com/reference#rest-auth-funding-offers-hist for more info
-func (fs *FundingService) OfferHistory(symbol string) (*bitfinex.FundingOfferSnapshot, error) {
+func (fs *FundingService) OfferHistory(symbol string) (*fundingoffer.Snapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/offers", symbol, "hist"))
 	if err != nil {
 		return nil, err
@@ -51,7 +52,7 @@ func (fs *FundingService) OfferHistory(symbol string) (*bitfinex.FundingOfferSna
 	if err != nil {
 		return nil, err
 	}
-	offers, err := bitfinex.NewFundingOfferSnapshotFromRaw(raw)
+	offers, err := fundingoffer.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +154,7 @@ func (fs *FundingService) Trades(symbol string) (*fundingtrade.Snapshot, error) 
 
 // Submits a request to create a new funding offer
 // see https://docs.bitfinex.com/reference#submit-funding-offer for more info
-func (fs *FundingService) SubmitOffer(fo *bitfinex.FundingOfferRequest) (*bitfinex.Notification, error) {
+func (fs *FundingService) SubmitOffer(fo *fundingoffer.SubmitRequest) (*bitfinex.Notification, error) {
 	bytes, err := fo.ToJSON()
 	if err != nil {
 		return nil, err
@@ -171,7 +172,7 @@ func (fs *FundingService) SubmitOffer(fo *bitfinex.FundingOfferRequest) (*bitfin
 
 // Submits a request to cancel the given offer
 // see https://docs.bitfinex.com/reference#cancel-funding-offer for more info
-func (fs *FundingService) CancelOffer(fc *bitfinex.FundingOfferCancelRequest) (*bitfinex.Notification, error) {
+func (fs *FundingService) CancelOffer(fc *fundingoffer.CancelRequest) (*bitfinex.Notification, error) {
 	bytes, err := fc.ToJSON()
 	if err != nil {
 		return nil, err
