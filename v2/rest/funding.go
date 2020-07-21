@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
@@ -97,7 +98,7 @@ func (fs *FundingService) LoansHistory(symbol string) (*fundingloan.Snapshot, er
 
 // Retreive all of the active credits used in positions
 // see https://docs.bitfinex.com/reference#rest-auth-funding-credits for more info
-func (fs *FundingService) Credits(symbol string) (*bitfinex.FundingCreditSnapshot, error) {
+func (fs *FundingService) Credits(symbol string) (*fundingcredit.Snapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/credits", symbol))
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func (fs *FundingService) Credits(symbol string) (*bitfinex.FundingCreditSnapsho
 	if err != nil {
 		return nil, err
 	}
-	loans, err := bitfinex.NewFundingCreditSnapshotFromRaw(raw)
+	loans, err := fundingcredit.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +116,7 @@ func (fs *FundingService) Credits(symbol string) (*bitfinex.FundingCreditSnapsho
 
 // Retreive all of the past in-active credits used in positions
 // see https://docs.bitfinex.com/reference#rest-auth-funding-credits-hist for more info
-func (fs *FundingService) CreditsHistory(symbol string) (*bitfinex.FundingCreditSnapshot, error) {
+func (fs *FundingService) CreditsHistory(symbol string) (*fundingcredit.Snapshot, error) {
 	req, err := fs.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("funding/credits", symbol, "hist"))
 	if err != nil {
 		return nil, err
@@ -124,7 +125,7 @@ func (fs *FundingService) CreditsHistory(symbol string) (*bitfinex.FundingCredit
 	if err != nil {
 		return nil, err
 	}
-	loans, err := bitfinex.NewFundingCreditSnapshotFromRaw(raw)
+	loans, err := fundingcredit.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
