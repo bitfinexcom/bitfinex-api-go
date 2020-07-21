@@ -7,14 +7,6 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
-const (
-	LoanStatusActive          LoanStatus = "ACTIVE"
-	LoanStatusExecuted        LoanStatus = "EXECUTED"
-	LoanStatusPartiallyFilled LoanStatus = "PARTIALLY FILLED"
-	LoanStatusCanceled        LoanStatus = "CANCELED"
-)
-
-type LoanStatus string
 type HistoricalLoan Loan
 type New Loan
 type Update Loan
@@ -32,7 +24,7 @@ type Loan struct {
 	MTSUpdated    int64
 	Amount        float64
 	Flags         interface{}
-	Status        LoanStatus
+	Status        string
 	Rate          float64
 	Period        int64
 	MTSOpened     int64
@@ -81,7 +73,7 @@ func FromRaw(raw []interface{}) (l *Loan, err error) {
 		MTSUpdated:    convert.I64ValOrZero(raw[4]),
 		Amount:        convert.F64ValOrZero(raw[5]),
 		Flags:         raw[6],
-		Status:        LoanStatus(convert.SValOrEmpty(raw[7])),
+		Status:        convert.SValOrEmpty(raw[7]),
 		Rate:          convert.F64ValOrZero(raw[11]),
 		Period:        convert.I64ValOrZero(raw[12]),
 		MTSOpened:     convert.I64ValOrZero(raw[13]),
