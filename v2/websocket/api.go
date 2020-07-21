@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -206,7 +207,7 @@ func (c *Client) LookupSubscription(subID string) (*SubscriptionRequest, error) 
 }
 
 // Submit a new funding offer request
-func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *bitfinex.FundingOfferRequest) error {
+func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *fundingoffer.SubmitRequest) error {
 	socket, err := c.GetAuthenticatedSocket()
 	if err != nil {
 		return err
@@ -215,7 +216,7 @@ func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *bitfinex.
 }
 
 // Submit a request to cancel and existing funding offer
-func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *bitfinex.FundingOfferCancelRequest) error {
+func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *fundingoffer.CancelRequest) error {
 	socket, err := c.GetAuthenticatedSocket()
 	if err != nil {
 		return err
