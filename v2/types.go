@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
@@ -143,44 +142,6 @@ type bookFrequency string
 
 // BookFrequency provides a typed book frequency.
 type BookFrequency bookFrequency
-
-// TradeExecution represents the first message receievd for a trade on the private data feed.
-type TradeExecution struct {
-	ID         int64
-	Pair       string
-	MTS        int64
-	OrderID    int64
-	Amount     float64
-	Price      float64
-	OrderType  string
-	OrderPrice float64
-	Maker      int
-}
-
-func NewTradeExecutionFromRaw(raw []interface{}) (o *TradeExecution, err error) {
-	if len(raw) < 6 {
-		log.Printf("[ERROR] not enough members (%d, need at least 6) for trade execution: %#v", len(raw), raw)
-		return o, fmt.Errorf("data slice too short for trade execution: %#v", raw)
-	}
-
-	// trade executions sometimes omit order type, price, and maker flag
-	o = &TradeExecution{
-		ID:      convert.I64ValOrZero(raw[0]),
-		Pair:    convert.SValOrEmpty(raw[1]),
-		MTS:     convert.I64ValOrZero(raw[2]),
-		OrderID: convert.I64ValOrZero(raw[3]),
-		Amount:  convert.F64ValOrZero(raw[4]),
-		Price:   convert.F64ValOrZero(raw[5]),
-	}
-
-	if len(raw) >= 9 {
-		o.OrderType = convert.SValOrEmpty(raw[6])
-		o.OrderPrice = convert.F64ValOrZero(raw[7])
-		o.Maker = convert.IValOrZero(raw[8])
-	}
-
-	return
-}
 
 type BalanceInfo struct {
 	TotalAUM float64
