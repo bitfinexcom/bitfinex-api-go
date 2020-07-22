@@ -1,22 +1,22 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
-	"context"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
 func SubmitTestOrder(c *websocket.Client) {
 	log.Printf("Submitting new order")
-	err := c.SubmitOrder(context.Background(), &bitfinex.OrderNewRequest{
+	err := c.SubmitOrder(context.Background(), &order.NewRequest{
 		Symbol: "tBTCUSD",
 		CID:    time.Now().Unix() / 1000,
 		Amount: 0.02,
-		Type: 	"EXCHANGE LIMIT",
+		Type:   "EXCHANGE LIMIT",
 		Price:  5000,
 	})
 	if err != nil {
@@ -26,8 +26,8 @@ func SubmitTestOrder(c *websocket.Client) {
 
 func UpdateTestOrder(orderId int64, c *websocket.Client) {
 	log.Printf("Updating order")
-	err := c.SubmitUpdateOrder(context.Background(), &bitfinex.OrderUpdateRequest{
-		ID: orderId,
+	err := c.SubmitUpdateOrder(context.Background(), &order.UpdateRequest{
+		ID:     orderId,
 		Amount: 0.04,
 	})
 	if err != nil {
@@ -58,9 +58,9 @@ func main() {
 		case *websocket.AuthEvent:
 			// on authorize create new order
 			SubmitTestOrder(c)
-		case *bitfinex.OrderNew:
+		case *order.New:
 			// new order received so update it
-			id := obj.(*bitfinex.OrderNew).ID
+			id := obj.(*order.New).ID
 			UpdateTestOrder(id, c)
 		default:
 			log.Printf("MSG RECV: %#v", obj)

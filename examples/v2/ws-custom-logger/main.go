@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
-	"github.com/op/go-logging"
 	_ "net/http/pprof"
 	"os"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
+	"github.com/op/go-logging"
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 		case error:
 			log.Errorf("channel closed: %s", obj)
 			return
-		case *bitfinex.Trade:
+		case *trade.Trade:
 			log.Infof("New trade: %s", obj)
 		case *websocket.InfoEvent:
 			// Info event confirms connection to the bfx websocket
