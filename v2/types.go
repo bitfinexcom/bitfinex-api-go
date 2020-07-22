@@ -8,7 +8,9 @@ import (
 	"math"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 )
 
@@ -95,10 +97,10 @@ type CandleResolution candleResolution
 
 // Order sides
 const (
-	Bid   OrderSide = 1
-	Ask   OrderSide = 2
-	Long  OrderSide = 1
-	Short OrderSide = 2
+	Bid   common.OrderSide = 1
+	Ask   common.OrderSide = 2
+	Long  common.OrderSide = 1
+	Short common.OrderSide = 2
 )
 
 // Settings flags
@@ -110,11 +112,6 @@ const (
 	Seq_all   int = 65536
 	Checksum  int = 131072
 )
-
-type orderSide byte
-
-// OrderSide provides a typed set of order sides.
-type OrderSide orderSide
 
 // Book precision levels
 const (
@@ -146,494 +143,6 @@ type bookFrequency string
 
 // BookFrequency provides a typed book frequency.
 type BookFrequency bookFrequency
-
-const (
-	OrderFlagHidden   int = 64
-	OrderFlagClose    int = 512
-	OrderFlagPostOnly int = 4096
-	OrderFlagOCO      int = 16384
-)
-
-// OrderNewRequest represents an order to be posted to the bitfinex websocket
-// service.
-type OrderNewRequest struct {
-	GID           int64                  `json:"gid"`
-	CID           int64                  `json:"cid"`
-	Type          string                 `json:"type"`
-	Symbol        string                 `json:"symbol"`
-	Amount        float64                `json:"amount,string"`
-	Price         float64                `json:"price,string"`
-	Leverage      int64                  `json:"lev,omitempty"`
-	PriceTrailing float64                `json:"price_trailing,string,omitempty"`
-	PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
-	PriceOcoStop  float64                `json:"price_oco_stop,string,omitempty"`
-	Hidden        bool                   `json:"hidden,omitempty"`
-	PostOnly      bool                   `json:"postonly,omitempty"`
-	Close         bool                   `json:"close,omitempty"`
-	OcoOrder      bool                   `json:"oco_order,omitempty"`
-	TimeInForce   string                 `json:"tif,omitempty"`
-	AffiliateCode string                 `json:"-"`
-	Meta          map[string]interface{} `json:"meta,omitempty"`
-}
-
-type OrderMeta struct {
-	AffiliateCode string `json:"aff_code,string,omitempty"`
-}
-
-// MarshalJSON converts the order object into the format required by the bitfinex
-// websocket service.
-func (o *OrderNewRequest) MarshalJSON() ([]byte, error) {
-	jsonOrder, err := o.ToJSON()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(fmt.Sprintf("[0, \"on\", null, %s]", string(jsonOrder))), nil
-}
-
-// EnrichedPayload returns enriched representation of order struct for submission
-func (o *OrderNewRequest) EnrichedPayload() interface{} {
-	pld := struct {
-		GID           int64                  `json:"gid"`
-		CID           int64                  `json:"cid"`
-		Type          string                 `json:"type"`
-		Symbol        string                 `json:"symbol"`
-		Amount        float64                `json:"amount,string"`
-		Price         float64                `json:"price,string"`
-		Leverage      int64                  `json:"lev,omitempty"`
-		PriceTrailing float64                `json:"price_trailing,string,omitempty"`
-		PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
-		PriceOcoStop  float64                `json:"price_oco_stop,string,omitempty"`
-		TimeInForce   string                 `json:"tif,omitempty"`
-		Flags         int                    `json:"flags,omitempty"`
-		Meta          map[string]interface{} `json:"meta,omitempty"`
-	}{
-		GID:           o.GID,
-		CID:           o.CID,
-		Type:          o.Type,
-		Symbol:        o.Symbol,
-		Amount:        o.Amount,
-		Price:         o.Price,
-		Leverage:      o.Leverage,
-		PriceTrailing: o.PriceTrailing,
-		PriceAuxLimit: o.PriceAuxLimit,
-		PriceOcoStop:  o.PriceOcoStop,
-		TimeInForce:   o.TimeInForce,
-	}
-
-	if o.Hidden {
-		pld.Flags = pld.Flags + OrderFlagHidden
-	}
-
-	if o.PostOnly {
-		pld.Flags = pld.Flags + OrderFlagPostOnly
-	}
-
-	if o.OcoOrder {
-		pld.Flags = pld.Flags + OrderFlagOCO
-	}
-
-	if o.Close {
-		pld.Flags = pld.Flags + OrderFlagClose
-	}
-
-	if o.Meta == nil {
-		pld.Meta = make(map[string]interface{})
-	}
-
-	if o.AffiliateCode != "" {
-		pld.Meta["aff_code"] = o.AffiliateCode
-	}
-
-	return pld
-}
-
-func (o *OrderNewRequest) ToJSON() ([]byte, error) {
-	return json.Marshal(o.EnrichedPayload())
-}
-
-type OrderUpdateRequest struct {
-	ID            int64                  `json:"id"`
-	GID           int64                  `json:"gid,omitempty"`
-	Price         float64                `json:"price,string,omitempty"`
-	Amount        float64                `json:"amount,string,omitempty"`
-	Leverage      int64                  `json:"lev,omitempty"`
-	Delta         float64                `json:"delta,string,omitempty"`
-	PriceTrailing float64                `json:"price_trailing,string,omitempty"`
-	PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
-	Hidden        bool                   `json:"hidden,omitempty"`
-	PostOnly      bool                   `json:"postonly,omitempty"`
-	TimeInForce   string                 `json:"tif,omitempty"`
-	Meta          map[string]interface{} `json:"meta,omitempty"`
-}
-
-// MarshalJSON converts the order object into the format required by the bitfinex
-// websocket service.
-func (o *OrderUpdateRequest) MarshalJSON() ([]byte, error) {
-	aux, err := o.ToJSON()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(fmt.Sprintf("[0, \"ou\", null, %s]", string(aux))), nil
-}
-
-func (o *OrderUpdateRequest) EnrichedPayload() interface{} {
-	pld := struct {
-		ID            int64                  `json:"id"`
-		GID           int64                  `json:"gid,omitempty"`
-		Price         float64                `json:"price,string,omitempty"`
-		Amount        float64                `json:"amount,string,omitempty"`
-		Leverage      int64                  `json:"lev,omitempty"`
-		Delta         float64                `json:"delta,string,omitempty"`
-		PriceTrailing float64                `json:"price_trailing,string,omitempty"`
-		PriceAuxLimit float64                `json:"price_aux_limit,string,omitempty"`
-		Hidden        bool                   `json:"hidden,omitempty"`
-		PostOnly      bool                   `json:"postonly,omitempty"`
-		TimeInForce   string                 `json:"tif,omitempty"`
-		Flags         int                    `json:"flags,omitempty"`
-		Meta          map[string]interface{} `json:"meta,omitempty"`
-	}{
-		ID:            o.ID,
-		GID:           o.GID,
-		Amount:        o.Amount,
-		Leverage:      o.Leverage,
-		Price:         o.Price,
-		PriceTrailing: o.PriceTrailing,
-		PriceAuxLimit: o.PriceAuxLimit,
-		Delta:         o.Delta,
-		TimeInForce:   o.TimeInForce,
-	}
-
-	if o.Meta == nil {
-		pld.Meta = make(map[string]interface{})
-	}
-
-	if o.Hidden {
-		pld.Flags = pld.Flags + OrderFlagHidden
-	}
-
-	if o.PostOnly {
-		pld.Flags = pld.Flags + OrderFlagPostOnly
-	}
-
-	return pld
-}
-
-func (o *OrderUpdateRequest) ToJSON() ([]byte, error) {
-	return json.Marshal(o.EnrichedPayload())
-}
-
-// OrderCancelRequest represents an order cancel request.
-// An order can be cancelled using the internal ID or a
-// combination of Client ID (CID) and the daten for the given
-// CID.
-type OrderCancelRequest struct {
-	ID      int64  `json:"id,omitempty"`
-	CID     int64  `json:"cid,omitempty"`
-	CIDDate string `json:"cid_date,omitempty"`
-}
-
-func (o *OrderCancelRequest) ToJSON() ([]byte, error) {
-	aux := struct {
-		ID      int64  `json:"id,omitempty"`
-		CID     int64  `json:"cid,omitempty"`
-		CIDDate string `json:"cid_date,omitempty"`
-	}{
-		ID:      o.ID,
-		CID:     o.CID,
-		CIDDate: o.CIDDate,
-	}
-
-	return json.Marshal(aux)
-}
-
-// MarshalJSON converts the order cancel object into the format required by the
-// bitfinex websocket service.
-func (o *OrderCancelRequest) MarshalJSON() ([]byte, error) {
-	aux, err := o.ToJSON()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(fmt.Sprintf("[0, \"oc\", null, %s]", string(aux))), nil
-}
-
-// TODO: MultiOrderCancelRequest represents an order cancel request.
-
-type Heartbeat struct {
-	//ChannelIDs []int64
-}
-
-// OrderType represents the types orders the bitfinex platform can handle.
-type OrderType string
-
-const (
-	OrderTypeMarket               = "MARKET"
-	OrderTypeExchangeMarket       = "EXCHANGE MARKET"
-	OrderTypeLimit                = "LIMIT"
-	OrderTypeExchangeLimit        = "EXCHANGE LIMIT"
-	OrderTypeStop                 = "STOP"
-	OrderTypeExchangeStop         = "EXCHANGE STOP"
-	OrderTypeTrailingStop         = "TRAILING STOP"
-	OrderTypeExchangeTrailingStop = "EXCHANGE TRAILING STOP"
-	OrderTypeFOK                  = "FOK"
-	OrderTypeExchangeFOK          = "EXCHANGE FOK"
-	OrderTypeStopLimit            = "STOP LIMIT"
-	OrderTypeExchangeStopLimit    = "EXCHANGE STOP LIMIT"
-)
-
-// OrderStatus represents the possible statuses an order can be in.
-type OrderStatus string
-
-const (
-	OrderStatusActive          OrderStatus = "ACTIVE"
-	OrderStatusExecuted        OrderStatus = "EXECUTED"
-	OrderStatusPartiallyFilled OrderStatus = "PARTIALLY FILLED"
-	OrderStatusCanceled        OrderStatus = "CANCELED"
-)
-
-// Order as returned from the bitfinex websocket service.
-type Order struct {
-	ID            int64
-	GID           int64
-	CID           int64
-	Symbol        string
-	MTSCreated    int64
-	MTSUpdated    int64
-	Amount        float64
-	AmountOrig    float64
-	Type          string
-	TypePrev      string
-	MTSTif        int64
-	Flags         int64
-	Status        OrderStatus
-	Price         float64
-	PriceAvg      float64
-	PriceTrailing float64
-	PriceAuxLimit float64
-	Notify        bool
-	Hidden        bool
-	PlacedID      int64
-	Meta          map[string]interface{}
-}
-
-// NewOrderFromRaw takes the raw list of values as returned from the websocket
-// service and tries to convert it into an Order.
-func NewOrderFromRaw(raw []interface{}) (o *Order, err error) {
-	if len(raw) == 12 {
-		o = &Order{
-			ID:         int64(convert.F64ValOrZero(raw[0])),
-			Symbol:     convert.SValOrEmpty(raw[1]),
-			Amount:     convert.F64ValOrZero(raw[2]),
-			AmountOrig: convert.F64ValOrZero(raw[3]),
-			Type:       convert.SValOrEmpty(raw[4]),
-			Status:     OrderStatus(convert.SValOrEmpty(raw[5])),
-			Price:      convert.F64ValOrZero(raw[6]),
-			PriceAvg:   convert.F64ValOrZero(raw[7]),
-			MTSUpdated: convert.I64ValOrZero(raw[8]),
-			// 3 trailing zeroes, what do they map to?
-		}
-	} else if len(raw) < 26 {
-		return o, fmt.Errorf("data slice too short for order: %#v", raw)
-	} else {
-		o = &Order{
-			ID:            int64(convert.F64ValOrZero(raw[0])),
-			GID:           int64(convert.F64ValOrZero(raw[1])),
-			CID:           int64(convert.F64ValOrZero(raw[2])),
-			Symbol:        convert.SValOrEmpty(raw[3]),
-			MTSCreated:    int64(convert.F64ValOrZero(raw[4])),
-			MTSUpdated:    int64(convert.F64ValOrZero(raw[5])),
-			Amount:        convert.F64ValOrZero(raw[6]),
-			AmountOrig:    convert.F64ValOrZero(raw[7]),
-			Type:          convert.SValOrEmpty(raw[8]),
-			TypePrev:      convert.SValOrEmpty(raw[9]),
-			MTSTif:        int64(convert.F64ValOrZero(raw[10])),
-			Flags:         convert.I64ValOrZero(raw[12]),
-			Status:        OrderStatus(convert.SValOrEmpty(raw[13])),
-			Price:         convert.F64ValOrZero(raw[16]),
-			PriceAvg:      convert.F64ValOrZero(raw[17]),
-			PriceTrailing: convert.F64ValOrZero(raw[18]),
-			PriceAuxLimit: convert.F64ValOrZero(raw[19]),
-			Notify:        convert.BValOrFalse(raw[23]),
-			Hidden:        convert.BValOrFalse(raw[24]),
-			PlacedID:      convert.I64ValOrZero(raw[25]),
-		}
-	}
-	if len(raw) >= 31 {
-		o.Meta = convert.SiMapOrEmpty(raw[31])
-	}
-	return o, nil
-}
-
-// OrderSnapshotFromRaw takes a raw list of values as returned from the websocket
-// service and tries to convert it into an OrderSnapshot.
-func NewOrderSnapshotFromRaw(raw []interface{}) (s *OrderSnapshot, err error) {
-	if len(raw) == 0 {
-		return
-	}
-
-	os := make([]*Order, 0)
-	switch raw[0].(type) {
-	case []interface{}:
-		for _, v := range raw {
-			if l, ok := v.([]interface{}); ok {
-				o, err := NewOrderFromRaw(l)
-				if err != nil {
-					return s, err
-				}
-				os = append(os, o)
-			}
-		}
-	default:
-		return s, fmt.Errorf("not an order snapshot")
-	}
-	s = &OrderSnapshot{Snapshot: os}
-
-	return
-}
-
-// OrderSnapshot is a collection of Orders that would usually be sent on
-// inital connection.
-type OrderSnapshot struct {
-	Snapshot []*Order
-}
-
-// OrderUpdate is an Order that gets sent out after every change to an
-// order.
-type OrderUpdate Order
-
-// OrderNew gets sent out after an Order was created successfully.
-type OrderNew Order
-
-// OrderCancel gets sent out after an Order was cancelled successfully.
-type OrderCancel Order
-
-// Trade represents a trade on the public data feed.
-type Trade struct {
-	Pair   string
-	ID     int64
-	MTS    int64
-	Amount float64
-	Price  float64
-	Side   OrderSide
-}
-
-func NewTradeFromRaw(pair string, raw []interface{}) (o *Trade, err error) {
-	if len(raw) < 4 {
-		return o, fmt.Errorf("data slice too short for trade: %#v", raw)
-	}
-
-	amt := convert.F64ValOrZero(raw[2])
-	var side OrderSide
-	if amt > 0 {
-		side = Bid
-	} else {
-		side = Ask
-	}
-
-	o = &Trade{
-		Pair:   pair,
-		ID:     convert.I64ValOrZero(raw[0]),
-		MTS:    convert.I64ValOrZero(raw[1]),
-		Amount: math.Abs(amt),
-		Price:  convert.F64ValOrZero(raw[3]),
-		Side:   side,
-	}
-
-	return
-}
-
-type TradeSnapshot struct {
-	Snapshot []*Trade
-}
-
-func NewTradeSnapshotFromRaw(pair string, raw [][]float64) (*TradeSnapshot, error) {
-	if len(raw) <= 0 {
-		return nil, fmt.Errorf("data slice is too short for trade snapshot: %#v", raw)
-	}
-	snapshot := make([]*Trade, 0)
-	for _, flt := range raw {
-		t, err := NewTradeFromRaw(pair, convert.ToInterface(flt))
-		if err == nil {
-			snapshot = append(snapshot, t)
-		}
-	}
-
-	return &TradeSnapshot{Snapshot: snapshot}, nil
-}
-
-// TradeExecutionUpdate represents a full update to a trade on the private data feed.  Following a TradeExecution,
-// TradeExecutionUpdates include additional details, e.g. the trade's execution ID (TradeID).
-type TradeExecutionUpdate struct {
-	ID          int64
-	Pair        string
-	MTS         int64
-	OrderID     int64
-	ExecAmount  float64
-	ExecPrice   float64
-	OrderType   string
-	OrderPrice  float64
-	Maker       int
-	Fee         float64
-	FeeCurrency string
-}
-
-// public trade update just looks like a trade
-func NewTradeExecutionUpdateFromRaw(raw []interface{}) (o *TradeExecutionUpdate, err error) {
-	if len(raw) == 4 {
-		o = &TradeExecutionUpdate{
-			ID:         convert.I64ValOrZero(raw[0]),
-			MTS:        convert.I64ValOrZero(raw[1]),
-			ExecAmount: convert.F64ValOrZero(raw[2]),
-			ExecPrice:  convert.F64ValOrZero(raw[3]),
-		}
-		return
-	}
-	if len(raw) == 11 {
-		o = &TradeExecutionUpdate{
-			ID:          convert.I64ValOrZero(raw[0]),
-			Pair:        convert.SValOrEmpty(raw[1]),
-			MTS:         convert.I64ValOrZero(raw[2]),
-			OrderID:     convert.I64ValOrZero(raw[3]),
-			ExecAmount:  convert.F64ValOrZero(raw[4]),
-			ExecPrice:   convert.F64ValOrZero(raw[5]),
-			OrderType:   convert.SValOrEmpty(raw[6]),
-			OrderPrice:  convert.F64ValOrZero(raw[7]),
-			Maker:       convert.IValOrZero(raw[8]),
-			Fee:         convert.F64ValOrZero(raw[9]),
-			FeeCurrency: convert.SValOrEmpty(raw[10]),
-		}
-		return
-	}
-	return o, fmt.Errorf("data slice too short for trade update: %#v", raw)
-}
-
-type TradeExecutionUpdateSnapshot struct {
-	Snapshot []*TradeExecutionUpdate
-}
-type HistoricalTradeSnapshot TradeExecutionUpdateSnapshot
-
-func NewTradeExecutionUpdateSnapshotFromRaw(raw []interface{}) (s *TradeExecutionUpdateSnapshot, err error) {
-	if len(raw) == 0 {
-		return
-	}
-	ts := make([]*TradeExecutionUpdate, 0)
-	switch raw[0].(type) {
-	case []interface{}:
-		for _, v := range raw {
-			if l, ok := v.([]interface{}); ok {
-				t, err := NewTradeExecutionUpdateFromRaw(l)
-				if err != nil {
-					return s, err
-				}
-				ts = append(ts, t)
-			}
-		}
-	default:
-		return s, fmt.Errorf("not a trade snapshot: %#v", raw)
-	}
-	s = &TradeExecutionUpdateSnapshot{Snapshot: ts}
-
-	return
-}
 
 // TradeExecution represents the first message receievd for a trade on the private data feed.
 type TradeExecution struct {
@@ -849,33 +358,33 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 			// will be a set of orders if created via rest
 			// this is to accommodate OCO orders
 			if _, ok := nraw[0].([]interface{}); ok {
-				o.NotifyInfo, err = NewOrderSnapshotFromRaw(nraw)
+				o.NotifyInfo, err = order.SnapshotFromRaw(nraw)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				on, err := NewOrderFromRaw(nraw)
+				on, err := order.FromRaw(nraw)
 				if err != nil {
 					return nil, err
 				}
-				oNew := OrderNew(*on)
+				oNew := order.New(*on)
 				o.NotifyInfo = &oNew
 			}
 		case "ou-req":
-			on, err := NewOrderFromRaw(nraw)
+			on, err := order.FromRaw(nraw)
 			if err != nil {
 				return nil, err
 			}
-			oNew := OrderUpdate(*on)
-			o.NotifyInfo = &oNew
+			ou := order.Update(*on)
+			o.NotifyInfo = &ou
 		case "oc-req":
 			// if list of list then parse to order snapshot
-			oc, err := NewOrderFromRaw(nraw)
+			on, err := order.FromRaw(nraw)
 			if err != nil {
 				return o, err
 			}
-			orderCancel := OrderCancel(*oc)
-			o.NotifyInfo = &orderCancel
+			oc := order.Cancel(*on)
+			o.NotifyInfo = &oc
 		case "fon-req":
 			fon, err := fundingoffer.FromRaw(nraw)
 			if err != nil {
@@ -923,15 +432,15 @@ const (
 
 // BookUpdate represents an order book price update.
 type BookUpdate struct {
-	ID          int64       // the book update ID, optional
-	Symbol      string      // book symbol
-	Price       float64     // updated price
-	PriceJsNum  json.Number // update price as json.Number
-	Count       int64       // updated count, optional
-	Amount      float64     // updated amount
-	AmountJsNum json.Number // update amount as json.Number
-	Side        OrderSide   // side
-	Action      BookAction  // action (add/remove)
+	ID          int64            // the book update ID, optional
+	Symbol      string           // book symbol
+	Price       float64          // updated price
+	PriceJsNum  json.Number      // update price as json.Number
+	Count       int64            // updated count, optional
+	Amount      float64          // updated amount
+	AmountJsNum json.Number      // update amount as json.Number
+	Side        common.OrderSide // side
+	Action      BookAction       // action (add/remove)
 }
 
 type BookUpdateSnapshot struct {
@@ -971,7 +480,7 @@ func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numb
 	amt := convert.F64ValOrZero(data[2])
 	amt_num := convert.FloatToJsonNumber(raw_num_array[2])
 
-	var side OrderSide
+	var side common.OrderSide
 	var actionCtrl float64
 	if IsRawBook(precision) {
 		// [ID, price, amount]
