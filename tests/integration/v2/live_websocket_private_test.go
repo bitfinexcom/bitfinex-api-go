@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -35,9 +37,9 @@ func TestWebsocketOrder(t *testing.T) {
 				if e.Status == "ERROR" && e.Type == "on-req" {
 					t.Errorf("failed to create order: %s", e.Text)
 				}
-			case *bitfinex.OrderNew:
+			case *order.New:
 				wg.Done()
-			case *bitfinex.OrderCancel:
+			case *order.Cancel:
 				wg.Done()
 			case error:
 				t.Logf("Listen() error: %s", ev)
@@ -59,9 +61,9 @@ func TestWebsocketOrder(t *testing.T) {
 	n := time.Now()
 	cid := n.Unix()
 	cidDate := n.Format("2006-01-02")
-	o := &bitfinex.OrderNewRequest{
+	o := &order.NewRequest{
 		CID:    cid,
-		Type:   bitfinex.OrderTypeExchangeLimit,
+		Type:   common.OrderTypeExchangeLimit,
 		Symbol: bitfinex.TradingPrefix + bitfinex.BTCUSD,
 		Amount: 1.0,
 		Price:  28.5,
@@ -77,7 +79,7 @@ func TestWebsocketOrder(t *testing.T) {
 		t.Fatalf("failed to create order: %s", err)
 	}
 
-	oc := &bitfinex.OrderCancelRequest{
+	oc := &order.CancelRequest{
 		CID:     cid,
 		CIDDate: cidDate,
 	}

@@ -10,6 +10,8 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -147,15 +149,15 @@ func TestPublicTrades(t *testing.T) {
 					subs <- m
 				case *websocket.InfoEvent:
 					infos <- m
-				case *bitfinex.TradeExecutionUpdateSnapshot:
+				case *tradeexecutionupdate.Snapshot:
 					trades <- m
-				case *bitfinex.Trade:
+				case *trade.Trade:
 					trades <- m
-				case *bitfinex.TradeExecutionUpdate:
+				case *tradeexecutionupdate.TradeExecutionUpdate:
 					trades <- m
 				case *bitfinex.TradeExecution:
 					trades <- m
-				case *bitfinex.TradeSnapshot:
+				case *trade.Snapshot:
 					trades <- m
 				default:
 					t.Logf("test recv: %#v", msg)

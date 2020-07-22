@@ -5,8 +5,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -24,14 +26,14 @@ type listener struct {
 	positionSnapshot     chan *position.Snapshot
 	notifications        chan *bitfinex.Notification
 	positions            chan *position.Update
-	tradeUpdates         chan *bitfinex.TradeExecutionUpdate
+	tradeUpdates         chan *tradeexecutionupdate.TradeExecutionUpdate
 	tradeExecutions      chan *bitfinex.TradeExecution
-	cancels              chan *bitfinex.OrderCancel
+	cancels              chan *order.Cancel
 	marginBase           chan *bitfinex.MarginInfoBase
 	marginUpdate         chan *bitfinex.MarginInfoUpdate
 	funding              chan *bitfinex.FundingInfo
-	orderNew             chan *bitfinex.OrderNew
-	orderUpdate          chan *bitfinex.OrderUpdate
+	orderNew             chan *order.New
+	orderUpdate          chan *order.Update
 	errors               chan error
 }
 
@@ -49,13 +51,13 @@ func newListener() *listener {
 		errors:               make(chan error, 10),
 		notifications:        make(chan *bitfinex.Notification, 10),
 		positions:            make(chan *position.Update, 10),
-		tradeUpdates:         make(chan *bitfinex.TradeExecutionUpdate, 10),
+		tradeUpdates:         make(chan *tradeexecutionupdate.TradeExecutionUpdate, 10),
 		tradeExecutions:      make(chan *bitfinex.TradeExecution, 10),
-		cancels:              make(chan *bitfinex.OrderCancel, 10),
+		cancels:              make(chan *order.Cancel, 10),
 		marginBase:           make(chan *bitfinex.MarginInfoBase, 10),
 		marginUpdate:         make(chan *bitfinex.MarginInfoUpdate, 10),
-		orderNew:             make(chan *bitfinex.OrderNew, 10),
-		orderUpdate:          make(chan *bitfinex.OrderUpdate, 10),
+		orderNew:             make(chan *order.New, 10),
+		orderUpdate:          make(chan *order.Update, 10),
 		funding:              make(chan *bitfinex.FundingInfo, 10),
 	}
 }
@@ -228,7 +230,7 @@ func (l *listener) nextPositionUpdate() (*position.Update, error) {
 	}
 }
 
-func (l *listener) nextTradeUpdate() (*bitfinex.TradeExecutionUpdate, error) {
+func (l *listener) nextTradeUpdate() (*tradeexecutionupdate.TradeExecutionUpdate, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -242,7 +244,7 @@ func (l *listener) nextTradeUpdate() (*bitfinex.TradeExecutionUpdate, error) {
 	}
 }
 
-func (l *listener) nextOrderCancel() (*bitfinex.OrderCancel, error) {
+func (l *listener) nextOrderCancel() (*order.Cancel, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -298,7 +300,7 @@ func (l *listener) nextFundingInfo() (*bitfinex.FundingInfo, error) {
 	}
 }
 
-func (l *listener) nextOrderNew() (*bitfinex.OrderNew, error) {
+func (l *listener) nextOrderNew() (*order.New, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -312,7 +314,7 @@ func (l *listener) nextOrderNew() (*bitfinex.OrderNew, error) {
 	}
 }
 
-func (l *listener) nextOrderUpdate() (*bitfinex.OrderUpdate, error) {
+func (l *listener) nextOrderUpdate() (*order.Update, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -357,22 +359,22 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.balanceUpdates <- msg.(*bitfinex.BalanceUpdate)
 				case *bitfinex.Notification:
 					l.notifications <- msg.(*bitfinex.Notification)
-				case *bitfinex.TradeExecutionUpdate:
-					l.tradeUpdates <- msg.(*bitfinex.TradeExecutionUpdate)
+				case *tradeexecutionupdate.TradeExecutionUpdate:
+					l.tradeUpdates <- msg.(*tradeexecutionupdate.TradeExecutionUpdate)
 				case *bitfinex.TradeExecution:
 					l.tradeExecutions <- msg.(*bitfinex.TradeExecution)
 				case *position.Update:
 					l.positions <- msg.(*position.Update)
-				case *bitfinex.OrderCancel:
-					l.cancels <- msg.(*bitfinex.OrderCancel)
+				case *order.Cancel:
+					l.cancels <- msg.(*order.Cancel)
 				case *bitfinex.MarginInfoBase:
 					l.marginBase <- msg.(*bitfinex.MarginInfoBase)
 				case *bitfinex.MarginInfoUpdate:
 					l.marginUpdate <- msg.(*bitfinex.MarginInfoUpdate)
-				case *bitfinex.OrderNew:
-					l.orderNew <- msg.(*bitfinex.OrderNew)
-				case *bitfinex.OrderUpdate:
-					l.orderUpdate <- msg.(*bitfinex.OrderUpdate)
+				case *order.New:
+					l.orderNew <- msg.(*order.New)
+				case *order.Update:
+					l.orderUpdate <- msg.(*order.Update)
 				case *bitfinex.FundingInfo:
 					l.funding <- msg.(*bitfinex.FundingInfo)
 				case *position.Snapshot:
