@@ -37,7 +37,7 @@ func main() {
     client := bitfinex.NewClient().Credentials("API_KEY", "API_SEC")
 	
     // create order
-    response, err := c.Orders.SubmitOrder(&bitfinex.OrderNewRequest{
+    response, err := c.Orders.SubmitOrder(&order.NewRequest{
         Symbol: "tBTCUSD",
         CID:    time.Now().Unix() / 1000,
         Amount: 0.02,
