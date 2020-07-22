@@ -7,6 +7,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -172,30 +173,30 @@ func (c *Client) GetOrderbook(symbol string) (*Orderbook, error) {
 }
 
 // Submit a request to create a new order
-func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewRequest) error {
+func (c *Client) SubmitOrder(ctx context.Context, onr *order.NewRequest) error {
 	socket, err := c.GetAuthenticatedSocket()
 	if err != nil {
 		return err
 	}
-	return socket.Asynchronous.Send(ctx, order)
+	return socket.Asynchronous.Send(ctx, onr)
 }
 
 // Submit and update request to change an existing orders values
-func (c *Client) SubmitUpdateOrder(ctx context.Context, orderUpdate *bitfinex.OrderUpdateRequest) error {
+func (c *Client) SubmitUpdateOrder(ctx context.Context, our *order.UpdateRequest) error {
 	socket, err := c.GetAuthenticatedSocket()
 	if err != nil {
 		return err
 	}
-	return socket.Asynchronous.Send(ctx, orderUpdate)
+	return socket.Asynchronous.Send(ctx, our)
 }
 
 // Submit a cancel request for an existing order
-func (c *Client) SubmitCancel(ctx context.Context, cancel *bitfinex.OrderCancelRequest) error {
+func (c *Client) SubmitCancel(ctx context.Context, ocr *order.CancelRequest) error {
 	socket, err := c.GetAuthenticatedSocket()
 	if err != nil {
 		return err
 	}
-	return socket.Asynchronous.Send(ctx, cancel)
+	return socket.Asynchronous.Send(ctx, ocr)
 }
 
 // Get a subscription request using a subscription ID
