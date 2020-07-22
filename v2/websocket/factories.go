@@ -10,6 +10,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/derivatives"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -50,15 +51,11 @@ func (f *TradeFactory) Build(sub *subscription, objType string, raw []interface{
 	if "tu" == objType {
 		return nil, nil // do not process TradeUpdate messages on public feed, only need to process TradeExecution (first copy seen)
 	}
-	return bitfinex.NewTradeFromRaw(sub.Request.Symbol, raw)
+	return trade.FromRaw(sub.Request.Symbol, raw)
 }
 
 func (f *TradeFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := convert.ToFloat64Array(raw)
-	if err != nil {
-		return nil, err
-	}
-	return bitfinex.NewTradeSnapshotFromRaw(sub.Request.Symbol, converted)
+	return trade.SnapshotFromRaw(sub.Request.Symbol, raw)
 }
 
 type BookFactory struct {
