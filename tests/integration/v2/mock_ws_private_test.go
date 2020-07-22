@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
@@ -320,12 +321,12 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.TradeExecution{ID: 1, Pair: "tBTCUSD", OrderID: 1234567, MTS: 1514909325593, Amount: 0.21679716, Price: 915.9}), fmt.Sprint(*te))
+	assert(t, fmt.Sprint(tradeexecution.TradeExecution{ID: 1, Pair: "tBTCUSD", OrderID: 1234567, MTS: 1514909325593, ExecAmount: 0.21679716, ExecPrice: 915.9}), fmt.Sprint(*te))
 	te, err = listener.nextTradeExecution()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.TradeExecution{ID: 2, Pair: "tBTCUSD", OrderID: 1234567, MTS: 1514909325597, Amount: 0.78320284, Price: 916.2}), fmt.Sprint(*te))
+	assert(t, fmt.Sprint(tradeexecution.TradeExecution{ID: 2, Pair: "tBTCUSD", OrderID: 1234567, MTS: 1514909325597, ExecAmount: 0.78320284, ExecPrice: 916.2}), fmt.Sprint(*te))
 
 	// fills--trade updates
 	async.Publish(`[0,"tu",[1,"tBTCUSD",1514909325593,1234567,0.21679716,915.9,"MARKET",915.5,-1,-0.39712904,"USD"]]`)

@@ -8,6 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
@@ -27,7 +28,7 @@ type listener struct {
 	notifications        chan *bitfinex.Notification
 	positions            chan *position.Update
 	tradeUpdates         chan *tradeexecutionupdate.TradeExecutionUpdate
-	tradeExecutions      chan *bitfinex.TradeExecution
+	tradeExecutions      chan *tradeexecution.TradeExecution
 	cancels              chan *order.Cancel
 	marginBase           chan *bitfinex.MarginInfoBase
 	marginUpdate         chan *bitfinex.MarginInfoUpdate
@@ -52,7 +53,7 @@ func newListener() *listener {
 		notifications:        make(chan *bitfinex.Notification, 10),
 		positions:            make(chan *position.Update, 10),
 		tradeUpdates:         make(chan *tradeexecutionupdate.TradeExecutionUpdate, 10),
-		tradeExecutions:      make(chan *bitfinex.TradeExecution, 10),
+		tradeExecutions:      make(chan *tradeexecution.TradeExecution, 10),
 		cancels:              make(chan *order.Cancel, 10),
 		marginBase:           make(chan *bitfinex.MarginInfoBase, 10),
 		marginUpdate:         make(chan *bitfinex.MarginInfoUpdate, 10),
@@ -202,7 +203,7 @@ func (l *listener) nextNotification() (*bitfinex.Notification, error) {
 	}
 }
 
-func (l *listener) nextTradeExecution() (*bitfinex.TradeExecution, error) {
+func (l *listener) nextTradeExecution() (*tradeexecution.TradeExecution, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -361,8 +362,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.notifications <- msg.(*bitfinex.Notification)
 				case *tradeexecutionupdate.TradeExecutionUpdate:
 					l.tradeUpdates <- msg.(*tradeexecutionupdate.TradeExecutionUpdate)
-				case *bitfinex.TradeExecution:
-					l.tradeExecutions <- msg.(*bitfinex.TradeExecution)
+				case *tradeexecution.TradeExecution:
+					l.tradeExecutions <- msg.(*tradeexecution.TradeExecution)
 				case *position.Update:
 					l.positions <- msg.(*position.Update)
 				case *order.Cancel:
