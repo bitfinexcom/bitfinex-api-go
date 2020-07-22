@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -210,7 +211,7 @@ func TestOrderNewMultiOp(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		o := bitfinex.OrderNewRequest{
+		o := order.NewRequest{
 			CID:           119,
 			GID:           118,
 			Type:          "EXCHANGE LIMIT",
@@ -258,7 +259,7 @@ func TestOrderUpdateMultiOp(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		o := bitfinex.OrderUpdateRequest{
+		o := order.UpdateRequest{
 			ID:     1189503586,
 			Price:  12,
 			Amount: 0.002,
@@ -339,7 +340,7 @@ func TestOrderMultiOp(t *testing.T) {
 		pld := OrderOps{
 			{
 				"on",
-				bitfinex.OrderNewRequest{
+				order.NewRequest{
 					CID:           987,
 					GID:           876,
 					Type:          "EXCHANGE LIMIT",
@@ -360,7 +361,7 @@ func TestOrderMultiOp(t *testing.T) {
 			},
 			{
 				"ou",
-				bitfinex.OrderUpdateRequest{
+				order.UpdateRequest{
 					ID:     1189503342,
 					Price:  15,
 					Amount: 0.002,
