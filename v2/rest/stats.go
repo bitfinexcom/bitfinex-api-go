@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -70,13 +71,13 @@ func (ss *StatsService) FundingLast(symbol string) (*bitfinex.Stat, error) {
 
 // Retrieves platform statistics for credit size history
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) CreditSizeHistory(symbol string, side bitfinex.OrderSide) ([]bitfinex.Stat, error) {
+func (ss *StatsService) CreditSizeHistory(symbol string, side common.OrderSide) ([]bitfinex.Stat, error) {
 	return ss.getHistory(symbol, bitfinex.CreditSizeKey, "")
 }
 
 // Retrieves platform statistics for credit size last
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) CreditSizeLast(symbol string, side bitfinex.OrderSide) (*bitfinex.Stat, error) {
+func (ss *StatsService) CreditSizeLast(symbol string, side common.OrderSide) (*bitfinex.Stat, error) {
 	return ss.getLast(symbol, bitfinex.CreditSizeKey, "")
 }
 
@@ -94,7 +95,7 @@ func (ss *StatsService) SymbolCreditSizeLast(fundingSymbol string, tradingSymbol
 
 // Retrieves platform statistics for position history
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) PositionHistory(symbol string, side bitfinex.OrderSide) ([]bitfinex.Stat, error) {
+func (ss *StatsService) PositionHistory(symbol string, side common.OrderSide) ([]bitfinex.Stat, error) {
 	var strSide string
 	if side == bitfinex.Long {
 		strSide = "long"
@@ -108,7 +109,7 @@ func (ss *StatsService) PositionHistory(symbol string, side bitfinex.OrderSide) 
 
 // Retrieves platform statistics for position last
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) PositionLast(symbol string, side bitfinex.OrderSide) (*bitfinex.Stat, error) {
+func (ss *StatsService) PositionLast(symbol string, side common.OrderSide) (*bitfinex.Stat, error) {
 	var strSide string
 	if side == bitfinex.Long {
 		strSide = "long"
