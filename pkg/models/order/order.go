@@ -30,6 +30,21 @@ type Order struct {
 	Meta          map[string]interface{}
 }
 
+// Snapshot is a collection of Orders that would usually be sent on
+// inital connection.
+type Snapshot struct {
+	Snapshot []*Order
+}
+
+// Update is an Order that gets sent out after every change to an order.
+type Update Order
+
+// New gets sent out after an Order was created successfully.
+type New Order
+
+// Cancel gets sent out after an Order was cancelled successfully.
+type Cancel Order
+
 // FromRaw takes the raw list of values as returned from the websocket
 // service and tries to convert it into an Order.
 func FromRaw(raw []interface{}) (o *Order, err error) {
@@ -108,18 +123,3 @@ func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 
 	return
 }
-
-// Snapshot is a collection of Orders that would usually be sent on
-// inital connection.
-type Snapshot struct {
-	Snapshot []*Order
-}
-
-// Update is an Order that gets sent out after every change to an order.
-type Update Order
-
-// New gets sent out after an Order was created successfully.
-type New Order
-
-// Cancel gets sent out after an Order was cancelled successfully.
-type Cancel Order
