@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 	"log"
 	_ "net/http/pprof"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
 var tickers = []string{"tBTCUSD", "tETHUSD", "tBTCUSD", "tVETUSD", "tDGBUSD", "tEOSUSD", "tTRXUSD"}
@@ -23,7 +24,7 @@ func main() {
 		case error:
 			log.Printf("channel closed: %s", obj)
 			return
-		case *bitfinex.Trade:
+		case *trade.Trade:
 			log.Printf("New trade: %s", obj)
 		case *websocket.InfoEvent:
 			// Info event confirms connection to the bfx websocket

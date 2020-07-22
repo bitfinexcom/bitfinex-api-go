@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -52,7 +52,7 @@ func cancelOrderMultiOp(c *rest.Client) {
 }
 
 func orderNewMultiOp(c *rest.Client) {
-	o := bitfinex.OrderNewRequest{
+	o := order.NewRequest{
 		CID:    119,
 		GID:    118,
 		Type:   "EXCHANGE LIMIT",
@@ -70,7 +70,7 @@ func orderNewMultiOp(c *rest.Client) {
 }
 
 func orderUpdateMultiOp(c *rest.Client) {
-	o := bitfinex.OrderUpdateRequest{
+	o := order.UpdateRequest{
 		ID:     1189503586,
 		Price:  12,
 		Amount: 0.002,
@@ -88,7 +88,7 @@ func orderMultiOp(c *rest.Client) {
 	pld := rest.OrderOps{
 		{
 			"on",
-			bitfinex.OrderNewRequest{
+			order.NewRequest{
 				CID:    987,
 				GID:    876,
 				Type:   "EXCHANGE LIMIT",
@@ -107,7 +107,7 @@ func orderMultiOp(c *rest.Client) {
 		},
 		{
 			"ou",
-			bitfinex.OrderUpdateRequest{
+			order.UpdateRequest{
 				ID:     1189503342,
 				Price:  15,
 				Amount: 0.002,

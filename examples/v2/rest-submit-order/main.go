@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"os"
 	"time"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 )
 
 // Set BFX_APIKEY and BFX_SECRET as :
@@ -20,30 +21,30 @@ func main() {
 	c := rest.NewClientWithURL("https://test.bitfinex.com/v2/").Credentials(key, secret)
 
 	// create order
-	response, err := c.Orders.SubmitOrder(&bitfinex.OrderNewRequest{
+	response, err := c.Orders.SubmitOrder(&order.NewRequest{
 		Symbol: "tBTCUSD",
 		CID:    time.Now().Unix() / 1000,
 		Amount: 0.02,
-		Type: 	"EXCHANGE LIMIT",
+		Type:   "EXCHANGE LIMIT",
 		Price:  5000,
 	})
 	if err != nil {
 		panic(err)
 	}
 	time.Sleep(time.Second * 5)
-	orders := response.NotifyInfo.(*bitfinex.OrderSnapshot)
+	orders := response.NotifyInfo.(*order.Snapshot)
 	// update orders
 	for _, o := range orders.Snapshot {
-		response, err = c.Orders.SubmitUpdateOrder(&bitfinex.OrderUpdateRequest{
-			ID: o.ID,
+		response, err = c.Orders.SubmitUpdateOrder(&order.UpdateRequest{
+			ID:    o.ID,
 			Price: 6000,
 		})
 		if err != nil {
 			panic(err)
 		}
 		// cancel orders
-		updatedOrder := response.NotifyInfo.(*bitfinex.OrderUpdate)
-		err := c.Orders.SubmitCancelOrder(&bitfinex.OrderCancelRequest{
+		updatedOrder := response.NotifyInfo.(*order.Update)
+		err := c.Orders.SubmitCancelOrder(&order.CancelRequest{
 			ID: updatedOrder.ID,
 		})
 		if err != nil {
