@@ -10,10 +10,16 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
+
+type Heartbeat struct {
+	//ChannelIDs []int64
+}
 
 func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
 	if c.terminal {
@@ -190,7 +196,7 @@ func (c *Client) handlePrivateDataMessage(term string, data []interface{}) (ms i
 
 	if term == "hb" { // Heartbeat
 		// TODO: Consider adding a switch to enable/disable passing these along.
-		return &bitfinex.Heartbeat{}, nil
+		return &Heartbeat{}, nil
 	}
 	/*
 		list, ok := data[2].([]interface{})
@@ -256,38 +262,38 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		wu := wallet.Update(*o)
 		return &wu
 	case "os":
-		o, err := bitfinex.NewOrderSnapshotFromRaw(raw)
+		o, err := order.SnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
 		return o
 	case "on":
-		o, err := bitfinex.NewOrderFromRaw(raw)
+		o, err := order.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		on := bitfinex.OrderNew(*o)
+		on := order.New(*o)
 		return &on
 	case "ou":
-		o, err := bitfinex.NewOrderFromRaw(raw)
+		o, err := order.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		ou := bitfinex.OrderUpdate(*o)
+		ou := order.Update(*o)
 		return &ou
 	case "oc":
-		o, err := bitfinex.NewOrderFromRaw(raw)
+		o, err := order.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		oc := bitfinex.OrderCancel(*o)
+		oc := order.Cancel(*o)
 		return &oc
 	case "hts":
-		o, err := bitfinex.NewTradeExecutionUpdateSnapshotFromRaw(raw)
+		tu, err := tradeexecutionupdate.SnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
-		hts := bitfinex.HistoricalTradeSnapshot(*o)
+		hts := tradeexecutionupdate.HistoricalTradeSnapshot(*tu)
 		return &hts
 	case "te":
 		o, err := bitfinex.NewTradeExecutionFromRaw(raw)
@@ -296,7 +302,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		return o
 	case "tu":
-		tu, err := bitfinex.NewTradeExecutionUpdateFromRaw(raw)
+		tu, err := tradeexecutionupdate.FromRaw(raw)
 		if err != nil {
 			return err
 		}
@@ -417,7 +423,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		return &flc
 	//case "uac":
 	case "hb":
-		return &bitfinex.Heartbeat{}
+		return &Heartbeat{}
 	case "ats":
 		// TODO: Is not in documentation, so figure out what it is.
 		return nil
