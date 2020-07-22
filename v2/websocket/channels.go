@@ -12,6 +12,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
@@ -296,7 +297,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		hts := tradeexecutionupdate.HistoricalTradeSnapshot(*tu)
 		return &hts
 	case "te":
-		o, err := bitfinex.NewTradeExecutionFromRaw(raw)
+		o, err := tradeexecution.FromRaw(raw)
 		if err != nil {
 			return err
 		}
