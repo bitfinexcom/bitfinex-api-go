@@ -11,6 +11,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -155,7 +156,7 @@ func TestPublicTrades(t *testing.T) {
 					trades <- m
 				case *tradeexecutionupdate.TradeExecutionUpdate:
 					trades <- m
-				case *bitfinex.TradeExecution:
+				case *tradeexecution.TradeExecution:
 					trades <- m
 				case *trade.Snapshot:
 					trades <- m
