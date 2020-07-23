@@ -6,12 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/derivatives"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 type messageFactory interface {
@@ -85,14 +84,7 @@ func ConvertBytesToJsonNumberArray(raw_bytes []byte) ([]interface{}, error) {
 }
 
 func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error) {
-	// we need ot parse the bytes using json numbers since they store the exact string value
-	// and not a float64 representation
-	raw_json_number, str_conv_err := ConvertBytesToJsonNumberArray(raw_bytes)
-	if str_conv_err != nil {
-		return nil, str_conv_err
-	}
-
-	update, err := bitfinex.NewBookUpdateFromRaw(sub.Request.Symbol, sub.Request.Precision, raw, raw_json_number[1])
+	update, err := book.FromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
 	if f.manageBooks {
 		f.lock.Lock()
 		defer f.lock.Unlock()
@@ -104,32 +96,24 @@ func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}
 }
 
 func (f *BookFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	converted, err := convert.ToFloat64Array(raw)
+	update, err := book.SnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
 	if err != nil {
 		return nil, err
 	}
-	// parse the bytes using the json number value to store the exact string value
-	raw_json_number, str_conv_err := ConvertBytesToJsonNumberArray(raw_bytes)
-	if str_conv_err != nil {
-		return nil, str_conv_err
-	}
 
-	update, err2 := bitfinex.NewBookUpdateSnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, converted, raw_json_number[1])
-	if err2 != nil {
-		return nil, err2
-	}
 	if f.manageBooks {
 		f.lock.Lock()
 		defer f.lock.Unlock()
 		// create new orderbook
 		f.orderbooks[sub.Request.Symbol] = &Orderbook{
 			symbol: sub.Request.Symbol,
-			bids:   make([]*bitfinex.BookUpdate, 0),
-			asks:   make([]*bitfinex.BookUpdate, 0),
+			bids:   make([]*book.Book, 0),
+			asks:   make([]*book.Book, 0),
 		}
 		f.orderbooks[sub.Request.Symbol].SetWithSnapshot(update)
 	}
-	return update, err
+
+	return update, nil
 }
 
 type CandlesFactory struct {
