@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 )
@@ -43,7 +44,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		os, err := c.Orders.OrderTrades(bitfinex.TradingPrefix+bitfinex.BTCUSD, ordid)
+		os, err := c.Orders.OrderTrades(common.TradingPrefix+bitfinex.BTCUSD, ordid)
 		if err != nil {
 			log.Fatalf("getting order trades: %s", err)
 		}

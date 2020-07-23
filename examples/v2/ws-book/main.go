@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
@@ -23,7 +24,7 @@ func main() {
 	// subscribe to BTCUSD book
 	ctx, cxl2 := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl2()
-	_, err = c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
+	_, err = c.SubscribeBook(ctx, common.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,7 +32,7 @@ func main() {
 	// subscribe to BTCUSD trades
 	ctx, cxl3 := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl3()
-	_, err = c.SubscribeTrades(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
+	_, err = c.SubscribeTrades(ctx, common.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,7 +46,7 @@ func main() {
 		log.Printf("MSG RECV: %#v", obj)
 
 		// Load the latest orderbook
-		ob, _ := c.GetOrderbook(bitfinex.TradingPrefix + bitfinex.BTCUSD)
+		ob, _ := c.GetOrderbook(common.TradingPrefix + bitfinex.BTCUSD)
 		if ob != nil {
 			log.Printf("Orderbook asks: %v", ob.Asks())
 			log.Printf("Orderbook bids: %v", ob.Bids())
