@@ -1,5 +1,7 @@
 package common
 
+import "errors"
+
 const (
 	OrderFlagHidden               int       = 64
 	OrderFlagClose                int       = 512
@@ -21,6 +23,12 @@ const (
 	Ask                           OrderSide = 2
 	Long                          OrderSide = 1
 	Short                         OrderSide = 2
+	FundingPrefix                           = "f"
+	TradingPrefix                           = "t"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 // OrderSide provides a typed set of order sides.
