@@ -127,30 +127,6 @@ type bookFrequency string
 // BookFrequency provides a typed book frequency.
 type BookFrequency bookFrequency
 
-type BalanceInfo struct {
-	TotalAUM float64
-	NetAUM   float64
-	/*WalletType string
-	Currency   string*/
-}
-
-func NewBalanceInfoFromRaw(raw []interface{}) (o *BalanceInfo, err error) {
-	if len(raw) < 2 {
-		return o, fmt.Errorf("data slice too short for balance info: %#v", raw)
-	}
-
-	o = &BalanceInfo{
-		TotalAUM: convert.F64ValOrZero(raw[0]),
-		NetAUM:   convert.F64ValOrZero(raw[1]),
-		/*WalletType: convert.SValOrEmpty(raw[2]),
-		Currency:   convert.SValOrEmpty(raw[3]),*/
-	}
-
-	return
-}
-
-type BalanceUpdate BalanceInfo
-
 // marginInfoFromRaw returns either a MarginInfoBase or MarginInfoUpdate, since
 // the Margin Info is split up into a base and per symbol parts.
 func NewMarginInfoFromRaw(raw []interface{}) (o interface{}, err error) {
