@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
@@ -131,7 +132,7 @@ func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision bit
 		Precision: string(precision),
 		Len:       fmt.Sprintf("%d", priceLevel), // needed for R0?
 	}
-	if !bitfinex.IsRawBook(string(precision)) {
+	if !book.IsRawBook(string(precision)) {
 		req.Frequency = string(frequency)
 	}
 	return c.Subscribe(ctx, req)
