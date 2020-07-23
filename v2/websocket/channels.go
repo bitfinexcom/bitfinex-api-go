@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
@@ -217,11 +218,11 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 	// The things you do to get proper types.
 	switch term {
 	case "bu":
-		o, err := bitfinex.NewBalanceInfoFromRaw(raw)
+		o, err := balanceinfo.FromRaw(raw)
 		if err != nil {
 			return err
 		}
-		bu := bitfinex.BalanceUpdate(*o)
+		bu := balanceinfo.Update(*o)
 		return &bu
 	case "ps":
 		o, err := position.SnapshotFromRaw(raw)
