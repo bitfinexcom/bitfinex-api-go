@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -119,7 +120,7 @@ func TestOrderbook(t *testing.T) {
 	assert(t, &websocket.InfoEvent{Version: 2}, ev)
 
 	// we will use XRPBTC since that uses reallllyy small numbers
-	bId, err_st := ws.SubscribeBook(context.Background(), bitfinex.TradingPrefix+bitfinex.XRPBTC, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
+	bId, err_st := ws.SubscribeBook(context.Background(), common.TradingPrefix+bitfinex.XRPBTC, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
 	if err_st != nil {
 		t.Fatal(err_st)
 	}

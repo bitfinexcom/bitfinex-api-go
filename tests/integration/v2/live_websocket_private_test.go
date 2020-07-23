@@ -64,7 +64,7 @@ func TestWebsocketOrder(t *testing.T) {
 	o := &order.NewRequest{
 		CID:    cid,
 		Type:   common.OrderTypeExchangeLimit,
-		Symbol: bitfinex.TradingPrefix + bitfinex.BTCUSD,
+		Symbol: common.TradingPrefix + bitfinex.BTCUSD,
 		Amount: 1.0,
 		Price:  28.5,
 	}

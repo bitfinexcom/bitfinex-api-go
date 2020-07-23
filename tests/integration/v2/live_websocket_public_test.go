@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
@@ -96,7 +98,7 @@ func TestPublicTicker(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
-	id, err := c.SubscribeTicker(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
+	id, err := c.SubscribeTicker(ctx, common.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +171,7 @@ func TestPublicTrades(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
-	id, err := c.SubscribeTrades(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD)
+	id, err := c.SubscribeTrades(ctx, common.TradingPrefix+bitfinex.BTCUSD)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -223,9 +225,9 @@ func TestPublicBooks(t *testing.T) {
 					subs <- m
 				case *websocket.InfoEvent:
 					infos <- m
-				case *bitfinex.BookUpdateSnapshot:
+				case *book.Snapshot:
 					books <- m
-				case *bitfinex.BookUpdate:
+				case *book.Book:
 					books <- m
 				default:
 					t.Logf("test recv: %#v", msg)
@@ -236,7 +238,7 @@ func TestPublicBooks(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
-	id, err := c.SubscribeBook(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 1)
+	id, err := c.SubscribeBook(ctx, common.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,7 +305,7 @@ func TestPublicCandles(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
-	id, err := c.SubscribeCandles(ctx, bitfinex.TradingPrefix+bitfinex.BTCUSD, bitfinex.OneMonth)
+	id, err := c.SubscribeCandles(ctx, common.TradingPrefix+bitfinex.BTCUSD, bitfinex.OneMonth)
 	if err != nil {
 		t.Fatal(err)
 	}

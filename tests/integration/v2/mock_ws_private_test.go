@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
@@ -383,7 +384,7 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.FundingInfo{Symbol: "ftBTCUSD"}), fmt.Sprint(*fi))
+	assert(t, fmt.Sprint(fundinginfo.FundingInfo{Symbol: "ftBTCUSD"}), fmt.Sprint(*fi))
 }
 
 func TestCancel(t *testing.T) {

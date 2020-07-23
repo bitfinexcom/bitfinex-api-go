@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
@@ -32,7 +33,7 @@ type listener struct {
 	cancels              chan *order.Cancel
 	marginBase           chan *bitfinex.MarginInfoBase
 	marginUpdate         chan *bitfinex.MarginInfoUpdate
-	funding              chan *bitfinex.FundingInfo
+	funding              chan *fundinginfo.FundingInfo
 	orderNew             chan *order.New
 	orderUpdate          chan *order.Update
 	errors               chan error
@@ -59,7 +60,7 @@ func newListener() *listener {
 		marginUpdate:         make(chan *bitfinex.MarginInfoUpdate, 10),
 		orderNew:             make(chan *order.New, 10),
 		orderUpdate:          make(chan *order.Update, 10),
-		funding:              make(chan *bitfinex.FundingInfo, 10),
+		funding:              make(chan *fundinginfo.FundingInfo, 10),
 	}
 }
 
@@ -287,7 +288,7 @@ func (l *listener) nextMarginInfoUpdate() (*bitfinex.MarginInfoUpdate, error) {
 	}
 }
 
-func (l *listener) nextFundingInfo() (*bitfinex.FundingInfo, error) {
+func (l *listener) nextFundingInfo() (*fundinginfo.FundingInfo, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -376,8 +377,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.orderNew <- msg.(*order.New)
 				case *order.Update:
 					l.orderUpdate <- msg.(*order.Update)
-				case *bitfinex.FundingInfo:
-					l.funding <- msg.(*bitfinex.FundingInfo)
+				case *fundinginfo.FundingInfo:
+					l.funding <- msg.(*fundinginfo.FundingInfo)
 				case *position.Snapshot:
 					l.positionSnapshot <- msg.(*position.Snapshot)
 				case *wallet.Snapshot:
