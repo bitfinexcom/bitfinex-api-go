@@ -1,26 +1,13 @@
 package bitfinex
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"math"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
-)
-
-// Prefixes for available pairs
-const (
-	FundingPrefix = "f"
-	TradingPrefix = "t"
-)
-
-var (
-	ErrNotFound = errors.New("not found")
 )
 
 // Candle resolutions
@@ -88,11 +75,8 @@ const (
 	PermissionWrite = "w"
 )
 
-// private type--cannot instantiate.
-type candleResolution string
-
 // CandleResolution provides a typed set of resolutions for candle subscriptions.
-type CandleResolution candleResolution
+type CandleResolution string
 
 // Order sides
 const (
@@ -243,44 +227,6 @@ func NewMarginInfoBaseFromRaw(raw []interface{}) (o *MarginInfoBase, err error) 
 	return
 }
 
-type FundingInfo struct {
-	Symbol       string
-	YieldLoan    float64
-	YieldLend    float64
-	DurationLoan float64
-	DurationLend float64
-}
-
-func NewFundingInfoFromRaw(raw []interface{}) (o *FundingInfo, err error) {
-	if len(raw) < 3 { // "sym", symbol, data
-		return o, fmt.Errorf("data slice too short for funding info: %#v", raw)
-	}
-
-	sym, ok := raw[1].(string)
-	if !ok {
-		return o, fmt.Errorf("expected symbol in second position of funding info: %v", raw)
-	}
-
-	data, ok := raw[2].([]interface{})
-	if !ok {
-		return o, fmt.Errorf("expected list in third position of funding info: %v", raw)
-	}
-
-	if len(data) < 4 {
-		return o, fmt.Errorf("data too short: %#v", data)
-	}
-
-	o = &FundingInfo{
-		Symbol:       sym,
-		YieldLoan:    convert.F64ValOrZero(data[0]),
-		YieldLend:    convert.F64ValOrZero(data[1]),
-		DurationLoan: convert.F64ValOrZero(data[2]),
-		DurationLend: convert.F64ValOrZero(data[3]),
-	}
-
-	return
-}
-
 type Notification struct {
 	MTS        int64
 	Type       string
@@ -374,112 +320,6 @@ func NewNotificationFromRaw(raw []interface{}) (o *Notification, err error) {
 		default:
 			o.NotifyInfo = raw[4]
 		}
-	}
-
-	return
-}
-
-type bookAction byte
-
-// BookAction represents a new/update or removal for a book entry.
-type BookAction bookAction
-
-const (
-	//BookUpdateEntry represents a new or updated book entry.
-	BookUpdateEntry BookAction = 0
-	//BookRemoveEntry represents a removal of a book entry.
-	BookRemoveEntry BookAction = 1
-)
-
-// BookUpdate represents an order book price update.
-type BookUpdate struct {
-	ID          int64            // the book update ID, optional
-	Symbol      string           // book symbol
-	Price       float64          // updated price
-	PriceJsNum  json.Number      // update price as json.Number
-	Count       int64            // updated count, optional
-	Amount      float64          // updated amount
-	AmountJsNum json.Number      // update amount as json.Number
-	Side        common.OrderSide // side
-	Action      BookAction       // action (add/remove)
-}
-
-type BookUpdateSnapshot struct {
-	Snapshot []*BookUpdate
-}
-
-func NewBookUpdateSnapshotFromRaw(symbol, precision string, raw [][]float64, raw_numbers interface{}) (*BookUpdateSnapshot, error) {
-	if len(raw) <= 0 {
-		return nil, fmt.Errorf("data slice too short for book snapshot: %#v", raw)
-	}
-	snap := make([]*BookUpdate, len(raw))
-	for i, f := range raw {
-		b, err := NewBookUpdateFromRaw(symbol, precision, convert.ToInterface(f), raw_numbers.([]interface{})[i])
-		if err != nil {
-			return nil, err
-		}
-		snap[i] = b
-	}
-	return &BookUpdateSnapshot{Snapshot: snap}, nil
-}
-
-func IsRawBook(precision string) bool {
-	return precision == "R0"
-}
-
-// NewBookUpdateFromRaw creates a new book update object from raw data.  Precision determines how
-// to interpret the side (baked into Count versus Amount)
-// raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
-func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numbers interface{}) (b *BookUpdate, err error) {
-	if len(data) < 3 {
-		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(data), data)
-	}
-	var px float64
-	var px_num json.Number
-	var id, cnt int64
-	raw_num_array := raw_numbers.([]interface{})
-	amt := convert.F64ValOrZero(data[2])
-	amt_num := convert.FloatToJsonNumber(raw_num_array[2])
-
-	var side common.OrderSide
-	var actionCtrl float64
-	if IsRawBook(precision) {
-		// [ID, price, amount]
-		id = convert.I64ValOrZero(data[0])
-		px = convert.F64ValOrZero(data[1])
-		px_num = convert.FloatToJsonNumber(raw_num_array[1])
-		actionCtrl = px
-	} else {
-		// [price, amount, count]
-		px = convert.F64ValOrZero(data[0])
-		px_num = convert.FloatToJsonNumber(raw_num_array[0])
-		cnt = convert.I64ValOrZero(data[1])
-		actionCtrl = float64(cnt)
-	}
-
-	if amt > 0 {
-		side = Bid
-	} else {
-		side = Ask
-	}
-
-	var action BookAction
-	if actionCtrl <= 0 {
-		action = BookRemoveEntry
-	} else {
-		action = BookUpdateEntry
-	}
-
-	b = &BookUpdate{
-		Symbol:      symbol,
-		Price:       math.Abs(px),
-		PriceJsNum:  px_num,
-		Count:       cnt,
-		Amount:      math.Abs(amt),
-		AmountJsNum: amt_num,
-		Side:        side,
-		Action:      action,
-		ID:          id,
 	}
 
 	return
