@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	bfx "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"github.com/davecgh/go-spew/spew"
@@ -18,7 +19,7 @@ func main() {
 }
 
 func last(c *rest.Client) {
-	candle, err := c.Candles.Last(bfx.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
+	candle, err := c.Candles.Last(common.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
 	if err != nil {
 		log.Fatalf("last: %s", err)
 	}
@@ -27,7 +28,7 @@ func last(c *rest.Client) {
 }
 
 func history(c *rest.Client) {
-	candles, err := c.Candles.History(bfx.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
+	candles, err := c.Candles.History(common.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
 	if err != nil {
 		log.Fatalf("history: %s", err)
 	}
@@ -44,7 +45,7 @@ func historyWithQuery(c *rest.Client) {
 	end := bfx.Mts(millis)
 
 	candles, err := c.Candles.HistoryWithQuery(
-		bfx.TradingPrefix+bfx.BTCUSD,
+		common.TradingPrefix+bfx.BTCUSD,
 		bfx.FiveMinutes,
 		start,
 		end,
