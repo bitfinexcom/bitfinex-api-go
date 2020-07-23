@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/stretchr/testify/assert"
@@ -55,7 +56,7 @@ func TestOrdersHistory(t *testing.T) {
 		return &resp, nil
 	}
 
-	orders, err := NewClientWithHttpDo(httpDo).Orders.GetHistoryBySymbol(bitfinex.TradingPrefix + bitfinex.IOTBTC)
+	orders, err := NewClientWithHttpDo(httpDo).Orders.GetHistoryBySymbol(common.TradingPrefix + bitfinex.IOTBTC)
 
 	if err != nil {
 		t.Error(err)
