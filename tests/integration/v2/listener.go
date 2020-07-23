@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -23,7 +24,7 @@ type listener struct {
 	subscriptionEvents   chan *websocket.SubscribeEvent
 	unsubscriptionEvents chan *websocket.UnsubscribeEvent
 	walletUpdates        chan *wallet.Update
-	balanceUpdates       chan *bitfinex.BalanceUpdate
+	balanceUpdates       chan *balanceinfo.Update
 	walletSnapshot       chan *wallet.Snapshot
 	positionSnapshot     chan *position.Snapshot
 	notifications        chan *bitfinex.Notification
@@ -47,7 +48,7 @@ func newListener() *listener {
 		subscriptionEvents:   make(chan *websocket.SubscribeEvent, 10),
 		unsubscriptionEvents: make(chan *websocket.UnsubscribeEvent, 10),
 		walletUpdates:        make(chan *wallet.Update, 10),
-		balanceUpdates:       make(chan *bitfinex.BalanceUpdate, 10),
+		balanceUpdates:       make(chan *balanceinfo.Update, 10),
 		walletSnapshot:       make(chan *wallet.Snapshot, 10),
 		positionSnapshot:     make(chan *position.Snapshot, 10),
 		errors:               make(chan error, 10),
@@ -106,7 +107,7 @@ func (l *listener) nextWalletUpdate() (*wallet.Update, error) {
 	}
 }
 
-func (l *listener) nextBalanceUpdate() (*bitfinex.BalanceUpdate, error) {
+func (l *listener) nextBalanceUpdate() (*balanceinfo.Update, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -357,8 +358,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.authEvents <- msg.(*websocket.AuthEvent)
 				case *wallet.Update:
 					l.walletUpdates <- msg.(*wallet.Update)
-				case *bitfinex.BalanceUpdate:
-					l.balanceUpdates <- msg.(*bitfinex.BalanceUpdate)
+				case *balanceinfo.Update:
+					l.balanceUpdates <- msg.(*balanceinfo.Update)
 				case *bitfinex.Notification:
 					l.notifications <- msg.(*bitfinex.Notification)
 				case *tradeexecutionupdate.TradeExecutionUpdate:

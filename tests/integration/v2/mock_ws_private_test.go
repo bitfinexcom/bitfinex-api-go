@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -137,7 +138,7 @@ func TestWalletBalanceUpdates(t *testing.T) {
 		t.Fatal(err)
 	}
 	// total aum, net aum
-	assert(t, fmt.Sprint(bitfinex.BalanceUpdate{TotalAUM: 147260, NetAUM: 147260}), fmt.Sprint(*bu))
+	assert(t, fmt.Sprint(balanceinfo.Update{TotalAUM: 147260, NetAUM: 147260}), fmt.Sprint(*bu))
 }
 
 func TestNewOrder(t *testing.T) {
