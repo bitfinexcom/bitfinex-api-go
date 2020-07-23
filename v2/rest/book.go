@@ -1,45 +1,30 @@
 package rest
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"net/url"
 	"path"
 	"strconv"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 type BookService struct {
 	Synchronous
 }
 
-// Retrieve all books for the given symbol with the given precision at the given price level
+// All - retrieve all books for the given symbol with the given precision at the given price level
 // see https://docs.bitfinex.com/reference#rest-public-books for more info
-func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, priceLevels int) (*bitfinex.BookUpdateSnapshot, error) {
+func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, priceLevels int) (*book.Snapshot, error) {
 	req := NewRequestWithMethod(path.Join("book", symbol, string(precision)), "GET")
 	req.Params = make(url.Values)
 	req.Params.Add("len", strconv.Itoa(priceLevels))
+
 	raw, err := b.Request(req)
-
 	if err != nil {
 		return nil, err
 	}
 
-	data := make([][]float64, 0, len(raw))
-	for _, ifacearr := range raw {
-		if arr, ok := ifacearr.([]interface{}); ok {
-			sub := make([]float64, 0, len(arr))
-			for _, iface := range arr {
-				if flt, ok := iface.(float64); ok {
-					sub = append(sub, flt)
-				}
-			}
-			data = append(data, sub)
-		}
-	}
-
-	book, err := bitfinex.NewBookUpdateSnapshotFromRaw(symbol, string(precision), data, raw)
-	if err != nil {
-		return nil, err
-	}
-
-	return book, nil
+	return book.SnapshotFromRaw(symbol, string(precision), convert.ToInterfaceArray(raw))
 }
