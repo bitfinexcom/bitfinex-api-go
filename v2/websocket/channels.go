@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
@@ -363,7 +364,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		foc := fundingoffer.Cancel(*o)
 		return &foc
 	case "fiu":
-		o, err := bitfinex.NewFundingInfoFromRaw(raw)
+		o, err := fundinginfo.FromRaw(raw)
 		if err != nil {
 			return err
 		}
