@@ -36,18 +36,20 @@ type Snapshot struct {
 	Snapshot []*Book
 }
 
-func SnapshotFromRaw(symbol, precision string, raw [][]interface{}) (*Snapshot, error) {
+func SnapshotFromRaw(symbol, precision string, raw [][]interface{}, rawNumbers interface{}) (*Snapshot, error) {
 	if len(raw) <= 0 {
 		return nil, fmt.Errorf("data slice too short for book snapshot: %#v", raw)
 	}
+
 	snap := make([]*Book, len(raw))
 	for i, v := range raw {
-		b, err := FromRaw(symbol, precision, v)
+		b, err := FromRaw(symbol, precision, v, rawNumbers.([]interface{})[i])
 		if err != nil {
 			return nil, err
 		}
 		snap[i] = b
 	}
+
 	return &Snapshot{Snapshot: snap}, nil
 }
 
@@ -58,34 +60,34 @@ func IsRawBook(precision string) bool {
 // FromRaw creates a new book object from raw data. Precision determines how
 // to interpret the side (baked into Count versus Amount)
 // raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
-func FromRaw(symbol, precision string, data []interface{}) (b *Book, err error) {
+func FromRaw(symbol, precision string, data []interface{}, rawNumbers interface{}) (b *Book, err error) {
 	if len(data) < 3 {
 		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 3, len(data), data)
 	}
 
-	// DS: by the looks of it, it does not handle funding currency?
 	var (
 		price, actionCtrl float64
-		id, cnt           int64
+		id, count         int64
 		priceNum          json.Number
 		side              common.OrderSide
 	)
 
+	rawNumSlice := rawNumbers.([]interface{})
 	amount := convert.F64ValOrZero(data[2])
-	amountNum := convert.FloatToJsonNumber(data[2])
+	amountNum := convert.FloatToJsonNumber(rawNumSlice[2])
 
 	if IsRawBook(precision) {
 		// [ID, price, amount]
 		id = convert.I64ValOrZero(data[0])
 		price = convert.F64ValOrZero(data[1])
-		priceNum = convert.FloatToJsonNumber(data[1])
+		priceNum = convert.FloatToJsonNumber(rawNumSlice[1])
 		actionCtrl = price
 	} else {
 		// [price, count, amount]
 		price = convert.F64ValOrZero(data[0])
-		priceNum = convert.FloatToJsonNumber(data[0])
-		cnt = convert.I64ValOrZero(data[1])
-		actionCtrl = float64(cnt)
+		priceNum = convert.FloatToJsonNumber(rawNumSlice[0])
+		count = convert.I64ValOrZero(data[1])
+		actionCtrl = float64(count)
 	}
 
 	if amount > 0 {
@@ -105,7 +107,7 @@ func FromRaw(symbol, precision string, data []interface{}) (b *Book, err error) 
 		Symbol:      symbol,
 		Price:       math.Abs(price),
 		PriceJsNum:  priceNum,
-		Count:       cnt,
+		Count:       count,
 		Amount:      math.Abs(amount),
 		AmountJsNum: amountNum,
 		Side:        side,
