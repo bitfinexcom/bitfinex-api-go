@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
@@ -359,12 +360,12 @@ func TestFills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.MarginInfoBase{UserProfitLoss: -2.76536085, MarginBalance: 19150.16773008, MarginNet: 19147.40236923}), fmt.Sprint(*mb))
+	assert(t, fmt.Sprint(margin.InfoBase{UserProfitLoss: -2.76536085, MarginBalance: 19150.16773008, MarginNet: 19147.40236923}), fmt.Sprint(*mb))
 	mu, err := listener.nextMarginInfoUpdate()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert(t, fmt.Sprint(bitfinex.MarginInfoUpdate{Symbol: "tBTCUSD", TradableBalance: 60162.93960325}), fmt.Sprint(*mu))
+	assert(t, fmt.Sprint(margin.InfoUpdate{Symbol: "tBTCUSD", TradableBalance: 60162.93960325}), fmt.Sprint(*mu))
 
 	// position update for executed trades
 	async.Publish(`[0,"pu",["tBTCUSD","ACTIVE",1,916.13496085,0,0,-2.76536085,-0.30185082,0,43.7962]]`)
