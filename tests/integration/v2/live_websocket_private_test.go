@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
@@ -33,7 +34,7 @@ func TestWebsocketOrder(t *testing.T) {
 	go func() {
 		for ev := range c.Listen() {
 			switch e := ev.(type) {
-			case *bitfinex.Notification:
+			case *notification.Notification:
 				if e.Status == "ERROR" && e.Type == "on-req" {
 					t.Errorf("failed to create order: %s", e.Text)
 				}
