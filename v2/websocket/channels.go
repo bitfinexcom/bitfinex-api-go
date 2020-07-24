@@ -13,12 +13,12 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 type Heartbeat struct {
@@ -333,7 +333,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		nfts := fundingtrade.HistoricalSnapshot(*fts)
 		return &nfts
 	case "n":
-		o, err := bitfinex.NewNotificationFromRaw(raw)
+		o, err := notification.FromRaw(raw)
 		if err != nil {
 			return err
 		}
