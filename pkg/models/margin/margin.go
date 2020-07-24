@@ -6,19 +6,19 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
-type MarginInfoBase struct {
+type InfoBase struct {
 	UserProfitLoss float64
 	UserSwaps      float64
 	MarginBalance  float64
 	MarginNet      float64
 }
 
-type MarginInfoUpdate struct {
+type InfoUpdate struct {
 	Symbol          string
 	TradableBalance float64
 }
 
-// FromRaw returns either a MarginInfoBase or MarginInfoUpdate, since
+// FromRaw returns either a InfoBase or InfoUpdate, since
 // the Margin Info is split up into a base and per symbol parts.
 func FromRaw(raw []interface{}) (o interface{}, err error) {
 	if len(raw) < 2 {
@@ -54,12 +54,12 @@ func FromRaw(raw []interface{}) (o interface{}, err error) {
 	return nil, fmt.Errorf("invalid margin info type in %#v", raw)
 }
 
-func updateFromRaw(symbol string, raw []interface{}) (o *MarginInfoUpdate, err error) {
+func updateFromRaw(symbol string, raw []interface{}) (o *InfoUpdate, err error) {
 	if len(raw) < 1 {
 		return o, fmt.Errorf("data slice too short for margin info update: %#v", raw)
 	}
 
-	o = &MarginInfoUpdate{
+	o = &InfoUpdate{
 		Symbol:          symbol,
 		TradableBalance: convert.F64ValOrZero(raw[0]),
 	}
@@ -67,12 +67,12 @@ func updateFromRaw(symbol string, raw []interface{}) (o *MarginInfoUpdate, err e
 	return
 }
 
-func baseFromRaw(raw []interface{}) (o *MarginInfoBase, err error) {
+func baseFromRaw(raw []interface{}) (o *InfoBase, err error) {
 	if len(raw) < 4 {
 		return o, fmt.Errorf("data slice too short for margin info base: %#v", raw)
 	}
 
-	o = &MarginInfoBase{
+	o = &InfoBase{
 		UserProfitLoss: convert.F64ValOrZero(raw[0]),
 		UserSwaps:      convert.F64ValOrZero(raw[1]),
 		MarginBalance:  convert.F64ValOrZero(raw[2]),
