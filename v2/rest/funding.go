@@ -9,6 +9,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
@@ -155,7 +156,7 @@ func (fs *FundingService) Trades(symbol string) (*fundingtrade.Snapshot, error) 
 
 // Submits a request to create a new funding offer
 // see https://docs.bitfinex.com/reference#submit-funding-offer for more info
-func (fs *FundingService) SubmitOffer(fo *fundingoffer.SubmitRequest) (*bitfinex.Notification, error) {
+func (fs *FundingService) SubmitOffer(fo *fundingoffer.SubmitRequest) (*notification.Notification, error) {
 	bytes, err := fo.ToJSON()
 	if err != nil {
 		return nil, err
@@ -168,12 +169,12 @@ func (fs *FundingService) SubmitOffer(fo *fundingoffer.SubmitRequest) (*bitfinex
 	if err != nil {
 		return nil, err
 	}
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // Submits a request to cancel the given offer
 // see https://docs.bitfinex.com/reference#cancel-funding-offer for more info
-func (fs *FundingService) CancelOffer(fc *fundingoffer.CancelRequest) (*bitfinex.Notification, error) {
+func (fs *FundingService) CancelOffer(fc *fundingoffer.CancelRequest) (*notification.Notification, error) {
 	bytes, err := fc.ToJSON()
 	if err != nil {
 		return nil, err
@@ -186,12 +187,12 @@ func (fs *FundingService) CancelOffer(fc *fundingoffer.CancelRequest) (*bitfinex
 	if err != nil {
 		return nil, err
 	}
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // KeepFunding - toggle to keep funding taken. Specify loan for unused funding and credit for used funding.
 // see https://docs.bitfinex.com/reference#rest-auth-keep-funding for more info
-func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*bitfinex.Notification, error) {
+func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*notification.Notification, error) {
 	if args.Type != "credit" && args.Type != "loan" {
 		return nil, fmt.Errorf("Expected type: credit or loan, got: %s", args.Type)
 	}
@@ -215,5 +216,5 @@ func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*bitfinex.Notifi
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
