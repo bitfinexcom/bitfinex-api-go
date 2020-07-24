@@ -3,20 +3,20 @@ package main
 import (
 	"fmt"
 	"log"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
-	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
-)
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+)
 
 func main() {
 	c := rest.NewClient()
-	pLStats, err := c.Stats.PositionLast("tBTCUSD", bitfinex.Long)
+	pLStats, err := c.Stats.PositionLast("tBTCUSD", common.Long)
 	if err != nil {
 		log.Fatalf("getting getting last position stats: %s", err)
 	}
 	fmt.Println(pLStats)
 
-	pHStats, err := c.Stats.PositionHistory("tBTCUSD", bitfinex.Long)
+	pHStats, err := c.Stats.PositionHistory("tBTCUSD", common.Long)
 	if err != nil {
 		log.Fatalf("getting getting last position stats: %s", err)
 	}

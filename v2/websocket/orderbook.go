@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 )
 
 type Orderbook struct {
@@ -51,7 +51,7 @@ func (ob *Orderbook) SetWithSnapshot(bs *book.Snapshot) {
 	ob.bids = make([]*book.Book, 0)
 	ob.asks = make([]*book.Book, 0)
 	for _, order := range bs.Snapshot {
-		if order.Side == bitfinex.Bid {
+		if order.Side == common.Bid {
 			ob.bids = append(ob.bids, order)
 		} else {
 			ob.asks = append(ob.asks, order)
@@ -64,7 +64,7 @@ func (ob *Orderbook) UpdateWith(b *book.Book) {
 	defer ob.lock.Unlock()
 
 	side := &ob.asks
-	if b.Side == bitfinex.Bid {
+	if b.Side == common.Bid {
 		side = &ob.bids
 	}
 
@@ -84,10 +84,9 @@ func (ob *Orderbook) UpdateWith(b *book.Book) {
 				// delete if count is equal to zero
 				*side = append((*side)[:index], (*side)[index+1:]...)
 				return
-			} else {
-				// remove now and we will add in the code below
-				*side = append((*side)[:index], (*side)[index+1:]...)
 			}
+			// remove now and we will add in the code below
+			*side = append((*side)[:index], (*side)[index+1:]...)
 		}
 	}
 	*side = append(*side, b)
@@ -96,11 +95,10 @@ func (ob *Orderbook) UpdateWith(b *book.Book) {
 		if i >= len(*(side)) || j >= len(*(side)) {
 			return false
 		}
-		if b.Side == bitfinex.Ask {
+		if b.Side == common.Ask {
 			return (*side)[i].Price < (*side)[j].Price
-		} else {
-			return (*side)[i].Price > (*side)[j].Price
 		}
+		return (*side)[i].Price > (*side)[j].Price
 	})
 }
 

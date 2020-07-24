@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
@@ -149,7 +149,7 @@ func TestReconnectResubscribeWithAuthBlah(t *testing.T) {
 	assert(t, &expTradeSub, tradeSub)
 
 	// book sub
-	_, err = apiClient.SubscribeBook(context.Background(), "tBTCUSD", bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
+	_, err = apiClient.SubscribeBook(context.Background(), "tBTCUSD", common.Precision0, common.FrequencyRealtime, 25)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,8 +169,8 @@ func TestReconnectResubscribeWithAuthBlah(t *testing.T) {
 		Symbol:    "tBTCUSD",
 		SubID:     "nonce3",
 		Channel:   "book",
-		Frequency: string(bitfinex.FrequencyRealtime),
-		Precision: string(bitfinex.Precision0),
+		Frequency: string(common.FrequencyRealtime),
+		Precision: string(common.Precision0),
 	}
 	assert(t, &expBookSub, bookSub)
 	// abrupt disconnect
@@ -263,8 +263,8 @@ func TestReconnectResubscribeWithAuthBlah(t *testing.T) {
 		Symbol:    "tBTCUSD",
 		SubID:     "nonce6",
 		Channel:   "book",
-		Frequency: string(bitfinex.FrequencyRealtime),
-		Precision: string(bitfinex.Precision0),
+		Frequency: string(common.FrequencyRealtime),
+		Precision: string(common.Precision0),
 		Len:       "25",
 	}
 	assert(t, &expBookSub, bookSub)

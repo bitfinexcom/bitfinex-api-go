@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
-	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
-	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"time"
-)
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+)
 
 func main() {
 	c := rest.NewClient()
@@ -17,10 +17,10 @@ func main() {
 	millis := now.UnixNano() / 1000000
 	prior := now.Add(time.Duration(-24) * time.Hour)
 	millisStart := prior.UnixNano() / 1000000
-	start := bitfinex.Mts(millisStart)
-	end := bitfinex.Mts(millis)
+	start := common.Mts(millisStart)
+	end := common.Mts(millis)
 	// send request
-	trades, err := c.Trades.PublicHistoryWithQuery("tBTCUSD", start, end, 10, bitfinex.OldestFirst)
+	trades, err := c.Trades.PublicHistoryWithQuery("tBTCUSD", start, end, 10, common.OldestFirst)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

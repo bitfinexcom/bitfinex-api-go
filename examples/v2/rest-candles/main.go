@@ -19,7 +19,7 @@ func main() {
 }
 
 func last(c *rest.Client) {
-	candle, err := c.Candles.Last(common.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
+	candle, err := c.Candles.Last(common.TradingPrefix+"BTCUSD", common.FiveMinutes)
 	if err != nil {
 		log.Fatalf("last: %s", err)
 	}
@@ -28,7 +28,7 @@ func last(c *rest.Client) {
 }
 
 func history(c *rest.Client) {
-	candles, err := c.Candles.History(common.TradingPrefix+"BTCUSD", bfx.FiveMinutes)
+	candles, err := c.Candles.History(common.TradingPrefix+"BTCUSD", common.FiveMinutes)
 	if err != nil {
 		log.Fatalf("history: %s", err)
 	}
@@ -41,16 +41,16 @@ func historyWithQuery(c *rest.Client) {
 	millis := now.UnixNano() / 1000000
 	prior := now.Add(time.Duration(-24) * time.Hour)
 	millisStart := prior.UnixNano() / 1000000
-	start := bfx.Mts(millisStart)
-	end := bfx.Mts(millis)
+	start := common.Mts(millisStart)
+	end := common.Mts(millis)
 
 	candles, err := c.Candles.HistoryWithQuery(
 		common.TradingPrefix+bfx.BTCUSD,
-		bfx.FiveMinutes,
+		common.FiveMinutes,
 		start,
 		end,
 		200,
-		bfx.OldestFirst,
+		common.OldestFirst,
 	)
 
 	if err != nil {

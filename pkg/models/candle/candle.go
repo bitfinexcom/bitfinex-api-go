@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 )
 
 type Candle struct {
 	Symbol     string
-	Resolution bitfinex.CandleResolution
+	Resolution common.CandleResolution
 	MTS        int64
 	Open       float64
 	Close      float64
@@ -22,7 +22,7 @@ type Snapshot struct {
 	Snapshot []*Candle
 }
 
-func SnapshotFromRaw(symbol string, resolution bitfinex.CandleResolution, raw [][]interface{}) (*Snapshot, error) {
+func SnapshotFromRaw(symbol string, resolution common.CandleResolution, raw [][]interface{}) (*Snapshot, error) {
 	if len(raw) <= 0 {
 		return nil, fmt.Errorf("data slice too short for candle snapshot: %#v", raw)
 	}
@@ -38,7 +38,7 @@ func SnapshotFromRaw(symbol string, resolution bitfinex.CandleResolution, raw []
 	return &Snapshot{Snapshot: snap}, nil
 }
 
-func FromRaw(symbol string, resolution bitfinex.CandleResolution, raw []interface{}) (c *Candle, err error) {
+func FromRaw(symbol string, resolution common.CandleResolution, raw []interface{}) (c *Candle, err error) {
 	if len(raw) < 6 {
 		return c, fmt.Errorf("data slice too short for candle, expected %d got %d: %#v", 6, len(raw), raw)
 	}

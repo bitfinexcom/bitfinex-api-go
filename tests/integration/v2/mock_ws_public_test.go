@@ -120,7 +120,7 @@ func TestOrderbook(t *testing.T) {
 	assert(t, &websocket.InfoEvent{Version: 2}, ev)
 
 	// we will use XRPBTC since that uses reallllyy small numbers
-	bId, err_st := ws.SubscribeBook(context.Background(), common.TradingPrefix+bitfinex.XRPBTC, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
+	bId, err_st := ws.SubscribeBook(context.Background(), common.TradingPrefix+bitfinex.XRPBTC, common.Precision0, common.FrequencyRealtime, 25)
 	if err_st != nil {
 		t.Fatal(err_st)
 	}
@@ -203,20 +203,20 @@ func TestCreateNewSocket(t *testing.T) {
 	for i, ticker := range tickers {
 		id := i * 10
 		// subscribe to 15m candles
-		id1, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.FifteenMinutes)
+		id1, err := ws.SubscribeCandles(context.Background(), ticker, common.FifteenMinutes)
 		if err != nil {
 			t.Fatal(err)
 		}
 		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id) + `,"key":"trade:15m:` + ticker + `","subId":"` + id1 + `"}`)
 		// subscribe to 1hr candles
-		id2, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.OneHour)
+		id2, err := ws.SubscribeCandles(context.Background(), ticker, common.OneHour)
 		if err != nil {
 			t.Fatal(err)
 		}
 		// subscribe ack
 		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id+1) + `,"key":"trade:1hr:` + ticker + `","subId":"` + id2 + `"}`)
 		// subscribe to 30min candles
-		id3, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.OneHour)
+		id3, err := ws.SubscribeCandles(context.Background(), ticker, common.OneHour)
 		if err != nil {
 			t.Fatal(err)
 		}

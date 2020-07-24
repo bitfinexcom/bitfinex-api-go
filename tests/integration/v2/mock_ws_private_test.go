@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
@@ -14,7 +15,6 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
@@ -635,7 +635,7 @@ func TestUsesAuthenticatedSocket(t *testing.T) {
 		"tBTCEOS", "tXRPUSD", "tXRPBTC", "tTRXETH", "tTRXBTC", "tLTCUSD", "tLTCBTC", "tLTCETH"}
 	for i, ticker := range tickers {
 		// subscribe to 15m candles
-		id, err := ws.SubscribeCandles(context.Background(), ticker, bitfinex.FifteenMinutes)
+		id, err := ws.SubscribeCandles(context.Background(), ticker, common.FifteenMinutes)
 		if err != nil {
 			t.Fatal(err)
 		}

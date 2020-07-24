@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -14,7 +14,7 @@ func main() {
 
 	now := time.Now()
 	millis := now.UnixNano() / 1000000
-	end := bitfinex.Mts(millis)
+	end := common.Mts(millis)
 
 	pulseHist, err := c.Pulse.PublicPulseHistory(0, end)
 	if err != nil {

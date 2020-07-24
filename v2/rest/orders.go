@@ -9,7 +9,6 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // OrderService manages data flow for the Order API endpoint
@@ -98,7 +97,7 @@ func (s *OrderService) GetHistoryByOrderId(orderID int64) (o *order.Order, err e
 // See https://docs.bitfinex.com/reference#orders-history for more info
 func (s *OrderService) OrderTrades(symbol string, orderID int64) (*tradeexecutionupdate.Snapshot, error) {
 	key := fmt.Sprintf("%s:%d", symbol, orderID)
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("order", key, "trades"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("order", key, "trades"))
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +109,7 @@ func (s *OrderService) OrderTrades(symbol string, orderID int64) (*tradeexecutio
 }
 
 func (s *OrderService) getActiveOrders(symbol string) (*order.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("orders", symbol))
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("orders", symbol))
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +128,7 @@ func (s *OrderService) getActiveOrders(symbol string) (*order.Snapshot, error) {
 }
 
 func (s *OrderService) getHistoricalOrders(symbol string) (*order.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("orders", symbol, "hist"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("orders", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +153,7 @@ func (s *OrderService) SubmitOrder(onr *order.NewRequest) (*notification.Notific
 	if err != nil {
 		return nil, err
 	}
-	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, path.Join("order", "submit"), bytes)
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(common.PermissionWrite, path.Join("order", "submit"), bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +171,7 @@ func (s *OrderService) SubmitUpdateOrder(our *order.UpdateRequest) (*notificatio
 	if err != nil {
 		return nil, err
 	}
-	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, path.Join("order", "update"), bytes)
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(common.PermissionWrite, path.Join("order", "update"), bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +189,7 @@ func (s *OrderService) SubmitCancelOrder(oc *order.CancelRequest) error {
 	if err != nil {
 		return err
 	}
-	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, path.Join("order", "cancel"), bytes)
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(common.PermissionWrite, path.Join("order", "cancel"), bytes)
 	if err != nil {
 		return err
 	}
@@ -212,7 +211,7 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*notifica
 	}
 
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
-		bitfinex.PermissionWrite,
+		common.PermissionWrite,
 		path.Join("order", "cancel", "multi"),
 		bytes,
 	)
@@ -246,7 +245,7 @@ func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*notification.Notifica
 	}
 
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
-		bitfinex.PermissionWrite,
+		common.PermissionWrite,
 		path.Join("order", "multi"),
 		bytes,
 	)
@@ -280,7 +279,7 @@ func (s *OrderService) CancelOrderMultiOp(orderID int) (*notification.Notificati
 	}
 
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
-		bitfinex.PermissionWrite,
+		common.PermissionWrite,
 		path.Join("order", "multi"),
 		bytes,
 	)
@@ -314,7 +313,7 @@ func (s *OrderService) OrderNewMultiOp(onr order.NewRequest) (*notification.Noti
 	}
 
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
-		bitfinex.PermissionWrite,
+		common.PermissionWrite,
 		path.Join("order", "multi"),
 		bytes,
 	)
@@ -348,7 +347,7 @@ func (s *OrderService) OrderUpdateMultiOp(our order.UpdateRequest) (*notificatio
 	}
 
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
-		bitfinex.PermissionWrite,
+		common.PermissionWrite,
 		path.Join("order", "multi"),
 		bytes,
 	)
@@ -397,7 +396,7 @@ func (s *OrderService) OrderMultiOp(ops OrderOps) (*notification.Notification, e
 	}
 
 	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(
-		bitfinex.PermissionWrite,
+		common.PermissionWrite,
 		path.Join("order", "multi"),
 		bytes,
 	)

@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 type FlagRequest struct {
@@ -120,7 +120,7 @@ func (c *Client) SubscribeTrades(ctx context.Context, symbol string) (string, er
 
 // Submit a  subscription request for market data for the given symbol, at the given frequency, with the given precision, returning no more than priceLevels price entries.
 // Default values are Precision0, Frequency0, and priceLevels=25.
-func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision bitfinex.BookPrecision, frequency bitfinex.BookFrequency, priceLevel int) (string, error) {
+func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision common.BookPrecision, frequency common.BookFrequency, priceLevel int) (string, error) {
 	if priceLevel < 0 {
 		return "", fmt.Errorf("negative price levels not supported: %d", priceLevel)
 	}
@@ -139,7 +139,7 @@ func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision bit
 }
 
 // Submit a subscription request to receive candle updates
-func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution bitfinex.CandleResolution) (string, error) {
+func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution common.CandleResolution) (string, error) {
 	req := &SubscriptionRequest{
 		SubID:   c.nonce.GetNonce(),
 		Event:   EventSubscribe,
@@ -150,7 +150,7 @@ func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution
 }
 
 // Submit a subscription request for status updates
-func (c *Client) SubscribeStatus(ctx context.Context, symbol string, sType bitfinex.StatusType) (string, error) {
+func (c *Client) SubscribeStatus(ctx context.Context, symbol string, sType common.StatusType) (string, error) {
 	req := &SubscriptionRequest{
 		SubID:   c.nonce.GetNonce(),
 		Event:   EventSubscribe,

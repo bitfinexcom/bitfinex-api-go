@@ -8,9 +8,9 @@ import (
 	"strconv"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulse"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulseprofile"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 type PulseService struct {
@@ -44,7 +44,7 @@ func (ps *PulseService) PublicPulseProfile(nickname Nickname) (*pulseprofile.Pul
 // PublicPulseHistory returns latest pulse messages. You can specify
 // an end timestamp to view older messages.
 // see https://docs.bitfinex.com/reference#rest-public-pulse-hist
-func (ps *PulseService) PublicPulseHistory(limit int, end bitfinex.Mts) ([]*pulse.Pulse, error) {
+func (ps *PulseService) PublicPulseHistory(limit int, end common.Mts) ([]*pulse.Pulse, error) {
 	req := NewRequestWithMethod(path.Join("pulse", "hist"), "GET")
 	req.Params = make(url.Values)
 	req.Params.Add("limit", strconv.Itoa(limit))
@@ -76,7 +76,7 @@ func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error) {
 		return nil, err
 	}
 
-	req, err := ps.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, path.Join("pulse", "add"), payload)
+	req, err := ps.requestFactory.NewAuthenticatedRequestWithBytes(common.PermissionWrite, path.Join("pulse", "add"), payload)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error) {
 // "false" boolean value for private and with "true" for public pulse history.
 // see https://docs.bitfinex.com/reference#rest-auth-pulse-hist
 func (ps *PulseService) PulseHistory(isPublic bool) ([]*pulse.Pulse, error) {
-	req, err := ps.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("pulse", "hist"))
+	req, err := ps.NewAuthenticatedRequest(common.PermissionRead, path.Join("pulse", "hist"))
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (ps *PulseService) PulseHistory(isPublic bool) ([]*pulse.Pulse, error) {
 func (ps *PulseService) DeletePulse(pid string) (int, error) {
 	payload := map[string]interface{}{"pid": pid}
 
-	req, err := ps.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, path.Join("pulse", "del"), payload)
+	req, err := ps.NewAuthenticatedRequestWithData(common.PermissionWrite, path.Join("pulse", "del"), payload)
 	if err != nil {
 		return 0, err
 	}
