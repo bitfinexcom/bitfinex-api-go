@@ -26,5 +26,5 @@ func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, price
 		return nil, err
 	}
 
-	return book.SnapshotFromRaw(symbol, string(precision), convert.ToInterfaceArray(raw))
+	return book.SnapshotFromRaw(symbol, string(precision), convert.ToInterfaceArray(raw), raw)
 }

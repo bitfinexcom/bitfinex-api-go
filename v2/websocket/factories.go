@@ -72,19 +72,26 @@ func newBookFactory(subs *subscriptions, obs map[string]*Orderbook, manageBooks 
 	}
 }
 
-func ConvertBytesToJsonNumberArray(raw_bytes []byte) ([]interface{}, error) {
-	var raw_json_number []interface{}
-	d := json.NewDecoder(strings.NewReader(string(raw_bytes)))
+func ConvertBytesToJsonNumberArray(b []byte) ([]interface{}, error) {
+	var rawJSONNumbers []interface{}
+	d := json.NewDecoder(strings.NewReader(string(b)))
 	d.UseNumber()
-	str_conv_err := d.Decode(&raw_json_number)
-	if str_conv_err != nil {
-		return nil, str_conv_err
+
+	err := d.Decode(&rawJSONNumbers)
+	if err != nil {
+		return nil, err
 	}
-	return raw_json_number, nil
+
+	return rawJSONNumbers, nil
 }
 
-func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error) {
-	update, err := book.FromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
+func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}, b []byte) (interface{}, error) {
+	rawJSONNumbers, err := ConvertBytesToJsonNumberArray(b)
+	if err != nil {
+		return nil, err
+	}
+
+	update, err := book.FromRaw(sub.Request.Symbol, sub.Request.Precision, raw, rawJSONNumbers[1])
 	if f.manageBooks {
 		f.lock.Lock()
 		defer f.lock.Unlock()
@@ -92,11 +99,17 @@ func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}
 			orderbook.UpdateWith(update)
 		}
 	}
+
 	return update, err
 }
 
-func (f *BookFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error) {
-	update, err := book.SnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, raw)
+func (f *BookFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, b []byte) (interface{}, error) {
+	rawJSONNumbers, err := ConvertBytesToJsonNumberArray(b)
+	if err != nil {
+		return nil, err
+	}
+
+	update, err := book.SnapshotFromRaw(sub.Request.Symbol, sub.Request.Precision, raw, rawJSONNumbers[1])
 	if err != nil {
 		return nil, err
 	}

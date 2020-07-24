@@ -12,8 +12,9 @@ import (
 func TestNewBookFromRaw(t *testing.T) {
 	t.Run("insufficient arguments", func(t *testing.T) {
 		payload := []interface{}{1591614631576}
+		rawNums := []interface{}{1.12345}
 
-		b, err := book.FromRaw("tBTCUSD", "P0", payload)
+		b, err := book.FromRaw("tBTCUSD", "P0", payload, rawNums)
 		require.NotNil(t, err)
 		require.Nil(t, b)
 	})
@@ -23,7 +24,9 @@ func TestNewBookFromRaw(t *testing.T) {
 			98169.99541156, 2, 0.000202,
 		}
 
-		b, err := book.FromRaw("tBTCUSD", "P0", payload)
+		rawNums := []interface{}{98169.99541156, 2, 0.000202}
+
+		b, err := book.FromRaw("tBTCUSD", "P0", payload, rawNums)
 		require.Nil(t, err)
 
 		expected := &book.Book{
@@ -44,7 +47,9 @@ func TestNewBookFromRaw(t *testing.T) {
 			34006738527, 8744.9, 0.25603413,
 		}
 
-		b, err := book.FromRaw("tBTCUSD", "R0", payload)
+		rawNums := []interface{}{34006738527, 8744.9, 0.25603413}
+
+		b, err := book.FromRaw("tBTCUSD", "R0", payload, rawNums)
 		require.Nil(t, err)
 
 		expected := &book.Book{
@@ -66,7 +71,9 @@ func TestNewBookFromRaw(t *testing.T) {
 			0.0003301, 30, 1, -3862.874,
 		}
 
-		b, err := book.FromRaw("fUSD", "P0", payload)
+		rawNums := []interface{}{0.0003301, 30, 1, -3862.874}
+
+		b, err := book.FromRaw("fUSD", "P0", payload, rawNums)
 		require.Nil(t, err)
 
 		expected := &book.Book{}
@@ -79,7 +86,9 @@ func TestNewBookFromRaw(t *testing.T) {
 			645902785, 30, 0.0003301, -3862.874,
 		}
 
-		b, err := book.FromRaw("fUSD", "R0", payload)
+		rawNums := []interface{}{645902785, 30, 0.0003301, -3862.874}
+
+		b, err := book.FromRaw("fUSD", "R0", payload, rawNums)
 		require.Nil(t, err)
 
 		expected := &book.Book{}
