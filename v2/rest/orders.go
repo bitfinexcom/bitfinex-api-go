@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
@@ -148,7 +149,7 @@ func (s *OrderService) getHistoricalOrders(symbol string) (*order.Snapshot, erro
 
 // Submit a request to create a new order
 // see https://docs.bitfinex.com/reference#submit-order for more info
-func (s *OrderService) SubmitOrder(onr *order.NewRequest) (*bitfinex.Notification, error) {
+func (s *OrderService) SubmitOrder(onr *order.NewRequest) (*notification.Notification, error) {
 	bytes, err := onr.ToJSON()
 	if err != nil {
 		return nil, err
@@ -161,12 +162,12 @@ func (s *OrderService) SubmitOrder(onr *order.NewRequest) (*bitfinex.Notificatio
 	if err != nil {
 		return nil, err
 	}
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // Submit a request to update an order with the given id with the given changes
 // see https://docs.bitfinex.com/reference#order-update for more info
-func (s *OrderService) SubmitUpdateOrder(our *order.UpdateRequest) (*bitfinex.Notification, error) {
+func (s *OrderService) SubmitUpdateOrder(our *order.UpdateRequest) (*notification.Notification, error) {
 	bytes, err := our.ToJSON()
 	if err != nil {
 		return nil, err
@@ -179,7 +180,7 @@ func (s *OrderService) SubmitUpdateOrder(our *order.UpdateRequest) (*bitfinex.No
 	if err != nil {
 		return nil, err
 	}
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // Submit a request to cancel an order with the given Id
@@ -204,7 +205,7 @@ func (s *OrderService) SubmitCancelOrder(oc *order.CancelRequest) error {
 // the combination of Client Order ID and Client Order Date, or the Group Order ID. Alternatively, the body
 // param 'all' can be used with a value of 1 to cancel all orders.
 // see https://docs.bitfinex.com/reference#rest-auth-order-cancel-multi for more info
-func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*bitfinex.Notification, error) {
+func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*notification.Notification, error) {
 	bytes, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
@@ -224,12 +225,12 @@ func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*bitfinex
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // CancelOrdersMultiOp cancels multiple orders simultaneously. Accepts a slice of order ID's to be canceled.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification, error) {
+func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*notification.Notification, error) {
 	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
@@ -258,12 +259,12 @@ func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // CancelOrderMultiOp cancels order. Accepts orderID to be canceled.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, error) {
+func (s *OrderService) CancelOrderMultiOp(orderID int) (*notification.Notification, error) {
 	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
@@ -292,12 +293,12 @@ func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, 
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // OrderNewMultiOp creates new order. Accepts instance of order.NewRequest
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) OrderNewMultiOp(onr order.NewRequest) (*bitfinex.Notification, error) {
+func (s *OrderService) OrderNewMultiOp(onr order.NewRequest) (*notification.Notification, error) {
 	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
@@ -326,12 +327,12 @@ func (s *OrderService) OrderNewMultiOp(onr order.NewRequest) (*bitfinex.Notifica
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // OrderUpdateMultiOp updates order. Accepts instance of order.UpdateRequest
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) OrderUpdateMultiOp(our order.UpdateRequest) (*bitfinex.Notification, error) {
+func (s *OrderService) OrderUpdateMultiOp(our order.UpdateRequest) (*notification.Notification, error) {
 	pld := OrderMultiOpsRequest{
 		Ops: OrderOps{
 			{
@@ -360,13 +361,13 @@ func (s *OrderService) OrderUpdateMultiOp(our order.UpdateRequest) (*bitfinex.No
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // OrderMultiOp - send Multiple order-related operations. Please note the sent object has
 // only one property with a value of a slice of slices detailing each order operation.
 // see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
-func (s *OrderService) OrderMultiOp(ops OrderOps) (*bitfinex.Notification, error) {
+func (s *OrderService) OrderMultiOp(ops OrderOps) (*notification.Notification, error) {
 	enrichedOrderOps := OrderOps{}
 
 	for _, v := range ops {
@@ -409,5 +410,5 @@ func (s *OrderService) OrderMultiOp(ops OrderOps) (*bitfinex.Notification, error
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
