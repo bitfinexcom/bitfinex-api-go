@@ -8,6 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
@@ -209,7 +210,7 @@ func TestNewOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected2 := bitfinex.Notification{Type: "on-req", NotifyInfo: order.New{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}, Status: "SUCCESS", Text: "Submitting market buy order for 1.0 BTC."}
+	expected2 := notification.Notification{Type: "on-req", NotifyInfo: order.New{ID: 1234567, CID: 123, Symbol: "tBTCUSD", Amount: 1, AmountOrig: 1, Type: "MARKET", Price: 915.5}, Status: "SUCCESS", Text: "Submitting market buy order for 1.0 BTC."}
 	not.NotifyInfo = *not.NotifyInfo.(*order.New)
 	assert(t, fmt.Sprint(expected2), fmt.Sprint(*not))
 }
