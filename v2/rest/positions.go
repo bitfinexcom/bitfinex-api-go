@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
@@ -34,7 +35,7 @@ func (s *PositionService) All() (*position.Snapshot, error) {
 
 // Claim - submits a request to claim an active position with the given id
 // see https://docs.bitfinex.com/reference#claim-position for more info
-func (s *PositionService) Claim(cp *position.ClaimRequest) (*bitfinex.Notification, error) {
+func (s *PositionService) Claim(cp *position.ClaimRequest) (*notification.Notification, error) {
 	bytes, err := cp.ToJSON()
 	if err != nil {
 		return nil, err
@@ -50,5 +51,5 @@ func (s *PositionService) Claim(cp *position.ClaimRequest) (*bitfinex.Notificati
 		return nil, err
 	}
 
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
