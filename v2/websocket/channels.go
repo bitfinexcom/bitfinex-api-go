@@ -12,6 +12,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
@@ -439,16 +440,16 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 	case "mis": // Should not be sent anymore as of 2017-04-01
 		return nil
 	case "miu":
-		o, err := bitfinex.NewMarginInfoFromRaw(raw)
+		o, err := margin.FromRaw(raw)
 		if err != nil {
 			return err
 		}
 		// return a strongly typed reference, rather than dereference a generic interface
 		// too bad golang doesn't inherit an interface's underlying type when creating a reference to the interface
-		if base, ok := o.(*bitfinex.MarginInfoBase); ok {
+		if base, ok := o.(*margin.InfoBase); ok {
 			return base
 		}
-		if update, ok := o.(*bitfinex.MarginInfoUpdate); ok {
+		if update, ok := o.(*margin.InfoUpdate); ok {
 			return update
 		}
 		return o // better than nothing
