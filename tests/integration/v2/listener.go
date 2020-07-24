@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
@@ -32,8 +33,8 @@ type listener struct {
 	tradeUpdates         chan *tradeexecutionupdate.TradeExecutionUpdate
 	tradeExecutions      chan *tradeexecution.TradeExecution
 	cancels              chan *order.Cancel
-	marginBase           chan *bitfinex.MarginInfoBase
-	marginUpdate         chan *bitfinex.MarginInfoUpdate
+	marginBase           chan *margin.InfoBase
+	marginUpdate         chan *margin.InfoUpdate
 	funding              chan *fundinginfo.FundingInfo
 	orderNew             chan *order.New
 	orderUpdate          chan *order.Update
@@ -57,8 +58,8 @@ func newListener() *listener {
 		tradeUpdates:         make(chan *tradeexecutionupdate.TradeExecutionUpdate, 10),
 		tradeExecutions:      make(chan *tradeexecution.TradeExecution, 10),
 		cancels:              make(chan *order.Cancel, 10),
-		marginBase:           make(chan *bitfinex.MarginInfoBase, 10),
-		marginUpdate:         make(chan *bitfinex.MarginInfoUpdate, 10),
+		marginBase:           make(chan *margin.InfoBase, 10),
+		marginUpdate:         make(chan *margin.InfoUpdate, 10),
 		orderNew:             make(chan *order.New, 10),
 		orderUpdate:          make(chan *order.Update, 10),
 		funding:              make(chan *fundinginfo.FundingInfo, 10),
@@ -261,7 +262,7 @@ func (l *listener) nextOrderCancel() (*order.Cancel, error) {
 	}
 }
 
-func (l *listener) nextMarginInfoBase() (*bitfinex.MarginInfoBase, error) {
+func (l *listener) nextMarginInfoBase() (*margin.InfoBase, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -275,7 +276,7 @@ func (l *listener) nextMarginInfoBase() (*bitfinex.MarginInfoBase, error) {
 	}
 }
 
-func (l *listener) nextMarginInfoUpdate() (*bitfinex.MarginInfoUpdate, error) {
+func (l *listener) nextMarginInfoUpdate() (*margin.InfoUpdate, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -370,10 +371,10 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.positions <- msg.(*position.Update)
 				case *order.Cancel:
 					l.cancels <- msg.(*order.Cancel)
-				case *bitfinex.MarginInfoBase:
-					l.marginBase <- msg.(*bitfinex.MarginInfoBase)
-				case *bitfinex.MarginInfoUpdate:
-					l.marginUpdate <- msg.(*bitfinex.MarginInfoUpdate)
+				case *margin.InfoBase:
+					l.marginBase <- msg.(*margin.InfoBase)
+				case *margin.InfoUpdate:
+					l.marginUpdate <- msg.(*margin.InfoUpdate)
 				case *order.New:
 					l.orderNew <- msg.(*order.New)
 				case *order.Update:
