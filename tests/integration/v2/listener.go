@@ -8,13 +8,13 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundinginfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecution"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
-	bitfinex "github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 )
 
@@ -28,7 +28,7 @@ type listener struct {
 	balanceUpdates       chan *balanceinfo.Update
 	walletSnapshot       chan *wallet.Snapshot
 	positionSnapshot     chan *position.Snapshot
-	notifications        chan *bitfinex.Notification
+	notifications        chan *notification.Notification
 	positions            chan *position.Update
 	tradeUpdates         chan *tradeexecutionupdate.TradeExecutionUpdate
 	tradeExecutions      chan *tradeexecution.TradeExecution
@@ -53,7 +53,7 @@ func newListener() *listener {
 		walletSnapshot:       make(chan *wallet.Snapshot, 10),
 		positionSnapshot:     make(chan *position.Snapshot, 10),
 		errors:               make(chan error, 10),
-		notifications:        make(chan *bitfinex.Notification, 10),
+		notifications:        make(chan *notification.Notification, 10),
 		positions:            make(chan *position.Update, 10),
 		tradeUpdates:         make(chan *tradeexecutionupdate.TradeExecutionUpdate, 10),
 		tradeExecutions:      make(chan *tradeexecution.TradeExecution, 10),
@@ -192,7 +192,7 @@ func (l *listener) nextTick() (*ticker.Ticker, error) {
 	}
 }
 
-func (l *listener) nextNotification() (*bitfinex.Notification, error) {
+func (l *listener) nextNotification() (*notification.Notification, error) {
 	timeout := make(chan bool)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -361,8 +361,8 @@ func (l *listener) run(ch <-chan interface{}) {
 					l.walletUpdates <- msg.(*wallet.Update)
 				case *balanceinfo.Update:
 					l.balanceUpdates <- msg.(*balanceinfo.Update)
-				case *bitfinex.Notification:
-					l.notifications <- msg.(*bitfinex.Notification)
+				case *notification.Notification:
+					l.notifications <- msg.(*notification.Notification)
 				case *tradeexecutionupdate.TradeExecutionUpdate:
 					l.tradeUpdates <- msg.(*tradeexecutionupdate.TradeExecutionUpdate)
 				case *tradeexecution.TradeExecution:
