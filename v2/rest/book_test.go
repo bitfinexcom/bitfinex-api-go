@@ -2,10 +2,11 @@ package rest
 
 import (
 	"bytes"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 func TestBookAll(t *testing.T) {
@@ -18,13 +19,13 @@ func TestBookAll(t *testing.T) {
 		return &resp, nil
 	}
 
-	book, err := NewClientWithHttpDo(httpDo).Book.All("tBTCUSD", bitfinex.Precision0, 25)
+	ba, err := NewClientWithHttpDo(httpDo).Book.All("tBTCUSD", bitfinex.Precision0, 25)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(book.Snapshot) != 50 {
-		t.Fatalf("expected 50 book update entries in snapshot, but got %d", len(book.Snapshot))
+	if len(ba.Snapshot) != 50 {
+		t.Fatalf("expected 50 book update entries in snapshot, but got %d", len(ba.Snapshot))
 	}
 }
