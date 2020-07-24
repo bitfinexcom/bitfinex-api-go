@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.14.x
+  - 1.14.2
 
 install:
   - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.30.0
