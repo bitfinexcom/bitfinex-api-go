@@ -48,7 +48,7 @@ func TestNewFundingTradeFromRaw(t *testing.T) {
 		got, err := margin.FromRaw(payload)
 		require.Nil(t, err)
 
-		expected := &margin.MarginInfoBase{
+		expected := &margin.InfoBase{
 			UserProfitLoss: -13.014640000000007,
 			UserSwaps:      0,
 			MarginBalance:  49331.70267297,
@@ -93,7 +93,7 @@ func TestNewFundingTradeFromRaw(t *testing.T) {
 		got, err := margin.FromRaw(payload)
 		require.Nil(t, err)
 
-		expected := &margin.MarginInfoUpdate{
+		expected := &margin.InfoUpdate{
 			Symbol:          "tETHUSD",
 			TradableBalance: 149361.09689202666,
 		}
