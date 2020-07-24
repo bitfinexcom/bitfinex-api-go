@@ -238,7 +238,7 @@ func TestPublicBooks(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
-	id, err := c.SubscribeBook(ctx, common.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 1)
+	id, err := c.SubscribeBook(ctx, common.TradingPrefix+bitfinex.BTCUSD, common.Precision0, common.FrequencyRealtime, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -305,7 +305,7 @@ func TestPublicCandles(t *testing.T) {
 
 	ctx, cxl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl()
-	id, err := c.SubscribeCandles(ctx, common.TradingPrefix+bitfinex.BTCUSD, bitfinex.OneMonth)
+	id, err := c.SubscribeCandles(ctx, common.TradingPrefix+bitfinex.BTCUSD, common.OneMonth)
 	if err != nil {
 		t.Fatal(err)
 	}

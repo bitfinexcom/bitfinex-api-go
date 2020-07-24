@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulse"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/pulseprofile"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -99,7 +99,7 @@ func TestPublicPulseHistory(t *testing.T) {
 		c := NewClientWithURL(server.URL)
 		now := time.Now()
 		millis := now.UnixNano() / 1000000
-		end := bitfinex.Mts(millis)
+		end := common.Mts(millis)
 		pp, err := c.Pulse.PublicPulseHistory(1, end)
 		require.NotNil(t, err)
 		require.Nil(t, pp)
@@ -145,7 +145,7 @@ func TestPublicPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		end := bitfinex.Mts(1591614631576)
+		end := common.Mts(1591614631576)
 		pph, err := c.Pulse.PublicPulseHistory(1, end)
 		require.Nil(t, err)
 

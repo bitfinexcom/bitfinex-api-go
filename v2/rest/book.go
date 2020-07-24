@@ -7,7 +7,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 )
 
 type BookService struct {
@@ -16,7 +16,7 @@ type BookService struct {
 
 // All - retrieve all books for the given symbol with the given precision at the given price level
 // see https://docs.bitfinex.com/reference#rest-public-books for more info
-func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, priceLevels int) (*book.Snapshot, error) {
+func (b *BookService) All(symbol string, precision common.BookPrecision, priceLevels int) (*book.Snapshot, error) {
 	req := NewRequestWithMethod(path.Join("book", symbol, string(precision)), "GET")
 	req.Params = make(url.Values)
 	req.Params.Add("len", strconv.Itoa(priceLevels))

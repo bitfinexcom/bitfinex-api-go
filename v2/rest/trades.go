@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/tradeexecutionupdate"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // TradeService manages the Trade endpoint.
@@ -20,7 +20,7 @@ type TradeService struct {
 // All returns all orders for the authenticated account.
 // left this in her
 func (s *TradeService) allAccountWithSymbol(symbol string) (*tradeexecutionupdate.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("trades", symbol, "hist"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("trades", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (s *TradeService) allAccountWithSymbol(symbol string) (*tradeexecutionupdat
 }
 
 func (s *TradeService) allAccount() (*tradeexecutionupdate.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("trades", "hist"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("trades", "hist"))
 	if err != nil {
 		return nil, err
 	}
@@ -59,12 +59,12 @@ func (s *TradeService) AccountAllWithSymbol(symbol string) (*tradeexecutionupdat
 // see https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
 func (s *TradeService) AccountHistoryWithQuery(
 	symbol string,
-	start bitfinex.Mts,
-	end bitfinex.Mts,
-	limit bitfinex.QueryLimit,
-	sort bitfinex.SortOrder,
+	start common.Mts,
+	end common.Mts,
+	limit common.QueryLimit,
+	sort common.SortOrder,
 ) (*tradeexecutionupdate.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, path.Join("trades", symbol, "hist"))
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("trades", symbol, "hist"))
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +84,10 @@ func (s *TradeService) AccountHistoryWithQuery(
 // see https://docs.bitfinex.com/reference#rest-public-trades for more info
 func (s *TradeService) PublicHistoryWithQuery(
 	symbol string,
-	start bitfinex.Mts,
-	end bitfinex.Mts,
-	limit bitfinex.QueryLimit,
-	sort bitfinex.SortOrder,
+	start common.Mts,
+	end common.Mts,
+	limit common.QueryLimit,
+	sort common.SortOrder,
 ) (*trade.Snapshot, error) {
 	req := NewRequestWithMethod(path.Join("trades", symbol, "hist"), "GET")
 	req.Params = make(url.Values)

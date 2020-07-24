@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 )
 
 func TestBookAll(t *testing.T) {
@@ -19,7 +19,7 @@ func TestBookAll(t *testing.T) {
 		return &resp, nil
 	}
 
-	ba, err := NewClientWithHttpDo(httpDo).Book.All("tBTCUSD", bitfinex.Precision0, 25)
+	ba, err := NewClientWithHttpDo(httpDo).Book.All("tBTCUSD", common.Precision0, 25)
 
 	if err != nil {
 		t.Fatal(err)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ledger"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // LedgerService manages the Ledgers endpoint.
@@ -24,7 +24,7 @@ func (s *LedgerService) Ledgers(currency string, start int64, end int64, max int
 	}
 
 	payload := map[string]interface{}{"start": start, "end": end, "limit": max}
-	req, err := s.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionRead, path.Join("ledgers", currency, "hist"), payload)
+	req, err := s.requestFactory.NewAuthenticatedRequestWithData(common.PermissionRead, path.Join("ledgers", currency, "hist"), payload)
 	if err != nil {
 		return nil, err
 	}

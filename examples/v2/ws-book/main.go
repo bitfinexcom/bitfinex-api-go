@@ -24,7 +24,7 @@ func main() {
 	// subscribe to BTCUSD book
 	ctx, cxl2 := context.WithTimeout(context.Background(), time.Second*5)
 	defer cxl2()
-	_, err = c.SubscribeBook(ctx, common.TradingPrefix+bitfinex.BTCUSD, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
+	_, err = c.SubscribeBook(ctx, common.TradingPrefix+bitfinex.BTCUSD, common.Precision0, common.FrequencyRealtime, 25)
 	if err != nil {
 		log.Fatal(err)
 	}

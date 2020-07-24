@@ -1,8 +1,9 @@
 package rest
 
 import (
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 	"path"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 )
 
 // OrderService manages data flow for the Order API endpoint
@@ -16,10 +17,10 @@ type DerivativesService struct {
 func (s *WalletService) SetCollateral(symbol string, amount float64) (bool, error) {
 	urlPath := path.Join("deriv", "collateral", "set")
 	data := map[string]interface{}{
-		"symbol": symbol,
+		"symbol":     symbol,
 		"collateral": amount,
 	}
-	req, err := s.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionRead, urlPath, data)
+	req, err := s.requestFactory.NewAuthenticatedRequestWithData(common.PermissionRead, urlPath, data)
 	if err != nil {
 		return false, err
 	}

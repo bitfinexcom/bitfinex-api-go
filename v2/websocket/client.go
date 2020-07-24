@@ -12,13 +12,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/op/go-logging"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
 
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/hex"
-
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 var productionBaseURL = "wss://api-pub.bitfinex.com/ws/2"
@@ -302,7 +301,7 @@ func (c *Client) listenDisconnect() {
 	}
 }
 
-func extractSymbolResolutionFromKey(subscription string) (symbol string, resolution bitfinex.CandleResolution, err error) {
+func extractSymbolResolutionFromKey(subscription string) (symbol string, resolution common.CandleResolution, err error) {
 	var res, sym string
 	str := strings.Split(subscription, ":")
 	if len(str) < 3 {
@@ -310,7 +309,7 @@ func extractSymbolResolutionFromKey(subscription string) (symbol string, resolut
 	}
 	res = str[1]
 	sym = str[2]
-	resolution, err = bitfinex.CandleResolutionFromString(res)
+	resolution, err = common.CandleResolutionFromString(res)
 	if err != nil {
 		return "", resolution, err
 	}
@@ -488,7 +487,7 @@ func (c *Client) checkResubscription(socketId SocketId) {
 	if c.parameters.ManageOrderbook {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		_, err_flag := c.EnableFlag(ctx, bitfinex.Checksum)
+		_, err_flag := c.EnableFlag(ctx, common.Checksum)
 		if err_flag != nil {
 			c.log.Errorf("could not enable checksum flag %s ", err_flag)
 		}

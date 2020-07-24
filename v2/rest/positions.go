@@ -1,9 +1,9 @@
 package rest
 
 import (
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // PositionService manages the Position endpoint.
@@ -15,7 +15,7 @@ type PositionService struct {
 // All - retrieves all of the active positions
 // see https://docs.bitfinex.com/reference#rest-auth-positions for more info
 func (s *PositionService) All() (*position.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, "positions")
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, "positions")
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (s *PositionService) Claim(cp *position.ClaimRequest) (*notification.Notifi
 		return nil, err
 	}
 
-	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(bitfinex.PermissionWrite, "position/claim", bytes)
+	req, err := s.requestFactory.NewAuthenticatedRequestWithBytes(common.PermissionWrite, "position/claim", bytes)
 	if err != nil {
 		return nil, err
 	}

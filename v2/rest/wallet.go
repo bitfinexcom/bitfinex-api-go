@@ -3,9 +3,9 @@ package rest
 import (
 	"strconv"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // WalletService manages data flow for the Wallet API endpoint
@@ -17,7 +17,7 @@ type WalletService struct {
 // Retrieves all of the wallets for the account
 // see https://docs.bitfinex.com/reference#rest-auth-wallets for more info
 func (s *WalletService) Wallet() (*wallet.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(bitfinex.PermissionRead, "wallets")
+	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, "wallets")
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount 
 		"currency_to": currencyTo,
 		"amount":      strconv.FormatFloat(amount, 'f', -1, 64),
 	}
-	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, "transfer", body)
+	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(common.PermissionWrite, "transfer", body)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (ws *WalletService) depositAddress(wallet string, method string, renew int)
 		"method":   method,
 		"op_renew": renew,
 	}
-	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, "deposit/address", body)
+	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(common.PermissionWrite, "deposit/address", body)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (ws *WalletService) Withdraw(wallet, method string, amount float64, address
 		"amount":  strconv.FormatFloat(amount, 'f', -1, 64),
 		"address": address,
 	}
-	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(bitfinex.PermissionWrite, "withdraw", body)
+	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(common.PermissionWrite, "withdraw", body)
 	if err != nil {
 		return nil, err
 	}

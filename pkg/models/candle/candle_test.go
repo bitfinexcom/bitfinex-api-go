@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ func TestNewCandleFromRaw(t *testing.T) {
 	t.Run("invalid arguments", func(t *testing.T) {
 		payload := []interface{}{1.5948918e+12}
 
-		c, err := candle.FromRaw("tBTCUSD", bitfinex.FiveMinutes, payload)
+		c, err := candle.FromRaw("tBTCUSD", common.FiveMinutes, payload)
 		require.NotNil(t, err)
 		require.Nil(t, c)
 	})
@@ -28,7 +28,7 @@ func TestNewCandleFromRaw(t *testing.T) {
 			149.87216331,
 		}
 
-		w, err := candle.FromRaw("tBTCUSD", bitfinex.FiveMinutes, payload)
+		w, err := candle.FromRaw("tBTCUSD", common.FiveMinutes, payload)
 		require.Nil(t, err)
 
 		expected := &candle.Candle{
@@ -50,7 +50,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 	t.Run("invalid arguments", func(t *testing.T) {
 		payload := [][]interface{}{}
 
-		c, err := candle.SnapshotFromRaw("tBTCUSD", bitfinex.FiveMinutes, payload)
+		c, err := candle.SnapshotFromRaw("tBTCUSD", common.FiveMinutes, payload)
 		require.NotNil(t, err)
 		require.Nil(t, c)
 	})
@@ -75,7 +75,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 			},
 		}
 
-		ss, err := candle.SnapshotFromRaw("tBTCUSD", bitfinex.FiveMinutes, payload)
+		ss, err := candle.SnapshotFromRaw("tBTCUSD", common.FiveMinutes, payload)
 		require.Nil(t, err)
 
 		expected := &candle.Snapshot{

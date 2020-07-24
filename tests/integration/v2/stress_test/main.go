@@ -4,10 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
+	"time"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/websocket"
 	"github.com/op/go-logging"
-	"time"
 )
 
 var symbols = []string{
@@ -38,9 +39,9 @@ func main() {
 	}
 
 	quit := make(chan interface{})
-	if (*useMultiplexor) {
+	if *useMultiplexor {
 		go runMultiplexerStressTest(c, logger, quit)
-	} else if (*useChannels) {
+	} else if *useChannels {
 		go runChannelsStressTest(c, logger, quit)
 	} else {
 		fmt.Println("No flags set, use:")
@@ -50,14 +51,14 @@ func main() {
 	timeout := time.After(time.Minute * time.Duration(*runTime))
 	for {
 		select {
-		case msg := <- c.Listen():
+		case msg := <-c.Listen():
 			switch msg.(type) {
 			case error:
 				logger.Error(msg)
 			default:
 				logger.Debugf("MSG RECV: %#v", msg)
 			}
-		case <- timeout:
+		case <-timeout:
 			logger.Warningf("Test timeout of %d mins reached. Killing test.", *runTime)
 			panic("time reached")
 		case <-quit:
@@ -74,21 +75,21 @@ func runChannelsStressTest(client *websocket.Client, log *logging.Logger, quit c
 		if err != nil {
 			panic(fmt.Sprintf("could not subscribe to trades: %s", err.Error()))
 		}
-		_, err = client.SubscribeCandles(context.Background(), ticker, bitfinex.FifteenMinutes)
+		_, err = client.SubscribeCandles(context.Background(), ticker, common.FifteenMinutes)
 		if err != nil {
-			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), bitfinex.FifteenMinutes))
+			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), common.FifteenMinutes))
 		}
-		_, err = client.SubscribeCandles(context.Background(), ticker, bitfinex.ThirtyMinutes)
+		_, err = client.SubscribeCandles(context.Background(), ticker, common.ThirtyMinutes)
 		if err != nil {
-			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), bitfinex.ThirtyMinutes))
+			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), common.ThirtyMinutes))
 		}
-		_, err = client.SubscribeCandles(context.Background(), ticker, bitfinex.OneHour)
+		_, err = client.SubscribeCandles(context.Background(), ticker, common.OneHour)
 		if err != nil {
-			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), bitfinex.OneHour))
+			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), common.OneHour))
 		}
-		_, err = client.SubscribeCandles(context.Background(), ticker, bitfinex.OneMinute)
+		_, err = client.SubscribeCandles(context.Background(), ticker, common.OneMinute)
 		if err != nil {
-			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), bitfinex.OneMinute))
+			panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), common.OneMinute))
 		}
 	}
 }
@@ -104,14 +105,14 @@ func runMultiplexerStressTest(client *websocket.Client, log *logging.Logger, qui
 				panic(fmt.Sprintf("could not subscribe to trades: %s", err.Error()))
 			}
 			subIds = append(subIds, subId1)
-			subId2, err := client.SubscribeCandles(context.Background(), ticker, bitfinex.FifteenMinutes)
+			subId2, err := client.SubscribeCandles(context.Background(), ticker, common.FifteenMinutes)
 			if err != nil {
-				panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), bitfinex.FifteenMinutes))
+				panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), common.FifteenMinutes))
 			}
 			subIds = append(subIds, subId2)
-			subId3, err := client.SubscribeBook(context.Background(), ticker, bitfinex.Precision0, bitfinex.FrequencyRealtime, 25)
+			subId3, err := client.SubscribeBook(context.Background(), ticker, common.Precision0, common.FrequencyRealtime, 25)
 			if err != nil {
-				panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), bitfinex.FifteenMinutes))
+				panic(fmt.Sprintf("could not subscribe to candles %s: %s", err.Error(), common.FifteenMinutes))
 			}
 			subIds = append(subIds, subId3)
 		}

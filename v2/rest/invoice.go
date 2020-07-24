@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/invoice"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 // InvoiceService manages Invoice endpoint
@@ -99,7 +99,7 @@ func (is *InvoiceService) GenerateInvoice(payload DepositInvoiceRequest) (*invoi
 	}
 
 	req, err := is.NewAuthenticatedRequestWithBytes(
-		bitfinex.PermissionWrite,
+		common.PermissionWrite,
 		path.Join("deposit", "invoice"),
 		pldBytes,
 	)

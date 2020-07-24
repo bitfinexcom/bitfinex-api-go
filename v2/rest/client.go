@@ -11,16 +11,16 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
-	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
 
 var productionBaseURL = "https://api-pub.bitfinex.com/v2/"
 
 type requestFactory interface {
-	NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType, refURL string, data map[string]interface{}) (Request, error)
-	NewAuthenticatedRequestWithBytes(permissionType bitfinex.PermissionType, refURL string, data []byte) (Request, error)
-	NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error)
+	NewAuthenticatedRequestWithData(permissionType common.PermissionType, refURL string, data map[string]interface{}) (Request, error)
+	NewAuthenticatedRequestWithBytes(permissionType common.PermissionType, refURL string, data []byte) (Request, error)
+	NewAuthenticatedRequest(permissionType common.PermissionType, refURL string) (Request, error)
 }
 
 type Synchronous interface {
@@ -162,14 +162,14 @@ func (c *Client) sign(msg string) (string, error) {
 // Create a new authenticated GET request with the given permission type and endpoint url
 // For example permissionType = "r" and refUrl = "/orders" then the target endpoint will be
 // https://api.bitfinex.com/v2/auth/r/orders/:Symbol
-func (c *Client) NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error) {
+func (c *Client) NewAuthenticatedRequest(permissionType common.PermissionType, refURL string) (Request, error) {
 	return c.NewAuthenticatedRequestWithBytes(permissionType, refURL, []byte("{}"))
 }
 
 // Create a new authenticated POST request with the given permission type,endpoint url and data (bytes) as the body
 // For example permissionType = "r" and refUrl = "/orders" then the target endpoint will be
 // https://api.bitfinex.com/v2/auth/r/orders/:Symbol
-func (c *Client) NewAuthenticatedRequestWithBytes(permissionType bitfinex.PermissionType, refURL string, data []byte) (Request, error) {
+func (c *Client) NewAuthenticatedRequestWithBytes(permissionType common.PermissionType, refURL string, data []byte) (Request, error) {
 	authURL := fmt.Sprintf("auth/%s/%s", string(permissionType), refURL)
 	req := NewRequestWithBytes(authURL, data)
 	nonce := c.nonce.GetNonce()
@@ -189,7 +189,7 @@ func (c *Client) NewAuthenticatedRequestWithBytes(permissionType bitfinex.Permis
 // Create a new authenticated POST request with the given permission type,endpoint url and data (map[string]interface{}) as the body
 // For example permissionType = "r" and refUrl = "/orders" then the target endpoint will be
 // https://api.bitfinex.com/v2/auth/r/orders/:Symbol
-func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType, refURL string, data map[string]interface{}) (Request, error) {
+func (c *Client) NewAuthenticatedRequestWithData(permissionType common.PermissionType, refURL string, data map[string]interface{}) (Request, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
 		return Request{}, err
