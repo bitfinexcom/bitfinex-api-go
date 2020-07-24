@@ -118,7 +118,7 @@ func TestNewPositionSnapshotFromRaw(t *testing.T) {
 
 		expected := &position.Snapshot{
 			Snapshot: []*position.Position{
-				&position.Position{
+				{
 					Id:                   142355652,
 					Symbol:               "tBTCUSD",
 					Status:               "ACTIVE",
@@ -131,7 +131,7 @@ func TestNewPositionSnapshotFromRaw(t *testing.T) {
 					LiquidationPrice:     7045.876419249083,
 					Leverage:             3.0673001895895604,
 				},
-				&position.Position{
+				{
 					Id:                   142355653,
 					Symbol:               "tBTCUSD",
 					Status:               "ACTIVE",

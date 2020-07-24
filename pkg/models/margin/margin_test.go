@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewFundingTradeFromRaw(t *testing.T) {
+func TestNewMarginFromRaw(t *testing.T) {
 	t.Run("invalid arguments", func(t *testing.T) {
 		payload := []interface{}{636040}
 
