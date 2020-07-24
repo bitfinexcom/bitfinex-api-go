@@ -3,6 +3,7 @@ package rest
 import (
 	"strconv"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/v2"
 )
@@ -35,7 +36,7 @@ func (s *WalletService) Wallet() (*wallet.Snapshot, error) {
 
 // Submits a request to transfer funds from one Bitfinex wallet to another
 // see https://docs.bitfinex.com/reference#transfer-between-wallets for more info
-func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount float64) (*bitfinex.Notification, error) {
+func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount float64) (*notification.Notification, error) {
 	body := map[string]interface{}{
 		"from":        from,
 		"to":          to,
@@ -51,10 +52,10 @@ func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount 
 	if err != nil {
 		return nil, err
 	}
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
-func (ws *WalletService) depositAddress(wallet string, method string, renew int) (*bitfinex.Notification, error) {
+func (ws *WalletService) depositAddress(wallet string, method string, renew int) (*notification.Notification, error) {
 	body := map[string]interface{}{
 		"wallet":   wallet,
 		"method":   method,
@@ -68,24 +69,24 @@ func (ws *WalletService) depositAddress(wallet string, method string, renew int)
 	if err != nil {
 		return nil, err
 	}
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
 
 // Retrieves the deposit address for the given Bitfinex wallet
 // see https://docs.bitfinex.com/reference#deposit-address for more info
-func (ws *WalletService) DepositAddress(wallet, method string) (*bitfinex.Notification, error) {
+func (ws *WalletService) DepositAddress(wallet, method string) (*notification.Notification, error) {
 	return ws.depositAddress(wallet, method, 0)
 }
 
 // Submits a request to create a new deposit address for the give Bitfinex wallet. Old addresses are still valid.
 // See https://docs.bitfinex.com/reference#deposit-address for more info
-func (ws *WalletService) CreateDepositAddress(wallet, method string) (*bitfinex.Notification, error) {
+func (ws *WalletService) CreateDepositAddress(wallet, method string) (*notification.Notification, error) {
 	return ws.depositAddress(wallet, method, 1)
 }
 
 // Submits a request to withdraw funds from the given Bitfinex wallet to the given address
 // See https://docs.bitfinex.com/reference#withdraw for more info
-func (ws *WalletService) Withdraw(wallet, method string, amount float64, address string) (*bitfinex.Notification, error) {
+func (ws *WalletService) Withdraw(wallet, method string, amount float64, address string) (*notification.Notification, error) {
 	body := map[string]interface{}{
 		"wallet":  wallet,
 		"method":  method,
@@ -100,5 +101,5 @@ func (ws *WalletService) Withdraw(wallet, method string, amount float64, address
 	if err != nil {
 		return nil, err
 	}
-	return bitfinex.NewNotificationFromRaw(raw)
+	return notification.FromRaw(raw)
 }
