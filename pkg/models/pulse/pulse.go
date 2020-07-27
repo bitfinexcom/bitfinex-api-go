@@ -36,8 +36,8 @@ var pulseFields = map[string]int{
 	"PulseProfile": 18,
 }
 
-// NewSingleFromRaw returns pointer to Pulse message
-func NewSingleFromRaw(raw []interface{}) (*Pulse, error) {
+// FromRaw returns pointer to Pulse message
+func FromRaw(raw []interface{}) (*Pulse, error) {
 	if len(raw) < 19 {
 		return nil, fmt.Errorf("data slice too short for Pulse Message: %#v", raw)
 	}
@@ -83,8 +83,8 @@ func NewSingleFromRaw(raw []interface{}) (*Pulse, error) {
 	return p, nil
 }
 
-// NewFromRaw returns slice of Pulse message pointers
-func NewFromRaw(raws []interface{}) ([]*Pulse, error) {
+// SnapshotFromRaw returns slice of Pulse message pointers
+func SnapshotFromRaw(raws []interface{}) ([]*Pulse, error) {
 	if len(raws) < 1 {
 		return nil, fmt.Errorf("data slice is too short for Pulse History: %#v", raws)
 	}
@@ -93,7 +93,7 @@ func NewFromRaw(raws []interface{}) ([]*Pulse, error) {
 
 	for _, raw := range raws {
 		raw := raw.([]interface{})
-		p, err := NewSingleFromRaw(raw)
+		p, err := FromRaw(raw)
 		if err != nil {
 			return nil, err
 		}

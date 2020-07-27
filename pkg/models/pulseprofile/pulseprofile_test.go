@@ -44,6 +44,8 @@ func TestNewProfileFromRaw(t *testing.T) {
 			Picture:       "picture",
 			Text:          "text",
 			TwitterHandle: "twitter",
+			Followers:     30,
+			Following:     5,
 		}
 		assert.Equal(t, expected, pp)
 	})

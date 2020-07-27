@@ -14,6 +14,8 @@ type PulseProfile struct {
 	Picture       string
 	Text          string
 	TwitterHandle string
+	Followers     int64
+	Following     int64
 }
 
 var pulseProfileFields = map[string]int{
@@ -23,6 +25,8 @@ var pulseProfileFields = map[string]int{
 	"Picture":       5,
 	"Text":          6,
 	"TwitterHandle": 9,
+	"Followers":     11,
+	"Following":     12,
 }
 
 // NewFromRaw takes in slice of interfaces and converts them to
@@ -40,6 +44,8 @@ func NewFromRaw(raw []interface{}) (*PulseProfile, error) {
 	pp.Picture = convert.SValOrEmpty(raw[pulseProfileFields["Picture"]])
 	pp.Text = convert.SValOrEmpty(raw[pulseProfileFields["Text"]])
 	pp.TwitterHandle = convert.SValOrEmpty(raw[pulseProfileFields["TwitterHandle"]])
+	pp.Followers = convert.I64ValOrZero(raw[pulseProfileFields["Followers"]])
+	pp.Following = convert.I64ValOrZero(raw[pulseProfileFields["Following"]])
 
 	return pp, nil
 }

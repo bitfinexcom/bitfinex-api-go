@@ -55,7 +55,7 @@ func (ps *PulseService) PublicPulseHistory(limit int, end common.Mts) ([]*pulse.
 		return nil, err
 	}
 
-	pph, err := pulse.NewFromRaw(raw)
+	pph, err := pulse.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error) {
 		return nil, err
 	}
 
-	pm, err := pulse.NewSingleFromRaw(raw)
+	pm, err := pulse.FromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (ps *PulseService) PulseHistory(isPublic bool) ([]*pulse.Pulse, error) {
 		return nil, err
 	}
 
-	pph, err := pulse.NewFromRaw(raw)
+	pph, err := pulse.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}
