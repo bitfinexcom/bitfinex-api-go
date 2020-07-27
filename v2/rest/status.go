@@ -19,7 +19,7 @@ const (
 	DERIV_TYPE = "deriv"
 )
 
-func (ss *StatusService) get(sType string, key string) (*derivatives.DerivativeStatusSnapshot, error) {
+func (ss *StatusService) get(sType string, key string) (*derivatives.Snapshot, error) {
 	req := NewRequestWithMethod(path.Join("status", sType), "GET")
 	req.Params = make(url.Values)
 	req.Params.Add("keys", key)

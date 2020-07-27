@@ -7,17 +7,12 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
-type PositionStatus string
-
-const (
-	PositionStatusActive PositionStatus = "ACTIVE"
-	PositionStatusClosed PositionStatus = "CLOSED"
-)
+type Status string
 
 type Position struct {
 	Id                   int64
 	Symbol               string
-	Status               PositionStatus
+	Status               Status
 	Amount               float64
 	BasePrice            float64
 	MarginFunding        float64
@@ -35,7 +30,7 @@ func FromRaw(raw []interface{}) (o *Position, err error) {
 
 	o = &Position{
 		Symbol:            convert.SValOrEmpty(raw[0]),
-		Status:            PositionStatus(convert.SValOrEmpty(raw[1])),
+		Status:            Status(convert.SValOrEmpty(raw[1])),
 		Amount:            convert.F64ValOrZero(raw[2]),
 		BasePrice:         convert.F64ValOrZero(raw[3]),
 		MarginFunding:     convert.F64ValOrZero(raw[4]),

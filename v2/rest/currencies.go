@@ -46,7 +46,7 @@ func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]
 	}
 
 	// parse to config object
-	configs, err := currency.ConfFromRaw(parsedRaw)
+	configs, err := currency.FromRaw(parsedRaw)
 	if err != nil {
 		return nil, err
 	}

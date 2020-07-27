@@ -27,6 +27,13 @@ type Offer struct {
 	RateReal   float64
 }
 
+type New Offer
+type Update Offer
+type Cancel Offer
+type Snapshot struct {
+	Snapshot []*Offer
+}
+
 type CancelRequest struct {
 	ID int64
 }
@@ -115,13 +122,6 @@ func FromRaw(raw []interface{}) (o *Offer, err error) {
 	}
 
 	return
-}
-
-type New Offer
-type Update Offer
-type Cancel Offer
-type Snapshot struct {
-	Snapshot []*Offer
 }
 
 func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {

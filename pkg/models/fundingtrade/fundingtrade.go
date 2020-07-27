@@ -17,6 +17,13 @@ type FundingTrade struct {
 	Maker      int64
 }
 
+type Execution FundingTrade
+type Update FundingTrade
+type Snapshot struct {
+	Snapshot []*FundingTrade
+}
+type HistoricalSnapshot Snapshot
+
 func FromRaw(raw []interface{}) (ft *FundingTrade, err error) {
 	if len(raw) < 8 {
 		return ft, fmt.Errorf("data slice too short for funding trade: %#v", raw)
@@ -35,13 +42,6 @@ func FromRaw(raw []interface{}) (ft *FundingTrade, err error) {
 
 	return
 }
-
-type Execution FundingTrade
-type Update FundingTrade
-type Snapshot struct {
-	Snapshot []*FundingTrade
-}
-type HistoricalSnapshot Snapshot
 
 func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {
 	if len(raw) == 0 {

@@ -7,7 +7,6 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
-type HistoricalLoan Loan
 type New Loan
 type Update Loan
 type Cancel Loan

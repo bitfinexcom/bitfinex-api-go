@@ -138,7 +138,7 @@ func parseExchangeMap(config map[string]Conf, raw []interface{}) {
 	}
 }
 
-func ConfFromRaw(raw []RawConf) ([]Conf, error) {
+func FromRaw(raw []RawConf) ([]Conf, error) {
 	configMap := make(map[string]Conf)
 	for _, r := range raw {
 		switch ConfigMapping(r.Mapping) {
