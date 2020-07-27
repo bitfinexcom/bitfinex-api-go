@@ -36,11 +36,11 @@ type BookService struct {
 #### func (*BookService) All
 
 ```go
-func (b *BookService) All(symbol string, precision bitfinex.BookPrecision, priceLevels int) (*bitfinex.BookUpdateSnapshot, error)
+func (b *BookService) All(symbol string, precision common.BookPrecision, priceLevels int) (*book.Snapshot, error)
 ```
-Retrieve all books for the given symbol with the given precision at the given
-price level see https://docs.bitfinex.com/reference#rest-public-books for more
-info
+All - retrieve all books for the given symbol with the given precision at the
+given price level see https://docs.bitfinex.com/reference#rest-public-books for
+more info
 
 #### type CancelOrderMultiRequest
 
@@ -69,34 +69,35 @@ CandleService manages the Candles endpoint.
 #### func (*CandleService) History
 
 ```go
-func (c *CandleService) History(symbol string, resolution bitfinex.CandleResolution) (*bitfinex.CandleSnapshot, error)
+func (c *CandleService) History(symbol string, resolution common.CandleResolution) (*candle.Snapshot, error)
 ```
-Retrieves all candles (Max=1000) with the given symbol and the given candle
-resolution See https://docs.bitfinex.com/reference#rest-public-candles for more
-info
+History - retrieves all candles (Max=1000) with the given symbol and the given
+candle resolution See https://docs.bitfinex.com/reference#rest-public-candles
+for more info
 
 #### func (*CandleService) HistoryWithQuery
 
 ```go
 func (c *CandleService) HistoryWithQuery(
 	symbol string,
-	resolution bitfinex.CandleResolution,
-	start bitfinex.Mts,
-	end bitfinex.Mts,
-	limit bitfinex.QueryLimit,
-	sort bitfinex.SortOrder,
-) (*bitfinex.CandleSnapshot, error)
+	resolution common.CandleResolution,
+	start common.Mts,
+	end common.Mts,
+	limit common.QueryLimit,
+	sort common.SortOrder,
+) (*candle.Snapshot, error)
 ```
-Retrieves all candles (Max=1000) that fit the given query criteria See
-https://docs.bitfinex.com/reference#rest-public-candles for more info
+HistoryWithQuery - retrieves all candles (Max=1000) that fit the given query
+criteria See https://docs.bitfinex.com/reference#rest-public-candles for more
+info
 
 #### func (*CandleService) Last
 
 ```go
-func (c *CandleService) Last(symbol string, resolution bitfinex.CandleResolution) (*bitfinex.Candle, error)
+func (c *CandleService) Last(symbol string, resolution common.CandleResolution) (*candle.Candle, error)
 ```
-Retrieve the last candle for the given symbol with the given resolution See
-https://docs.bitfinex.com/reference#rest-public-candles for more info
+Last - retrieve the last candle for the given symbol with the given resolution
+See https://docs.bitfinex.com/reference#rest-public-candles for more info
 
 #### type Client
 
@@ -195,7 +196,7 @@ Set the clients credentials in order to make authenticated requests
 #### func (*Client) NewAuthenticatedRequest
 
 ```go
-func (c *Client) NewAuthenticatedRequest(permissionType bitfinex.PermissionType, refURL string) (Request, error)
+func (c *Client) NewAuthenticatedRequest(permissionType common.PermissionType, refURL string) (Request, error)
 ```
 Create a new authenticated GET request with the given permission type and
 endpoint url For example permissionType = "r" and refUrl = "/orders" then the
@@ -204,7 +205,7 @@ target endpoint will be https://api.bitfinex.com/v2/auth/r/orders/:Symbol
 #### func (*Client) NewAuthenticatedRequestWithBytes
 
 ```go
-func (c *Client) NewAuthenticatedRequestWithBytes(permissionType bitfinex.PermissionType, refURL string, data []byte) (Request, error)
+func (c *Client) NewAuthenticatedRequestWithBytes(permissionType common.PermissionType, refURL string, data []byte) (Request, error)
 ```
 Create a new authenticated POST request with the given permission type,endpoint
 url and data (bytes) as the body For example permissionType = "r" and refUrl =
@@ -214,7 +215,7 @@ https://api.bitfinex.com/v2/auth/r/orders/:Symbol
 #### func (*Client) NewAuthenticatedRequestWithData
 
 ```go
-func (c *Client) NewAuthenticatedRequestWithData(permissionType bitfinex.PermissionType, refURL string, data map[string]interface{}) (Request, error)
+func (c *Client) NewAuthenticatedRequestWithData(permissionType common.PermissionType, refURL string, data map[string]interface{}) (Request, error)
 ```
 Create a new authenticated POST request with the given permission type,endpoint
 url and data (map[string]interface{}) as the body For example permissionType =
@@ -236,14 +237,14 @@ type CurrenciesService struct {
 }
 ```
 
-TradeService manages the Trade endpoint.
+CurrenciesService manages the conf endpoint.
 
 #### func (*CurrenciesService) Conf
 
 ```go
-func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]bitfinex.CurrencyConf, error)
+func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]currency.Conf, error)
 ```
-Retreive currency and symbol service configuration data see
+Conf - retreive currency and symbol service configuration data see
 https://docs.bitfinex.com/reference#rest-public-conf for more info
 
 #### type DepositInvoiceRequest
@@ -296,8 +297,8 @@ type ForeignExchangeRateRequest struct {
 }
 ```
 
-ForeignExchangeRateRequest data structure for constructing average price query
-params
+ForeignExchangeRateRequest data structure for constructing foreign exchange rate
+request payload
 
 #### type FundingService
 
@@ -312,7 +313,7 @@ FundingService manages the Funding endpoint.
 #### func (*FundingService) CancelOffer
 
 ```go
-func (fs *FundingService) CancelOffer(fc *bitfinex.FundingOfferCancelRequest) (*bitfinex.Notification, error)
+func (fs *FundingService) CancelOffer(fc *fundingoffer.CancelRequest) (*notification.Notification, error)
 ```
 Submits a request to cancel the given offer see
 https://docs.bitfinex.com/reference#cancel-funding-offer for more info
@@ -320,7 +321,7 @@ https://docs.bitfinex.com/reference#cancel-funding-offer for more info
 #### func (*FundingService) Credits
 
 ```go
-func (fs *FundingService) Credits(symbol string) (*bitfinex.FundingCreditSnapshot, error)
+func (fs *FundingService) Credits(symbol string) (*fundingcredit.Snapshot, error)
 ```
 Retreive all of the active credits used in positions see
 https://docs.bitfinex.com/reference#rest-auth-funding-credits for more info
@@ -328,7 +329,7 @@ https://docs.bitfinex.com/reference#rest-auth-funding-credits for more info
 #### func (*FundingService) CreditsHistory
 
 ```go
-func (fs *FundingService) CreditsHistory(symbol string) (*bitfinex.FundingCreditSnapshot, error)
+func (fs *FundingService) CreditsHistory(symbol string) (*fundingcredit.Snapshot, error)
 ```
 Retreive all of the past in-active credits used in positions see
 https://docs.bitfinex.com/reference#rest-auth-funding-credits-hist for more info
@@ -336,7 +337,7 @@ https://docs.bitfinex.com/reference#rest-auth-funding-credits-hist for more info
 #### func (*FundingService) KeepFunding
 
 ```go
-func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*bitfinex.Notification, error)
+func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*notification.Notification, error)
 ```
 KeepFunding - toggle to keep funding taken. Specify loan for unused funding and
 credit for used funding. see
@@ -345,7 +346,7 @@ https://docs.bitfinex.com/reference#rest-auth-keep-funding for more info
 #### func (*FundingService) Loans
 
 ```go
-func (fs *FundingService) Loans(symbol string) (*bitfinex.FundingLoanSnapshot, error)
+func (fs *FundingService) Loans(symbol string) (*fundingloan.Snapshot, error)
 ```
 Retreive all of the active funding loans see
 https://docs.bitfinex.com/reference#rest-auth-funding-loans for more info
@@ -353,7 +354,7 @@ https://docs.bitfinex.com/reference#rest-auth-funding-loans for more info
 #### func (*FundingService) LoansHistory
 
 ```go
-func (fs *FundingService) LoansHistory(symbol string) (*bitfinex.FundingLoanSnapshot, error)
+func (fs *FundingService) LoansHistory(symbol string) (*fundingloan.Snapshot, error)
 ```
 Retreive all of the past in-active funding loans see
 https://docs.bitfinex.com/reference#rest-auth-funding-loans-hist for more info
@@ -361,7 +362,7 @@ https://docs.bitfinex.com/reference#rest-auth-funding-loans-hist for more info
 #### func (*FundingService) OfferHistory
 
 ```go
-func (fs *FundingService) OfferHistory(symbol string) (*bitfinex.FundingOfferSnapshot, error)
+func (fs *FundingService) OfferHistory(symbol string) (*fundingoffer.Snapshot, error)
 ```
 Retreive all of the past in-active funding offers see
 https://docs.bitfinex.com/reference#rest-auth-funding-offers-hist for more info
@@ -369,7 +370,7 @@ https://docs.bitfinex.com/reference#rest-auth-funding-offers-hist for more info
 #### func (*FundingService) Offers
 
 ```go
-func (fs *FundingService) Offers(symbol string) (*bitfinex.FundingOfferSnapshot, error)
+func (fs *FundingService) Offers(symbol string) (*fundingoffer.Snapshot, error)
 ```
 Retreive all of the active fundign offers see
 https://docs.bitfinex.com/reference#rest-auth-funding-offers for more info
@@ -377,7 +378,7 @@ https://docs.bitfinex.com/reference#rest-auth-funding-offers for more info
 #### func (*FundingService) SubmitOffer
 
 ```go
-func (fs *FundingService) SubmitOffer(fo *bitfinex.FundingOfferRequest) (*bitfinex.Notification, error)
+func (fs *FundingService) SubmitOffer(fo *fundingoffer.SubmitRequest) (*notification.Notification, error)
 ```
 Submits a request to create a new funding offer see
 https://docs.bitfinex.com/reference#submit-funding-offer for more info
@@ -385,7 +386,7 @@ https://docs.bitfinex.com/reference#submit-funding-offer for more info
 #### func (*FundingService) Trades
 
 ```go
-func (fs *FundingService) Trades(symbol string) (*bitfinex.FundingTradeSnapshot, error)
+func (fs *FundingService) Trades(symbol string) (*fundingtrade.Snapshot, error)
 ```
 Retreive all of the matched funding trades see
 https://docs.bitfinex.com/reference#rest-auth-funding-trades-hist for more info
@@ -457,9 +458,9 @@ LedgerService manages the Ledgers endpoint.
 #### func (*LedgerService) Ledgers
 
 ```go
-func (s *LedgerService) Ledgers(currency string, start int64, end int64, max int32) (*bitfinex.LedgerSnapshot, error)
+func (s *LedgerService) Ledgers(currency string, start int64, end int64, max int32) (*ledger.Snapshot, error)
 ```
-Retrieves all of the past ledger entreies see
+Ledgers - all of the past ledger entreies see
 https://docs.bitfinex.com/reference#ledgers for more info
 
 #### type MarketService
@@ -533,7 +534,7 @@ OrderService manages data flow for the Order API endpoint
 #### func (*OrderService) All
 
 ```go
-func (s *OrderService) All() (*bitfinex.OrderSnapshot, error)
+func (s *OrderService) All() (*order.Snapshot, error)
 ```
 Retrieves all of the active orders See
 https://docs.bitfinex.com/reference#rest-auth-orders for more info
@@ -541,7 +542,7 @@ https://docs.bitfinex.com/reference#rest-auth-orders for more info
 #### func (*OrderService) AllHistory
 
 ```go
-func (s *OrderService) AllHistory() (*bitfinex.OrderSnapshot, error)
+func (s *OrderService) AllHistory() (*order.Snapshot, error)
 ```
 Retrieves all past orders See https://docs.bitfinex.com/reference#orders-history
 for more info
@@ -549,7 +550,7 @@ for more info
 #### func (*OrderService) CancelOrderMulti
 
 ```go
-func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*bitfinex.Notification, error)
+func (s *OrderService) CancelOrderMulti(args CancelOrderMultiRequest) (*notification.Notification, error)
 ```
 CancelOrderMulti cancels multiple orders simultaneously. Orders can be canceled
 based on the Order ID, the combination of Client Order ID and Client Order Date,
@@ -560,7 +561,7 @@ https://docs.bitfinex.com/reference#rest-auth-order-cancel-multi for more info
 #### func (*OrderService) CancelOrderMultiOp
 
 ```go
-func (s *OrderService) CancelOrderMultiOp(orderID int) (*bitfinex.Notification, error)
+func (s *OrderService) CancelOrderMultiOp(orderID int) (*notification.Notification, error)
 ```
 CancelOrderMultiOp cancels order. Accepts orderID to be canceled. see
 https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
@@ -568,7 +569,7 @@ https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 #### func (*OrderService) CancelOrdersMultiOp
 
 ```go
-func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*bitfinex.Notification, error)
+func (s *OrderService) CancelOrdersMultiOp(ids OrderIDs) (*notification.Notification, error)
 ```
 CancelOrdersMultiOp cancels multiple orders simultaneously. Accepts a slice of
 order ID's to be canceled. see
@@ -577,7 +578,7 @@ https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 #### func (*OrderService) GetByOrderId
 
 ```go
-func (s *OrderService) GetByOrderId(orderID int64) (o *bitfinex.Order, err error)
+func (s *OrderService) GetByOrderId(orderID int64) (o *order.Order, err error)
 ```
 Retrieve an active order by the given ID See
 https://docs.bitfinex.com/reference#rest-auth-orders for more info
@@ -585,7 +586,7 @@ https://docs.bitfinex.com/reference#rest-auth-orders for more info
 #### func (*OrderService) GetBySymbol
 
 ```go
-func (s *OrderService) GetBySymbol(symbol string) (*bitfinex.OrderSnapshot, error)
+func (s *OrderService) GetBySymbol(symbol string) (*order.Snapshot, error)
 ```
 Retrieves all of the active orders with for the given symbol See
 https://docs.bitfinex.com/reference#rest-auth-orders for more info
@@ -593,7 +594,7 @@ https://docs.bitfinex.com/reference#rest-auth-orders for more info
 #### func (*OrderService) GetHistoryByOrderId
 
 ```go
-func (s *OrderService) GetHistoryByOrderId(orderID int64) (o *bitfinex.Order, err error)
+func (s *OrderService) GetHistoryByOrderId(orderID int64) (o *order.Order, err error)
 ```
 Retrieve a single order in history with the given id See
 https://docs.bitfinex.com/reference#orders-history for more info
@@ -601,7 +602,7 @@ https://docs.bitfinex.com/reference#orders-history for more info
 #### func (*OrderService) GetHistoryBySymbol
 
 ```go
-func (s *OrderService) GetHistoryBySymbol(symbol string) (*bitfinex.OrderSnapshot, error)
+func (s *OrderService) GetHistoryBySymbol(symbol string) (*order.Snapshot, error)
 ```
 Retrieves all past orders with the given symbol See
 https://docs.bitfinex.com/reference#orders-history for more info
@@ -609,7 +610,7 @@ https://docs.bitfinex.com/reference#orders-history for more info
 #### func (*OrderService) OrderMultiOp
 
 ```go
-func (s *OrderService) OrderMultiOp(ops OrderOps) (*bitfinex.Notification, error)
+func (s *OrderService) OrderMultiOp(ops OrderOps) (*notification.Notification, error)
 ```
 OrderMultiOp - send Multiple order-related operations. Please note the sent
 object has only one property with a value of a slice of slices detailing each
@@ -619,15 +620,15 @@ for more info
 #### func (*OrderService) OrderNewMultiOp
 
 ```go
-func (s *OrderService) OrderNewMultiOp(order bitfinex.OrderNewRequest) (*bitfinex.Notification, error)
+func (s *OrderService) OrderNewMultiOp(onr order.NewRequest) (*notification.Notification, error)
 ```
-OrderNewMultiOp creates new order. Accepts instance of bitfinex.OrderNewRequest
-see https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
+OrderNewMultiOp creates new order. Accepts instance of order.NewRequest see
+https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 
 #### func (*OrderService) OrderTrades
 
 ```go
-func (s *OrderService) OrderTrades(symbol string, orderID int64) (*bitfinex.TradeExecutionUpdateSnapshot, error)
+func (s *OrderService) OrderTrades(symbol string, orderID int64) (*tradeexecutionupdate.Snapshot, error)
 ```
 Retrieves the trades generated by an order See
 https://docs.bitfinex.com/reference#orders-history for more info
@@ -635,16 +636,15 @@ https://docs.bitfinex.com/reference#orders-history for more info
 #### func (*OrderService) OrderUpdateMultiOp
 
 ```go
-func (s *OrderService) OrderUpdateMultiOp(order bitfinex.OrderUpdateRequest) (*bitfinex.Notification, error)
+func (s *OrderService) OrderUpdateMultiOp(our order.UpdateRequest) (*notification.Notification, error)
 ```
-OrderUpdateMultiOp updates order. Accepts instance of
-bitfinex.OrderUpdateRequest see
+OrderUpdateMultiOp updates order. Accepts instance of order.UpdateRequest see
 https://docs.bitfinex.com/reference#rest-auth-order-multi for more info
 
 #### func (*OrderService) SubmitCancelOrder
 
 ```go
-func (s *OrderService) SubmitCancelOrder(oc *bitfinex.OrderCancelRequest) error
+func (s *OrderService) SubmitCancelOrder(oc *order.CancelRequest) error
 ```
 Submit a request to cancel an order with the given Id see
 https://docs.bitfinex.com/reference#cancel-order for more info
@@ -652,7 +652,7 @@ https://docs.bitfinex.com/reference#cancel-order for more info
 #### func (*OrderService) SubmitOrder
 
 ```go
-func (s *OrderService) SubmitOrder(order *bitfinex.OrderNewRequest) (*bitfinex.Notification, error)
+func (s *OrderService) SubmitOrder(onr *order.NewRequest) (*notification.Notification, error)
 ```
 Submit a request to create a new order see
 https://docs.bitfinex.com/reference#submit-order for more info
@@ -660,7 +660,7 @@ https://docs.bitfinex.com/reference#submit-order for more info
 #### func (*OrderService) SubmitUpdateOrder
 
 ```go
-func (s *OrderService) SubmitUpdateOrder(order *bitfinex.OrderUpdateRequest) (*bitfinex.Notification, error)
+func (s *OrderService) SubmitUpdateOrder(our *order.UpdateRequest) (*notification.Notification, error)
 ```
 Submit a request to update an order with the given id with the given changes see
 https://docs.bitfinex.com/reference#order-update for more info
@@ -695,17 +695,17 @@ PositionService manages the Position endpoint.
 #### func (*PositionService) All
 
 ```go
-func (s *PositionService) All() (*bitfinex.PositionSnapshot, error)
+func (s *PositionService) All() (*position.Snapshot, error)
 ```
-Retrieves all of the active positions see
+All - retrieves all of the active positions see
 https://docs.bitfinex.com/reference#rest-auth-positions for more info
 
 #### func (*PositionService) Claim
 
 ```go
-func (s *PositionService) Claim(cp *bitfinex.ClaimPositionRequest) (*bitfinex.Notification, error)
+func (s *PositionService) Claim(cp *position.ClaimRequest) (*notification.Notification, error)
 ```
-Submits a request to claim an active position with the given id see
+Claim - submits a request to claim an active position with the given id see
 https://docs.bitfinex.com/reference#claim-position for more info
 
 #### type PulseService
@@ -736,7 +736,7 @@ if it was see https://docs.bitfinex.com/reference#rest-auth-pulse-del
 #### func (*PulseService) PublicPulseHistory
 
 ```go
-func (ps *PulseService) PublicPulseHistory(limit int, end bitfinex.Mts) ([]*pulse.Pulse, error)
+func (ps *PulseService) PublicPulseHistory(limit int, end common.Mts) ([]*pulse.Pulse, error)
 ```
 PublicPulseHistory returns latest pulse messages. You can specify an end
 timestamp to view older messages. see
@@ -841,7 +841,7 @@ TradeService manages the Trade endpoint.
 #### func (*StatsService) CreditSizeHistory
 
 ```go
-func (ss *StatsService) CreditSizeHistory(symbol string, side bitfinex.OrderSide) ([]bitfinex.Stat, error)
+func (ss *StatsService) CreditSizeHistory(symbol string, side common.OrderSide) ([]common.Stat, error)
 ```
 Retrieves platform statistics for credit size history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -849,7 +849,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) CreditSizeLast
 
 ```go
-func (ss *StatsService) CreditSizeLast(symbol string, side bitfinex.OrderSide) (*bitfinex.Stat, error)
+func (ss *StatsService) CreditSizeLast(symbol string, side common.OrderSide) (*common.Stat, error)
 ```
 Retrieves platform statistics for credit size last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -857,7 +857,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) FundingHistory
 
 ```go
-func (ss *StatsService) FundingHistory(symbol string) ([]bitfinex.Stat, error)
+func (ss *StatsService) FundingHistory(symbol string) ([]common.Stat, error)
 ```
 Retrieves platform statistics for funding history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -865,7 +865,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) FundingLast
 
 ```go
-func (ss *StatsService) FundingLast(symbol string) (*bitfinex.Stat, error)
+func (ss *StatsService) FundingLast(symbol string) (*common.Stat, error)
 ```
 Retrieves platform statistics for funding last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -873,7 +873,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) PositionHistory
 
 ```go
-func (ss *StatsService) PositionHistory(symbol string, side bitfinex.OrderSide) ([]bitfinex.Stat, error)
+func (ss *StatsService) PositionHistory(symbol string, side common.OrderSide) ([]common.Stat, error)
 ```
 Retrieves platform statistics for position history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -881,7 +881,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) PositionLast
 
 ```go
-func (ss *StatsService) PositionLast(symbol string, side bitfinex.OrderSide) (*bitfinex.Stat, error)
+func (ss *StatsService) PositionLast(symbol string, side common.OrderSide) (*common.Stat, error)
 ```
 Retrieves platform statistics for position last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -889,7 +889,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) SymbolCreditSizeHistory
 
 ```go
-func (ss *StatsService) SymbolCreditSizeHistory(fundingSymbol string, tradingSymbol string) ([]bitfinex.Stat, error)
+func (ss *StatsService) SymbolCreditSizeHistory(fundingSymbol string, tradingSymbol string) ([]common.Stat, error)
 ```
 Retrieves platform statistics for credit size history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -897,7 +897,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) SymbolCreditSizeLast
 
 ```go
-func (ss *StatsService) SymbolCreditSizeLast(fundingSymbol string, tradingSymbol string) (*bitfinex.Stat, error)
+func (ss *StatsService) SymbolCreditSizeLast(fundingSymbol string, tradingSymbol string) (*common.Stat, error)
 ```
 Retrieves platform statistics for credit size last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -915,7 +915,7 @@ TradeService manages the Trade endpoint.
 #### func (*StatusService) DerivativeStatus
 
 ```go
-func (ss *StatusService) DerivativeStatus(symbol string) (*bitfinex.DerivativeStatus, error)
+func (ss *StatusService) DerivativeStatus(symbol string) (*derivatives.DerivativeStatus, error)
 ```
 Retrieves derivative status information for the given symbol from the platform
 see https://docs.bitfinex.com/reference#rest-public-status for more info
@@ -923,7 +923,7 @@ see https://docs.bitfinex.com/reference#rest-public-status for more info
 #### func (*StatusService) DerivativeStatusAll
 
 ```go
-func (ss *StatusService) DerivativeStatusAll() ([]*bitfinex.DerivativeStatus, error)
+func (ss *StatusService) DerivativeStatusAll() ([]*derivatives.DerivativeStatus, error)
 ```
 Retrieves derivative status information for all symbols from the platform see
 https://docs.bitfinex.com/reference#rest-public-status for more info
@@ -931,7 +931,7 @@ https://docs.bitfinex.com/reference#rest-public-status for more info
 #### func (*StatusService) DerivativeStatusMulti
 
 ```go
-func (ss *StatusService) DerivativeStatusMulti(symbols []string) ([]*bitfinex.DerivativeStatus, error)
+func (ss *StatusService) DerivativeStatusMulti(symbols []string) ([]*derivatives.DerivativeStatus, error)
 ```
 Retrieves derivative status information for the given symbols from the platform
 see https://docs.bitfinex.com/reference#rest-public-status for more info
@@ -953,30 +953,30 @@ type TickerService struct {
 }
 ```
 
-TradeService manages the Trade endpoint.
+TickerService manages the Ticker endpoint.
 
 #### func (*TickerService) All
 
 ```go
-func (s *TickerService) All() (*[]bitfinex.Ticker, error)
+func (s *TickerService) All() ([]*ticker.Ticker, error)
 ```
-Retrieves all tickers for all symbols see
+All - retrieves all tickers for all symbols see
 https://docs.bitfinex.com/reference#rest-public-ticker for more info
 
 #### func (*TickerService) Get
 
 ```go
-func (s *TickerService) Get(symbol string) (*bitfinex.Ticker, error)
+func (s *TickerService) Get(symbol string) (*ticker.Ticker, error)
 ```
-Retrieves the ticker for the given symbol see
+Get - retrieves the ticker for the given symbol see
 https://docs.bitfinex.com/reference#rest-public-ticker for more info
 
 #### func (*TickerService) GetMulti
 
 ```go
-func (s *TickerService) GetMulti(symbols []string) (*[]bitfinex.Ticker, error)
+func (s *TickerService) GetMulti(symbols []string) ([]*ticker.Ticker, error)
 ```
-Retrieves the tickers for the given symbols see
+GetMulti - retrieves the tickers for the given symbols see
 https://docs.bitfinex.com/reference#rest-public-ticker for more info
 
 #### type TradeService
@@ -992,7 +992,7 @@ TradeService manages the Trade endpoint.
 #### func (*TradeService) AccountAll
 
 ```go
-func (s *TradeService) AccountAll() (*bitfinex.TradeExecutionUpdateSnapshot, error)
+func (s *TradeService) AccountAll() (*tradeexecutionupdate.Snapshot, error)
 ```
 Retrieves all matched trades for the account see
 https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
@@ -1000,7 +1000,7 @@ https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
 #### func (*TradeService) AccountAllWithSymbol
 
 ```go
-func (s *TradeService) AccountAllWithSymbol(symbol string) (*bitfinex.TradeExecutionUpdateSnapshot, error)
+func (s *TradeService) AccountAllWithSymbol(symbol string) (*tradeexecutionupdate.Snapshot, error)
 ```
 Retrieves all matched trades with the given symbol for the account see
 https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
@@ -1010,11 +1010,11 @@ https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
 ```go
 func (s *TradeService) AccountHistoryWithQuery(
 	symbol string,
-	start bitfinex.Mts,
-	end bitfinex.Mts,
-	limit bitfinex.QueryLimit,
-	sort bitfinex.SortOrder,
-) (*bitfinex.TradeExecutionUpdateSnapshot, error)
+	start common.Mts,
+	end common.Mts,
+	limit common.QueryLimit,
+	sort common.SortOrder,
+) (*tradeexecutionupdate.Snapshot, error)
 ```
 Queries all matched trades with group of optional parameters see
 https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
@@ -1024,11 +1024,11 @@ https://docs.bitfinex.com/reference#rest-auth-trades-hist for more info
 ```go
 func (s *TradeService) PublicHistoryWithQuery(
 	symbol string,
-	start bitfinex.Mts,
-	end bitfinex.Mts,
-	limit bitfinex.QueryLimit,
-	sort bitfinex.SortOrder,
-) (*bitfinex.TradeSnapshot, error)
+	start common.Mts,
+	end common.Mts,
+	limit common.QueryLimit,
+	sort common.SortOrder,
+) (*trade.Snapshot, error)
 ```
 Queries all public trades with a group of optional paramters see
 https://docs.bitfinex.com/reference#rest-public-trades for more info
@@ -1046,7 +1046,7 @@ WalletService manages data flow for the Wallet API endpoint
 #### func (*WalletService) CreateDepositAddress
 
 ```go
-func (ws *WalletService) CreateDepositAddress(wallet, method string) (*bitfinex.Notification, error)
+func (ws *WalletService) CreateDepositAddress(wallet, method string) (*notification.Notification, error)
 ```
 Submits a request to create a new deposit address for the give Bitfinex wallet.
 Old addresses are still valid. See
@@ -1055,7 +1055,7 @@ https://docs.bitfinex.com/reference#deposit-address for more info
 #### func (*WalletService) DepositAddress
 
 ```go
-func (ws *WalletService) DepositAddress(wallet, method string) (*bitfinex.Notification, error)
+func (ws *WalletService) DepositAddress(wallet, method string) (*notification.Notification, error)
 ```
 Retrieves the deposit address for the given Bitfinex wallet see
 https://docs.bitfinex.com/reference#deposit-address for more info
@@ -1072,7 +1072,7 @@ info
 #### func (*WalletService) Transfer
 
 ```go
-func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount float64) (*bitfinex.Notification, error)
+func (ws *WalletService) Transfer(from, to, currency, currencyTo string, amount float64) (*notification.Notification, error)
 ```
 Submits a request to transfer funds from one Bitfinex wallet to another see
 https://docs.bitfinex.com/reference#transfer-between-wallets for more info
@@ -1080,7 +1080,7 @@ https://docs.bitfinex.com/reference#transfer-between-wallets for more info
 #### func (*WalletService) Wallet
 
 ```go
-func (s *WalletService) Wallet() (*bitfinex.WalletSnapshot, error)
+func (s *WalletService) Wallet() (*wallet.Snapshot, error)
 ```
 Retrieves all of the wallets for the account see
 https://docs.bitfinex.com/reference#rest-auth-wallets for more info
@@ -1088,7 +1088,7 @@ https://docs.bitfinex.com/reference#rest-auth-wallets for more info
 #### func (*WalletService) Withdraw
 
 ```go
-func (ws *WalletService) Withdraw(wallet, method string, amount float64, address string) (*bitfinex.Notification, error)
+func (ws *WalletService) Withdraw(wallet, method string, amount float64, address string) (*notification.Notification, error)
 ```
 Submits a request to withdraw funds from the given Bitfinex wallet to the given
 address See https://docs.bitfinex.com/reference#withdraw for more info

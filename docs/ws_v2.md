@@ -75,7 +75,7 @@ ws-specific errors
 #### func  ConvertBytesToJsonNumberArray
 
 ```go
-func ConvertBytesToJsonNumberArray(raw_bytes []byte) ([]interface{}, error)
+func ConvertBytesToJsonNumberArray(b []byte) ([]interface{}, error)
 ```
 
 #### type Asynchronous
@@ -157,13 +157,13 @@ type BookFactory struct {
 #### func (*BookFactory) Build
 
 ```go
-func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}, raw_bytes []byte) (interface{}, error)
+func (f *BookFactory) Build(sub *subscription, objType string, raw []interface{}, b []byte) (interface{}, error)
 ```
 
 #### func (*BookFactory) BuildSnapshot
 
 ```go
-func (f *BookFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, raw_bytes []byte) (interface{}, error)
+func (f *BookFactory) BuildSnapshot(sub *subscription, raw [][]interface{}, b []byte) (interface{}, error)
 ```
 
 #### func (BookFactory) Close
@@ -359,6 +359,22 @@ func (c *Client) Close()
 Close the websocket client which will cause for all active sockets to be exited
 and the Done() function to be called
 
+#### func (*Client) CloseFundingCredit
+
+```go
+func (c *Client) CloseFundingCredit(ctx context.Context, fundingOffer *fundingcredit.CancelRequest) error
+```
+CloseFundingCredit - cancels funding credit by ID. Emits an error if not
+authenticated.
+
+#### func (*Client) CloseFundingLoan
+
+```go
+func (c *Client) CloseFundingLoan(ctx context.Context, flcr *fundingloan.CancelRequest) error
+```
+CloseFundingLoan - cancels funding loan by ID. Emits an error if not
+authenticated.
+
 #### func (*Client) Connect
 
 ```go
@@ -446,35 +462,35 @@ handled for you.
 #### func (*Client) SubmitCancel
 
 ```go
-func (c *Client) SubmitCancel(ctx context.Context, cancel *bitfinex.OrderCancelRequest) error
+func (c *Client) SubmitCancel(ctx context.Context, ocr *order.CancelRequest) error
 ```
 Submit a cancel request for an existing order
 
 #### func (*Client) SubmitFundingCancel
 
 ```go
-func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *bitfinex.FundingOfferCancelRequest) error
+func (c *Client) SubmitFundingCancel(ctx context.Context, fundingOffer *fundingoffer.CancelRequest) error
 ```
 Submit a request to cancel and existing funding offer
 
 #### func (*Client) SubmitFundingOffer
 
 ```go
-func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *bitfinex.FundingOfferRequest) error
+func (c *Client) SubmitFundingOffer(ctx context.Context, fundingOffer *fundingoffer.SubmitRequest) error
 ```
 Submit a new funding offer request
 
 #### func (*Client) SubmitOrder
 
 ```go
-func (c *Client) SubmitOrder(ctx context.Context, order *bitfinex.OrderNewRequest) error
+func (c *Client) SubmitOrder(ctx context.Context, onr *order.NewRequest) error
 ```
 Submit a request to create a new order
 
 #### func (*Client) SubmitUpdateOrder
 
 ```go
-func (c *Client) SubmitUpdateOrder(ctx context.Context, orderUpdate *bitfinex.OrderUpdateRequest) error
+func (c *Client) SubmitUpdateOrder(ctx context.Context, our *order.UpdateRequest) error
 ```
 Submit and update request to change an existing orders values
 
@@ -488,7 +504,7 @@ Submit a request to subscribe to the given SubscriptionRequuest
 #### func (*Client) SubscribeBook
 
 ```go
-func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision bitfinex.BookPrecision, frequency bitfinex.BookFrequency, priceLevel int) (string, error)
+func (c *Client) SubscribeBook(ctx context.Context, symbol string, precision common.BookPrecision, frequency common.BookFrequency, priceLevel int) (string, error)
 ```
 Submit a subscription request for market data for the given symbol, at the given
 frequency, with the given precision, returning no more than priceLevels price
@@ -497,14 +513,14 @@ entries. Default values are Precision0, Frequency0, and priceLevels=25.
 #### func (*Client) SubscribeCandles
 
 ```go
-func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution bitfinex.CandleResolution) (string, error)
+func (c *Client) SubscribeCandles(ctx context.Context, symbol string, resolution common.CandleResolution) (string, error)
 ```
 Submit a subscription request to receive candle updates
 
 #### func (*Client) SubscribeStatus
 
 ```go
-func (c *Client) SubscribeStatus(ctx context.Context, symbol string, sType bitfinex.StatusType) (string, error)
+func (c *Client) SubscribeStatus(ctx context.Context, symbol string, sType common.StatusType) (string, error)
 ```
 Submit a subscription request for status updates
 
@@ -569,6 +585,14 @@ type FlagRequest struct {
 ```
 
 
+#### type Heartbeat
+
+```go
+type Heartbeat struct {
+}
+```
+
+
 #### type HeartbeatDisconnect
 
 ```go
@@ -603,13 +627,13 @@ type Orderbook struct {
 #### func (*Orderbook) Asks
 
 ```go
-func (ob *Orderbook) Asks() []bitfinex.BookUpdate
+func (ob *Orderbook) Asks() []book.Book
 ```
 
 #### func (*Orderbook) Bids
 
 ```go
-func (ob *Orderbook) Bids() []bitfinex.BookUpdate
+func (ob *Orderbook) Bids() []book.Book
 ```
 
 #### func (*Orderbook) Checksum
@@ -621,7 +645,7 @@ func (ob *Orderbook) Checksum() uint32
 #### func (*Orderbook) SetWithSnapshot
 
 ```go
-func (ob *Orderbook) SetWithSnapshot(bs *bitfinex.BookUpdateSnapshot)
+func (ob *Orderbook) SetWithSnapshot(bs *book.Snapshot)
 ```
 
 #### func (*Orderbook) Symbol
@@ -633,7 +657,7 @@ func (ob *Orderbook) Symbol() string
 #### func (*Orderbook) UpdateWith
 
 ```go
-func (ob *Orderbook) UpdateWith(bu *bitfinex.BookUpdate)
+func (ob *Orderbook) UpdateWith(b *book.Book)
 ```
 
 #### type Parameters
