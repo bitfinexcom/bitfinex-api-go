@@ -35,6 +35,8 @@ func SnapshotFromRaw(raw []interface{}) (snap []*Stat, err error) {
 				return snap, err
 			}
 			stats = append(stats, s)
+		} else {
+			return nil, fmt.Errorf("Invalid stats snapshot")
 		}
 	}
 
