@@ -7,6 +7,36 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
+type Credit struct {
+	ID            int64
+	Symbol        string
+	Side          string
+	MTSCreated    int64
+	MTSUpdated    int64
+	Amount        float64
+	Flags         interface{}
+	Status        string
+	Rate          float64
+	Period        int64
+	MTSOpened     int64
+	MTSLastPayout int64
+	Notify        bool
+	Hidden        bool
+	Insure        bool
+	Renew         bool
+	RateReal      float64
+	NoClose       bool
+	PositionPair  string
+}
+
+type New Credit
+type Update Credit
+type Cancel Credit
+
+type Snapshot struct {
+	Snapshot []*Credit
+}
+
 type CancelRequest struct {
 	ID int64
 }
@@ -28,28 +58,6 @@ func (cr *CancelRequest) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return []byte(fmt.Sprintf("[0, \"fcc\", null, %s]", string(b))), nil
-}
-
-type Credit struct {
-	ID            int64
-	Symbol        string
-	Side          string
-	MTSCreated    int64
-	MTSUpdated    int64
-	Amount        float64
-	Flags         interface{}
-	Status        string
-	Rate          float64
-	Period        int64
-	MTSOpened     int64
-	MTSLastPayout int64
-	Notify        bool
-	Hidden        bool
-	Insure        bool
-	Renew         bool
-	RateReal      float64
-	NoClose       bool
-	PositionPair  string
 }
 
 func FromRaw(raw []interface{}) (o *Credit, err error) {
@@ -80,14 +88,6 @@ func FromRaw(raw []interface{}) (o *Credit, err error) {
 	}
 
 	return
-}
-
-type New Credit
-type Update Credit
-type Cancel Credit
-
-type Snapshot struct {
-	Snapshot []*Credit
 }
 
 func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {

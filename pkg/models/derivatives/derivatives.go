@@ -6,7 +6,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
-type DerivativeStatusSnapshot struct {
+type Snapshot struct {
 	Snapshot []*DerivativeStatus
 }
 
@@ -84,7 +84,7 @@ func FromRaw(raw []interface{}) (*DerivativeStatus, error) {
 	return ds, nil
 }
 
-func SnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
+func SnapshotFromRaw(raw [][]interface{}) (*Snapshot, error) {
 	snapshot := make([]*DerivativeStatus, len(raw))
 	for i, rStatus := range raw {
 		pStatus, err := FromRaw(rStatus)
@@ -93,5 +93,5 @@ func SnapshotFromRaw(raw [][]interface{}) (*DerivativeStatusSnapshot, error) {
 		}
 		snapshot[i] = pStatus
 	}
-	return &DerivativeStatusSnapshot{Snapshot: snapshot}, nil
+	return &Snapshot{Snapshot: snapshot}, nil
 }

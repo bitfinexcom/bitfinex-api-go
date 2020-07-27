@@ -165,7 +165,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 		ss, err := derivatives.SnapshotFromRaw(payload)
 		require.Nil(t, err)
 
-		expected := &derivatives.DerivativeStatusSnapshot{
+		expected := &derivatives.Snapshot{
 			Snapshot: []*derivatives.DerivativeStatus{
 				{
 					Symbol:               "tBTCF0:USTF0",

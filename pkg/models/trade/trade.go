@@ -17,6 +17,10 @@ type Trade struct {
 	Period int
 }
 
+type Snapshot struct {
+	Snapshot []*Trade
+}
+
 func FromRaw(pair string, raw []interface{}) (t *Trade, err error) {
 	if len(raw) < 4 {
 		return t, fmt.Errorf("data slice too short for trade: %#v", raw)
@@ -39,10 +43,6 @@ func FromRaw(pair string, raw []interface{}) (t *Trade, err error) {
 	}
 
 	return
-}
-
-type Snapshot struct {
-	Snapshot []*Trade
 }
 
 func SnapshotFromRaw(pair string, raw [][]interface{}) (*Snapshot, error) {

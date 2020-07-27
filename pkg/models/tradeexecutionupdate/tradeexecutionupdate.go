@@ -22,6 +22,12 @@ type TradeExecutionUpdate struct {
 	FeeCurrency string
 }
 
+type Snapshot struct {
+	Snapshot []*TradeExecutionUpdate
+}
+
+type HistoricalTradeSnapshot Snapshot
+
 // public trade update just looks like a trade
 func FromRaw(raw []interface{}) (tu *TradeExecutionUpdate, err error) {
 	if len(raw) == 4 {
@@ -51,11 +57,6 @@ func FromRaw(raw []interface{}) (tu *TradeExecutionUpdate, err error) {
 	}
 	return tu, fmt.Errorf("data slice too short for trade update: %#v", raw)
 }
-
-type Snapshot struct {
-	Snapshot []*TradeExecutionUpdate
-}
-type HistoricalTradeSnapshot Snapshot
 
 func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 	if len(raw) == 0 {
