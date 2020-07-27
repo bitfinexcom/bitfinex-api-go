@@ -21,12 +21,14 @@ const (
 
 // Book represents an order book price update.
 type Book struct {
-	ID          int64            // the book update ID, optional
-	Symbol      string           // book symbol
-	Price       float64          // updated price
+	Symbol      string // book symbol
+	ID          int64  // the book update ID, optional
+	Count       int64  // updated count, optional
+	Period      int64
+	Price       float64 // updated price
+	Amount      float64 // updated amount
+	Rate        float64
 	PriceJsNum  json.Number      // update price as json.Number
-	Count       int64            // updated count, optional
-	Amount      float64          // updated amount
 	AmountJsNum json.Number      // update amount as json.Number
 	Side        common.OrderSide // side
 	Action      BookAction       // action (add/remove)
@@ -60,35 +62,44 @@ func IsRawBook(precision string) bool {
 // FromRaw creates a new book object from raw data. Precision determines how
 // to interpret the side (baked into Count versus Amount)
 // raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
-func FromRaw(symbol, precision string, data []interface{}, rawNumbers interface{}) (b *Book, err error) {
-	if len(data) < 3 {
-		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 3, len(data), data)
+func FromRaw(symbol, precision string, raw []interface{}, rawNumbers interface{}) (b *Book, err error) {
+	if len(raw) < 3 {
+		return b, fmt.Errorf("raw slice too short for book update, expected %d got %d: %#v", 3, len(raw), raw)
 	}
 
+	rawBook := IsRawBook(precision)
+
+	if len(raw) == 3 && rawBook {
+		b = rawTradingPairsBook(raw, rawNumbers)
+	}
+
+	if len(raw) == 3 && !rawBook {
+		b = tradingPairsBook(raw, rawNumbers)
+	}
+
+	if len(raw) >= 4 && rawBook {
+		b = rawFundingPairsBook(raw, rawNumbers)
+	}
+
+	if len(raw) >= 4 && !rawBook {
+		b = fundingPairsBook(raw, rawNumbers)
+	}
+
+	b.Symbol = symbol
+
+	return
+}
+
+func rawTradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
+	// [ ORDER_ID, PRICE, AMOUNT ] - raw trading pairs signature
 	var (
-		price, actionCtrl float64
-		id, count         int64
-		priceNum          json.Number
-		side              common.OrderSide
+		side   common.OrderSide
+		action BookAction
 	)
 
 	rawNumSlice := rawNumbers.([]interface{})
-	amount := convert.F64ValOrZero(data[2])
-	amountNum := convert.FloatToJsonNumber(rawNumSlice[2])
-
-	if IsRawBook(precision) {
-		// [ID, price, amount]
-		id = convert.I64ValOrZero(data[0])
-		price = convert.F64ValOrZero(data[1])
-		priceNum = convert.FloatToJsonNumber(rawNumSlice[1])
-		actionCtrl = price
-	} else {
-		// [price, count, amount]
-		price = convert.F64ValOrZero(data[0])
-		priceNum = convert.FloatToJsonNumber(rawNumSlice[0])
-		count = convert.I64ValOrZero(data[1])
-		actionCtrl = float64(count)
-	}
+	amount := convert.F64ValOrZero(raw[2])
+	price := convert.F64ValOrZero(raw[1])
 
 	if amount > 0 {
 		side = common.Bid
@@ -96,15 +107,55 @@ func FromRaw(symbol, precision string, data []interface{}, rawNumbers interface{
 		side = common.Ask
 	}
 
-	var action BookAction
+	if price <= 0 {
+		action = BookRemoveEntry
+	} else {
+		action = BookEntry
+	}
+
+	return &Book{
+		Price:       math.Abs(price),
+		PriceJsNum:  convert.FloatToJsonNumber(rawNumSlice[1]),
+		Amount:      math.Abs(amount),
+		AmountJsNum: convert.FloatToJsonNumber(rawNumSlice[2]),
+		Side:        side,
+		Action:      action,
+		ID:          convert.I64ValOrZero(raw[0]),
+	}
+}
+
+func tradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
+	// [ PRICE, COUNT, AMOUNT ] - trading pairs signature
+	var (
+		price, actionCtrl float64
+		count             int64
+		priceNum          json.Number
+		side              common.OrderSide
+		action            BookAction
+	)
+
+	rawNumSlice := rawNumbers.([]interface{})
+	amount := convert.F64ValOrZero(raw[2])
+	amountNum := convert.FloatToJsonNumber(rawNumSlice[2])
+
+	price = convert.F64ValOrZero(raw[0])
+	priceNum = convert.FloatToJsonNumber(rawNumSlice[0])
+	count = convert.I64ValOrZero(raw[1])
+	actionCtrl = float64(count)
+
+	if amount > 0 {
+		side = common.Bid
+	} else {
+		side = common.Ask
+	}
+
 	if actionCtrl <= 0 {
 		action = BookRemoveEntry
 	} else {
 		action = BookEntry
 	}
 
-	b = &Book{
-		Symbol:      symbol,
+	return &Book{
 		Price:       math.Abs(price),
 		PriceJsNum:  priceNum,
 		Count:       count,
@@ -112,8 +163,31 @@ func FromRaw(symbol, precision string, data []interface{}, rawNumbers interface{
 		AmountJsNum: amountNum,
 		Side:        side,
 		Action:      action,
-		ID:          id,
 	}
+}
 
-	return
+func rawFundingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
+	// [ ORDER_ID, PERIOD, RATE, AMOUNT ] - raw funding pairs signature
+	rawNumSlice := rawNumbers.([]interface{})
+
+	return &Book{
+		ID:          convert.I64ValOrZero(raw[0]),
+		Period:      convert.I64ValOrZero(raw[1]),
+		Rate:        convert.F64ValOrZero(raw[2]),
+		Amount:      convert.F64ValOrZero(raw[3]),
+		AmountJsNum: convert.FloatToJsonNumber(rawNumSlice[3]),
+	}
+}
+
+func fundingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
+	// [ RATE, PERIOD, COUNT, AMOUNT ], - funding pairs signature
+	rawNumSlice := rawNumbers.([]interface{})
+
+	return &Book{
+		Rate:        convert.F64ValOrZero(raw[0]),
+		Period:      convert.I64ValOrZero(raw[1]),
+		Count:       convert.I64ValOrZero(raw[2]),
+		Amount:      convert.F64ValOrZero(raw[3]),
+		AmountJsNum: convert.FloatToJsonNumber(rawNumSlice[3]),
+	}
 }
