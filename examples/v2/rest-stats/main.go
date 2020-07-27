@@ -6,43 +6,69 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
 	c := rest.NewClient()
-	pLStats, err := c.Stats.PositionLast("tBTCUSD", common.Long)
-	if err != nil {
-		log.Fatalf("getting getting last position stats: %s", err)
-	}
-	fmt.Println(pLStats)
+	positionLast(c)
+	positionHistory(c)
+	symbolCreditSizeLast(c)
+	symbolCreditSizeHistory(c)
+	fundingLast(c)
+	fundingHistory(c)
+}
 
-	pHStats, err := c.Stats.PositionHistory("tBTCUSD", common.Long)
+func positionLast(c *rest.Client) {
+	resp, err := c.Stats.PositionLast("tBTCUSD", common.Long)
 	if err != nil {
-		log.Fatalf("getting getting last position stats: %s", err)
+		log.Fatalf("PositionLast: %s", err)
 	}
-	fmt.Println(pHStats)
+	fmt.Println("Position Last:")
+	spew.Dump(resp)
+}
 
-	scsStats, err := c.Stats.SymbolCreditSizeLast("fUSD", "tBTCUSD")
+func positionHistory(c *rest.Client) {
+	resp, err := c.Stats.PositionHistory("tBTCUSD", common.Long)
 	if err != nil {
-		log.Fatalf("getting getting last position stats: %s", err)
+		log.Fatalf("PositionHistory: %s", err)
 	}
-	fmt.Println(scsStats)
+	fmt.Println("Position history:")
+	spew.Dump(resp)
+}
 
-	scsHistStats, err := c.Stats.SymbolCreditSizeHistory("fUSD", "tBTCUSD")
+func symbolCreditSizeLast(c *rest.Client) {
+	resp, err := c.Stats.SymbolCreditSizeLast("fUSD", "tBTCUSD")
 	if err != nil {
-		log.Fatalf("getting getting last position stats: %s", err)
+		log.Fatalf("SymbolCreditSizeLast: %s", err)
 	}
-	fmt.Println(scsHistStats)
+	fmt.Println("Symbol Credit Size Last:")
+	spew.Dump(resp)
+}
 
-	fStats, err := c.Stats.FundingLast("fUSD")
+func symbolCreditSizeHistory(c *rest.Client) {
+	resp, err := c.Stats.SymbolCreditSizeHistory("fUSD", "tBTCUSD")
 	if err != nil {
-		log.Fatalf("getting getting last position stats: %s", err)
+		log.Fatalf("SymbolCreditSizeHistory: %s", err)
 	}
-	fmt.Println(fStats)
+	fmt.Println("Symbol Credit Size History:")
+	spew.Dump(resp)
+}
 
-	fhStats, err := c.Stats.FundingHistory("fUSD")
+func fundingLast(c *rest.Client) {
+	resp, err := c.Stats.FundingLast("fUSD")
 	if err != nil {
-		log.Fatalf("getting getting last position stats: %s", err)
+		log.Fatalf("FundingLast: %s", err)
 	}
-	fmt.Println(fhStats)
+	fmt.Println("Funding Last:")
+	spew.Dump(resp)
+}
+
+func fundingHistory(c *rest.Client) {
+	resp, err := c.Stats.FundingHistory("fUSD")
+	if err != nil {
+		log.Fatalf("FundingHistory: %s", err)
+	}
+	fmt.Println("Funding History:")
+	spew.Dump(resp)
 }
