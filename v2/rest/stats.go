@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/stats"
 )
@@ -30,37 +29,27 @@ func (ss *StatsService) get(symbol string, key common.StatKey, extra string, sec
 	return raw, nil
 }
 
-func (ss *StatsService) getHistory(symbol string, key common.StatKey, extra string) ([]stats.Stat, error) {
-	st, err := ss.get(symbol, key, extra, "hist")
+func (ss *StatsService) getHistory(symbol string, key common.StatKey, extra string) ([]*stats.Stat, error) {
+	raw, err := ss.get(symbol, key, extra, "hist")
 	if err != nil {
 		return nil, err
 	}
-	res := make([]stats.Stat, len(st))
-	for index, stat := range st {
-		arr := stat.([]interface{})
-		period := convert.I64ValOrZero(arr[0])
-		volume := convert.F64ValOrZero(arr[1])
-		res[index] = stats.Stat{Period: period, Volume: volume}
-	}
-	return res, nil
+
+	return stats.SnapshotFromRaw(raw)
 }
 
 func (ss *StatsService) getLast(symbol string, key common.StatKey, extra string) (*stats.Stat, error) {
-	st, err := ss.get(symbol, key, extra, "last")
+	raw, err := ss.get(symbol, key, extra, "last")
 	if err != nil {
 		return nil, err
 	}
-	if len(st) == 0 {
-		return nil, fmt.Errorf("Unable to get last stat for %s:%s", symbol, key)
-	}
-	period := convert.I64ValOrZero(st[0])
-	volume := convert.F64ValOrZero(st[1])
-	return &stats.Stat{Period: int64(period), Volume: volume}, nil
+
+	return stats.FromRaw(raw)
 }
 
 // Retrieves platform statistics for funding history
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) FundingHistory(symbol string) ([]stats.Stat, error) {
+func (ss *StatsService) FundingHistory(symbol string) ([]*stats.Stat, error) {
 	return ss.getHistory(symbol, common.FundingSizeKey, "")
 }
 
@@ -72,7 +61,7 @@ func (ss *StatsService) FundingLast(symbol string) (*stats.Stat, error) {
 
 // Retrieves platform statistics for credit size history
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) CreditSizeHistory(symbol string, side common.OrderSide) ([]stats.Stat, error) {
+func (ss *StatsService) CreditSizeHistory(symbol string, side common.OrderSide) ([]*stats.Stat, error) {
 	return ss.getHistory(symbol, common.CreditSizeKey, "")
 }
 
@@ -84,7 +73,7 @@ func (ss *StatsService) CreditSizeLast(symbol string, side common.OrderSide) (*s
 
 // Retrieves platform statistics for credit size history
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) SymbolCreditSizeHistory(fundingSymbol string, tradingSymbol string) ([]stats.Stat, error) {
+func (ss *StatsService) SymbolCreditSizeHistory(fundingSymbol string, tradingSymbol string) ([]*stats.Stat, error) {
 	return ss.getHistory(fundingSymbol, common.CreditSizeSymKey, tradingSymbol)
 }
 
@@ -96,7 +85,7 @@ func (ss *StatsService) SymbolCreditSizeLast(fundingSymbol string, tradingSymbol
 
 // Retrieves platform statistics for position history
 // see https://docs.bitfinex.com/reference#rest-public-stats for more info
-func (ss *StatsService) PositionHistory(symbol string, side common.OrderSide) ([]stats.Stat, error) {
+func (ss *StatsService) PositionHistory(symbol string, side common.OrderSide) ([]*stats.Stat, error) {
 	var strSide string
 	if side == common.Long {
 		strSide = "long"
