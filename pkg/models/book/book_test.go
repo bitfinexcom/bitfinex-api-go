@@ -66,7 +66,6 @@ func TestNewBookFromRaw(t *testing.T) {
 	})
 
 	t.Run("valid funding arguments", func(t *testing.T) {
-		t.Skip("skipping as implementation is missing atm")
 		payload := []interface{}{
 			0.0003301, 30, 1, -3862.874,
 		}
@@ -76,12 +75,18 @@ func TestNewBookFromRaw(t *testing.T) {
 		b, err := book.FromRaw("fUSD", "P0", payload, rawNums)
 		require.Nil(t, err)
 
-		expected := &book.Book{}
+		expected := &book.Book{
+			Symbol:      "fUSD",
+			Count:       1,
+			Period:      30,
+			Amount:      -3862.874,
+			Rate:        0.0003301,
+			AmountJsNum: "-3862.874",
+		}
 		assert.Equal(t, expected, b)
 	})
 
 	t.Run("valid raw funding arguments", func(t *testing.T) {
-		t.Skip("skipping as implementation is missing atm")
 		payload := []interface{}{
 			645902785, 30, 0.0003301, -3862.874,
 		}
@@ -91,7 +96,15 @@ func TestNewBookFromRaw(t *testing.T) {
 		b, err := book.FromRaw("fUSD", "R0", payload, rawNums)
 		require.Nil(t, err)
 
-		expected := &book.Book{}
+		expected := &book.Book{
+			Symbol:      "fUSD",
+			ID:          645902785,
+			Period:      30,
+			Amount:      -3862.874,
+			Rate:        0.0003301,
+			AmountJsNum: "-3862.874",
+		}
+
 		assert.Equal(t, expected, b)
 	})
 }
