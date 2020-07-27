@@ -15,7 +15,7 @@ func TestNewPulseFromRaw(t *testing.T) {
 			[]interface{}{"abc123"},
 		}
 
-		pm, err := pulse.NewFromRaw(payload)
+		pm, err := pulse.SnapshotFromRaw(payload)
 		require.NotNil(t, err)
 		require.Nil(t, pm)
 	})
@@ -45,7 +45,7 @@ func TestNewPulseFromRaw(t *testing.T) {
 			},
 		}
 
-		pm, err := pulse.NewFromRaw(payload)
+		pm, err := pulse.SnapshotFromRaw(payload)
 		require.Nil(t, err)
 
 		expected := &pulse.Pulse{
@@ -106,7 +106,7 @@ func TestNewPulseFromRaw(t *testing.T) {
 			},
 		}
 
-		pm, err := pulse.NewFromRaw(payload)
+		pm, err := pulse.SnapshotFromRaw(payload)
 		require.Nil(t, err)
 
 		expected := &pulse.Pulse{
@@ -127,6 +127,8 @@ func TestNewPulseFromRaw(t *testing.T) {
 				Picture:       "picture",
 				Text:          "text",
 				TwitterHandle: "twitter",
+				Followers:     30,
+				Following:     5,
 			},
 		}
 
