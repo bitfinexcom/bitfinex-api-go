@@ -10,6 +10,10 @@ import (
 )
 
 func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
+	if c.terminal {
+		return fmt.Errorf("received a message after close")
+	}
+
 	var raw []interface{}
 	err := json.Unmarshal(msg, &raw)
 	if err != nil {
