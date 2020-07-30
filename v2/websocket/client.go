@@ -329,10 +329,12 @@ func (c *Client) reconnect(socket *Socket, err error) error {
 	c.mtx.RLock()
 	if c.terminal {
 		// dont attempt to reconnect if terminal
+		c.mtx.RUnlock()
 		return err
 	}
 	if !c.parameters.AutoReconnect {
 		err := fmt.Errorf("AutoReconnect setting is disabled, do not reconnect: %s", err.Error())
+		c.mtx.RUnlock()
 		return err
 	}
 	c.mtx.RUnlock()
