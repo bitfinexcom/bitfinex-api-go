@@ -108,14 +108,14 @@
     - bitfinex.FundingOfferSnapshot -> fundingoffer.Snapshot
     - bitfinex.FundingOfferSnapshot -> fundingoffer.Snapshot
     - bitfinex.NewFundingOfferSnapshotFromRaw -> fundingoffer.SnapshotFromRaw
-    - bitfinex.Credit -> credit.Credit
-    - bitfinex.FundingCreditNew -> credit.New
-    - bitfinex.FundingCreditUpdate -> credit.Update
-    - bitfinex.FundingCreditCancel -> credit.Cancel
-    - bitfinex.FundingCreditSnapshot -> credit.Snapshot
-    - bitfinex.NewCreditFromRaw -> credit.FromRaw
-    - bitfinex.NewFundingCreditSnapshotFromRaw -> credit.SnapshotFromRaw
-    - bitfinex.NewFundingCreditSnapshotFromRaw -> credit.SnapshotFromRaw
+    - bitfinex.Credit -> fundingcredit.Credit
+    - bitfinex.FundingCreditNew -> fundingcredit.New
+    - bitfinex.FundingCreditUpdate -> fundingcredit.Update
+    - bitfinex.FundingCreditCancel -> fundingcredit.Cancel
+    - bitfinex.FundingCreditSnapshot -> fundingcredit.Snapshot
+    - bitfinex.NewCreditFromRaw -> fundingcredit.FromRaw
+    - bitfinex.NewFundingCreditSnapshotFromRaw -> fundingcredit.SnapshotFromRaw
+    - bitfinex.NewFundingCreditSnapshotFromRaw -> fundingcredit.SnapshotFromRaw
     - bitfinex.Loan -> fundingloan.Loan
     - bitfinex.FundingLoanNew -> fundingloan.New
     - bitfinex.FundingLoanUpdate -> fundingloan.Update
