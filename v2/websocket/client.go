@@ -344,7 +344,6 @@ func (c *Client) reconnect(socket *Socket, err error) error {
 		err := c.reconnectSocket(socket)
 		if err == nil {
 			c.log.Debugf("reconnect OK")
-			reconnectTry = 0
 			return nil
 		}
 		c.log.Warningf("socket (id=%d) reconnect failed: %s", socket.Id, err.Error())
@@ -460,7 +459,7 @@ func (c *Client) closeAsyncAndWait(socket *Socket, t time.Duration) {
 
 func (c *Client) handleMessage(socketId SocketId, msg []byte) error {
 	t := bytes.TrimLeftFunc(msg, unicode.IsSpace)
-	err := error(nil)
+	var err error
 	// either a channel data array or an event object, raw json encoding
 	if bytes.HasPrefix(t, []byte("[")) {
 		err = c.handleChannel(socketId, msg)
