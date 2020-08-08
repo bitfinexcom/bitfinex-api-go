@@ -1645,7 +1645,7 @@ func IsRawBook(precision string) bool {
 // raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
 func NewBookUpdateFromRaw(symbol, precision string, data []interface{}, raw_numbers interface{}) (b *BookUpdate, err error) {
 	if len(data) < 3 {
-		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 5, len(data), data)
+		return b, fmt.Errorf("data slice too short for book update, expected %d got %d: %#v", 3, len(data), data)
 	}
 	var px float64
 	var px_num json.Number
