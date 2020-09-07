@@ -1,3 +1,10 @@
+3.0.1
+- New rest v2 functions
+    - Pulse.AddComment
+- Fixes
+    - Pulse.PulseHistory: no loonger requires isPublic Bool argument
+    - tradeexecutionupdate.FromRaw: now aware of extra value in response payload
+
 3.0.0
 - split of legacy types.go into small, test covered modules:
     - bitfinex.OrderFlagHidden -> common.FundingPrefix
