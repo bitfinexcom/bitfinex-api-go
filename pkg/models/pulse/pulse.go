@@ -10,6 +10,7 @@ import (
 // Pulse message data structure
 type Pulse struct {
 	ID           string                     `json:"id,omitempty"`
+	Parent       string                     `json:"parent,omitempty"`
 	MTS          int64                      `json:"mts,omitempty"`
 	UserID       string                     `json:"userId,omitempty"`
 	Title        string                     `json:"title,omitempty"`
