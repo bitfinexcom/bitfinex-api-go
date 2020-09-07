@@ -250,9 +250,7 @@ func TestAddPulse(t *testing.T) {
 func TestPulseHistory(t *testing.T) {
 	t.Run("response data slice too short", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "/auth/r/pulse/hist?isPublic=0", r.RequestURI)
-			isPublic := r.URL.Query().Get("isPublic")
-			assert.Equal(t, "0", isPublic)
+			assert.Equal(t, "/auth/r/pulse/hist", r.RequestURI)
 
 			respMock := []interface{}{
 				[]interface{}{"id"},
@@ -266,16 +264,13 @@ func TestPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pp, err := c.Pulse.PulseHistory(false)
+		pp, err := c.Pulse.PulseHistory()
 		require.NotNil(t, err)
 		require.Nil(t, pp)
 	})
 
 	t.Run("private pulse history", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
-			isPublic := r.URL.Query().Get("isPublic")
-			assert.Equal(t, "0", isPublic)
-
 			respMock := []interface{}{
 				[]interface{}{
 					"id",
@@ -308,7 +303,7 @@ func TestPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pm, err := c.Pulse.PulseHistory(false)
+		pm, err := c.Pulse.PulseHistory()
 		require.Nil(t, err)
 
 		expected := &pulse.Pulse{
@@ -329,9 +324,6 @@ func TestPulseHistory(t *testing.T) {
 
 	t.Run("public pulse history", func(t *testing.T) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
-			isPublic := r.URL.Query().Get("isPublic")
-			assert.Equal(t, "1", isPublic)
-
 			respMock := []interface{}{
 				[]interface{}{
 					"id",
@@ -381,7 +373,7 @@ func TestPulseHistory(t *testing.T) {
 		defer server.Close()
 
 		c := NewClientWithURL(server.URL)
-		pm, err := c.Pulse.PulseHistory(true)
+		pm, err := c.Pulse.PulseHistory()
 		require.Nil(t, err)
 
 		expected := &pulse.Pulse{
@@ -429,5 +421,85 @@ func TestDeletePulse(t *testing.T) {
 		deleted, err := c.Pulse.DeletePulse("abc123")
 		require.Nil(t, err)
 		assert.Equal(t, 1, deleted)
+	})
+}
+
+func TestAddPulseComment(t *testing.T) {
+	t.Run("invalid payload", func(t *testing.T) {
+		p := &pulse.Pulse{Title: "foo"}
+		c := NewClient()
+		pm, err := c.Pulse.AddComment(p)
+		require.NotNil(t, err)
+		require.Nil(t, pm)
+	})
+
+	t.Run("response data slice too short", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/auth/w/pulse/add", r.RequestURI)
+			respMock := []interface{}{"id"}
+			payload, _ := json.Marshal(respMock)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		pm, err := c.Pulse.AddComment(&pulse.Pulse{Title: "foo bar baz qux 123"})
+		require.NotNil(t, err)
+		require.Nil(t, pm)
+	})
+
+	t.Run("valid payload", func(t *testing.T) {
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			respMock := []interface{}{
+				"id",
+				float64(1591614631576),
+				nil,
+				"uid",
+				nil,
+				"title",
+				"content",
+				nil,
+				nil,
+				1,
+				1,
+				nil,
+				[]interface{}{"tag1", "tag2"},
+				[]interface{}{"attach1", "attach2"},
+				nil,
+				5,
+				nil,
+				nil,
+				nil,
+			}
+			payload, _ := json.Marshal(respMock)
+			_, err := w.Write(payload)
+			require.Nil(t, err)
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(handler))
+		defer server.Close()
+
+		c := NewClientWithURL(server.URL)
+		payload := &pulse.Pulse{Title: "foo bar baz qux 123", Parent: "foo"}
+		pm, err := c.Pulse.AddComment(payload)
+		require.Nil(t, err)
+
+		expected := &pulse.Pulse{
+			ID:          "id",
+			MTS:         1591614631576,
+			UserID:      "uid",
+			Title:       "title",
+			Content:     "content",
+			IsPin:       1,
+			IsPublic:    1,
+			Tags:        []string{"tag1", "tag2"},
+			Attachments: []string{"attach1", "attach2"},
+			Likes:       5,
+		}
+
+		assert.Equal(t, expected, pm)
 	})
 }
