@@ -2,7 +2,7 @@
 - New rest v2 functions
     - Pulse.AddComment
 - Fixes
-    - Pulse.PulseHistory: no loonger requires isPublic Bool argument
+    - Pulse.PulseHistory: no longer requires isPublic Bool argument
     - tradeexecutionupdate.FromRaw: now aware of extra value in response payload
 
 3.0.0
