@@ -94,22 +94,24 @@ func (ps *PulseService) AddPulse(p *pulse.Pulse) (*pulse.Pulse, error) {
 	return pm, nil
 }
 
+// AddComment submits pulse comment
+// see https://docs.bitfinex.com/reference#rest-auth-pulse-add
+func (ps *PulseService) AddComment(p *pulse.Pulse) (*pulse.Pulse, error) {
+	if len(p.Parent) == 0 {
+		return nil, fmt.Errorf("Pulse comment requires `Parent` parameter to be set")
+	}
+
+	return ps.AddPulse(p)
+}
+
 // PulseHistory allows you to retrieve your pulse history. Call function with
 // "false" boolean value for private and with "true" for public pulse history.
 // see https://docs.bitfinex.com/reference#rest-auth-pulse-hist
-func (ps *PulseService) PulseHistory(isPublic bool) ([]*pulse.Pulse, error) {
+func (ps *PulseService) PulseHistory() ([]*pulse.Pulse, error) {
 	req, err := ps.NewAuthenticatedRequest(common.PermissionRead, path.Join("pulse", "hist"))
 	if err != nil {
 		return nil, err
 	}
-
-	public := "0"
-	if isPublic {
-		public = "1"
-	}
-
-	req.Params = make(url.Values)
-	req.Params.Add("isPublic", public)
 
 	raw, err := ps.Request(req)
 	if err != nil {
