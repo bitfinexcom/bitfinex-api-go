@@ -39,7 +39,7 @@ func FromRaw(raw []interface{}) (tu *TradeExecutionUpdate, err error) {
 		}
 		return
 	}
-	if len(raw) == 11 {
+	if len(raw) > 10 {
 		tu = &TradeExecutionUpdate{
 			ID:          convert.I64ValOrZero(raw[0]),
 			Pair:        convert.SValOrEmpty(raw[1]),
