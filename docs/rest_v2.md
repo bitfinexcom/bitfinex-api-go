@@ -717,6 +717,14 @@ type PulseService struct {
 ```
 
 
+#### func (*PulseService) AddComment
+
+```go
+func (ps *PulseService) AddComment(p *pulse.Pulse) (*pulse.Pulse, error)
+```
+AddComment submits pulse comment see
+https://docs.bitfinex.com/reference#rest-auth-pulse-add
+
 #### func (*PulseService) AddPulse
 
 ```go
@@ -753,7 +761,7 @@ https://docs.bitfinex.com/reference#rest-public-pulse-profile
 #### func (*PulseService) PulseHistory
 
 ```go
-func (ps *PulseService) PulseHistory(isPublic bool) ([]*pulse.Pulse, error)
+func (ps *PulseService) PulseHistory() ([]*pulse.Pulse, error)
 ```
 PulseHistory allows you to retrieve your pulse history. Call function with
 "false" boolean value for private and with "true" for public pulse history. see
@@ -836,12 +844,12 @@ type StatsService struct {
 }
 ```
 
-TradeService manages the Trade endpoint.
+StatsService manages the Stats endpoint.
 
 #### func (*StatsService) CreditSizeHistory
 
 ```go
-func (ss *StatsService) CreditSizeHistory(symbol string, side common.OrderSide) ([]common.Stat, error)
+func (ss *StatsService) CreditSizeHistory(symbol string, side common.OrderSide) ([]*stats.Stat, error)
 ```
 Retrieves platform statistics for credit size history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -849,7 +857,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) CreditSizeLast
 
 ```go
-func (ss *StatsService) CreditSizeLast(symbol string, side common.OrderSide) (*common.Stat, error)
+func (ss *StatsService) CreditSizeLast(symbol string, side common.OrderSide) (*stats.Stat, error)
 ```
 Retrieves platform statistics for credit size last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -857,7 +865,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) FundingHistory
 
 ```go
-func (ss *StatsService) FundingHistory(symbol string) ([]common.Stat, error)
+func (ss *StatsService) FundingHistory(symbol string) ([]*stats.Stat, error)
 ```
 Retrieves platform statistics for funding history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -865,7 +873,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) FundingLast
 
 ```go
-func (ss *StatsService) FundingLast(symbol string) (*common.Stat, error)
+func (ss *StatsService) FundingLast(symbol string) (*stats.Stat, error)
 ```
 Retrieves platform statistics for funding last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -873,7 +881,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) PositionHistory
 
 ```go
-func (ss *StatsService) PositionHistory(symbol string, side common.OrderSide) ([]common.Stat, error)
+func (ss *StatsService) PositionHistory(symbol string, side common.OrderSide) ([]*stats.Stat, error)
 ```
 Retrieves platform statistics for position history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -881,7 +889,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) PositionLast
 
 ```go
-func (ss *StatsService) PositionLast(symbol string, side common.OrderSide) (*common.Stat, error)
+func (ss *StatsService) PositionLast(symbol string, side common.OrderSide) (*stats.Stat, error)
 ```
 Retrieves platform statistics for position last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -889,7 +897,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) SymbolCreditSizeHistory
 
 ```go
-func (ss *StatsService) SymbolCreditSizeHistory(fundingSymbol string, tradingSymbol string) ([]common.Stat, error)
+func (ss *StatsService) SymbolCreditSizeHistory(fundingSymbol string, tradingSymbol string) ([]*stats.Stat, error)
 ```
 Retrieves platform statistics for credit size history see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
@@ -897,7 +905,7 @@ https://docs.bitfinex.com/reference#rest-public-stats for more info
 #### func (*StatsService) SymbolCreditSizeLast
 
 ```go
-func (ss *StatsService) SymbolCreditSizeLast(fundingSymbol string, tradingSymbol string) (*common.Stat, error)
+func (ss *StatsService) SymbolCreditSizeLast(fundingSymbol string, tradingSymbol string) (*stats.Stat, error)
 ```
 Retrieves platform statistics for credit size last see
 https://docs.bitfinex.com/reference#rest-public-stats for more info
