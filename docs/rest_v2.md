@@ -763,8 +763,7 @@ https://docs.bitfinex.com/reference#rest-public-pulse-profile
 ```go
 func (ps *PulseService) PulseHistory() ([]*pulse.Pulse, error)
 ```
-PulseHistory allows you to retrieve your pulse history. Call function with
-"false" boolean value for private and with "true" for public pulse history. see
+PulseHistory allows you to retrieve your pulse history. see
 https://docs.bitfinex.com/reference#rest-auth-pulse-hist
 
 #### type Request

@@ -104,8 +104,7 @@ func (ps *PulseService) AddComment(p *pulse.Pulse) (*pulse.Pulse, error) {
 	return ps.AddPulse(p)
 }
 
-// PulseHistory allows you to retrieve your pulse history. Call function with
-// "false" boolean value for private and with "true" for public pulse history.
+// PulseHistory allows you to retrieve your pulse history.
 // see https://docs.bitfinex.com/reference#rest-auth-pulse-hist
 func (ps *PulseService) PulseHistory() ([]*pulse.Pulse, error) {
 	req, err := ps.NewAuthenticatedRequest(common.PermissionRead, path.Join("pulse", "hist"))
