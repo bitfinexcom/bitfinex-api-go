@@ -23,8 +23,8 @@ type Client struct {
 }
 
 // New returns pointer to Client instance
-func New() *Client {
-	return &Client{}
+func New(ID int) *Client {
+	return &Client{ID: ID}
 }
 
 func (c *Client) Public() *Client {
