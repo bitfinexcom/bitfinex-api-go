@@ -10,46 +10,61 @@ import (
 
 const clientSubsLimit = 30
 
-type clientID int
-
 // Mux will manage all connections and subscriptions. Will check if subscriptions
 // limit is reached and spawn new connection when that happens. It will also listen
-// to all incomming client messages
+// to all incomming client messages and reconnect client with all its subscriptions
+// in case of a failure
 type Mux struct {
-	Clients map[clientID]*client.Client
+	CID     int
 	Inbound chan client.Msg
-	Subs    map[clientID]int
+	Clients map[int]*client.Client
+	Subs    map[int]map[string]map[string]string
 	Err     error
 }
 
 // New returns pointer to instance of mux
 func New() *Mux {
 	return &Mux{
-		Clients: make(map[clientID]*client.Client),
+		CID:     0,
 		Inbound: make(chan client.Msg),
-		Subs:    make(map[clientID]int),
+		Clients: make(map[int]*client.Client),
+		Subs:    make(map[int]map[string]map[string]string),
 	}
 }
 
-// Subscribe checks to see how many subscriptions last added client has
-// and if subscribing new channel would cross the clientSubsLimit, it will
-// create new client connection and call itself again recursively with same payload
+// Subscribe - given the details in form of hash table, subscribes client
 func (m *Mux) Subscribe(sub map[string]string) *Mux {
 	if m.Err != nil {
 		return m
 	}
 
-	idx := clientID(len(m.Clients) - 1)
+	subID := m.getSubID(sub)
 
-	if m.Subs[idx] >= clientSubsLimit {
-		log.Printf("%d subs limit is reached on conn: %d, spawning new conn\n", clientSubsLimit, idx)
-		m.AddPublicChan()
-		m.Subscribe(sub)
+	// check if already subscribed
+	if _, ok := m.Subs[m.CID][subID]; ok {
 		return m
 	}
 
-	m.Clients[idx].Subscribe(sub)
-	m.Subs[idx]++
+	// keep track of subscriptions
+	if _, ok := m.Subs[m.CID]; !ok {
+		m.Subs[m.CID] = make(map[string]map[string]string)
+	}
+
+	if _, ok := m.Subs[m.CID][subID]; !ok {
+		m.Subs[m.CID][subID] = sub
+	}
+
+	// check if new subscription will not exceed the subscriptions limit per client
+	// if it does, create new client and call Subscribe recursively with same payload
+	if len(m.Subs[m.CID]) == clientSubsLimit {
+		log.Printf("%d subs limit is reached on cID: %d, spawning new conn\n", clientSubsLimit, m.CID)
+		m.AddPublicChan()
+		return m.Subscribe(sub)
+	}
+
+	// subscribe and keep track of subscription
+	m.Clients[m.CID].Subscribe(sub)
+	m.Subs[m.CID][subID] = sub
 	return m
 }
 
@@ -59,26 +74,30 @@ func (m *Mux) AddPublicChan() *Mux {
 		return m
 	}
 
-	c := client.New().Public()
+	m.CID++
+
+	c := client.New(m.CID).Public()
 	if c.Err != nil {
 		m.Err = c.Err
 		return m
 	}
 
-	m.Clients[clientID(len(m.Clients))] = c
+	m.Clients[m.CID] = c
+	// start listening for incoming messages
+	go c.Read(m.Inbound)
 	return m
 }
 
 // Listen accepts a callback func that will get called each time mux receives a
 // message from any of its clients/subscriptions. It should be called last, after
-// all setup calls are made
+// all setup calls are made as it's blocking
 func (m *Mux) Listen(cb func([]byte, error)) {
 	if m.Err != nil {
 		cb(nil, m.Err)
 		return
 	}
 
-	go m.listen()
+	log.Println("starting to listen...")
 
 	for {
 		select {
@@ -100,16 +119,30 @@ func (m *Mux) Listen(cb func([]byte, error)) {
 }
 
 // private methods
-func (m *Mux) listen() {
-	if m.Err != nil {
-		return
+func (m *Mux) getSubID(sub map[string]string) (key string) {
+	for _, v := range sub {
+		key = key + "#" + v
 	}
-
-	for _, c := range m.Clients {
-		go c.Read(m.Inbound)
-	}
+	return
 }
 
-func (m *Mux) reconnect(cid int) {
+func (m *Mux) reconnect(cID int) {
+	// get client subscriptions
+	oldSubs, ok := m.Subs[cID]
+	if ok {
+		delete(m.Subs, cID)
+	}
 
+	if _, ok := m.Clients[cID]; ok {
+		if err := m.Clients[cID].Conn.Close(); err != nil {
+			log.Printf("failed closing client: %s\n", err)
+		}
+
+		delete(m.Clients, cID)
+	}
+
+	for subID, sub := range oldSubs {
+		log.Printf("resubscribing: %s\n", subID)
+		m.Subscribe(sub)
+	}
 }
