@@ -68,10 +68,13 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) Read(ch chan<- Msg) {
+	defer c.Close()
+
 	for {
 		msg, _, err := wsutil.ReadServerData(c.Conn)
 		if err != nil {
 			ch <- Msg{nil, err, c.ID}
+			return
 		}
 
 		ch <- Msg{msg, nil, c.ID}
