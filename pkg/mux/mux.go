@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
 )
@@ -20,6 +21,9 @@ type Mux struct {
 	Clients map[int]*client.Client
 	Subs    map[int]map[string]map[string]string
 	Err     error
+	mtx     *sync.RWMutex
+	APIKey  string
+	APISec  string
 }
 
 // New returns pointer to instance of mux
@@ -29,6 +33,7 @@ func New() *Mux {
 		Inbound: make(chan client.Msg),
 		Clients: make(map[int]*client.Client),
 		Subs:    make(map[int]map[string]map[string]string),
+		mtx:     &sync.RWMutex{},
 	}
 }
 
@@ -54,11 +59,13 @@ func (m *Mux) Subscribe(sub map[string]string) *Mux {
 		m.Subs[m.CID][subID] = sub
 	}
 
+	log.Printf("cID:%d <- %s\n", m.CID, subID)
+
 	// check if new subscription will not exceed the subscriptions limit per client
 	// if it does, create new client and call Subscribe recursively with same payload
 	if len(m.Subs[m.CID]) == clientSubsLimit {
 		log.Printf("%d subs limit is reached on cID: %d, spawning new conn\n", clientSubsLimit, m.CID)
-		m.AddPublicChan()
+		m.AddClient()
 		return m.Subscribe(sub)
 	}
 
@@ -68,24 +75,17 @@ func (m *Mux) Subscribe(sub map[string]string) *Mux {
 	return m
 }
 
-// AddPublicChan adds public cannel to mux
-func (m *Mux) AddPublicChan() *Mux {
-	if m.Err != nil {
-		return m
+// AddClient adds public or authenticated client depending
+// on mux api keys presence
+func (m *Mux) AddClient() *Mux {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if len(m.APIKey) == 0 && len(m.APISec) == 0 {
+		return m.addPublicClient()
 	}
 
-	m.CID++
-
-	c := client.New(m.CID).Public()
-	if c.Err != nil {
-		m.Err = c.Err
-		return m
-	}
-
-	m.Clients[m.CID] = c
-	// start listening for incoming messages
-	go c.Read(m.Inbound)
-	return m
+	return m.addPrivateClient()
 }
 
 // Listen accepts a callback func that will get called each time mux receives a
@@ -127,22 +127,51 @@ func (m *Mux) getSubID(sub map[string]string) (key string) {
 }
 
 func (m *Mux) reconnect(cID int) {
-	// get client subscriptions
+	// keep track of previous client subscriptions
 	oldSubs, ok := m.Subs[cID]
 	if ok {
 		delete(m.Subs, cID)
 	}
 
+	// remove failed client from mux list
 	if _, ok := m.Clients[cID]; ok {
-		if err := m.Clients[cID].Conn.Close(); err != nil {
-			log.Printf("failed closing client: %s\n", err)
-		}
-
 		delete(m.Clients, cID)
 	}
 
+	// spawn new client
+	m.AddClient()
+
+	// resubscribe
 	for subID, sub := range oldSubs {
 		log.Printf("resubscribing: %s\n", subID)
 		m.Subscribe(sub)
 	}
+}
+
+func (m *Mux) addPublicClient() *Mux {
+	if m.Err != nil {
+		return m
+	}
+
+	m.CID++
+
+	c := client.New(m.CID).Public()
+	if c.Err != nil {
+		m.Err = c.Err
+		return m
+	}
+
+	m.Clients[m.CID] = c
+	// start listening for incoming messages
+	go c.Read(m.Inbound)
+	return m
+}
+
+func (m *Mux) addPrivateClient() *Mux {
+	if m.Err != nil {
+		return m
+	}
+
+	// TODO: implement auth channel handler
+	return m
 }
