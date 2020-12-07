@@ -11,7 +11,7 @@ import (
 func main() {
 	srv := mux.
 		New().
-		AddPublicChan()
+		AddClient()
 
 	pairs := []string{}
 	dat, err := ioutil.ReadFile("./testpairs.json")
@@ -39,7 +39,7 @@ func main() {
 		candlesPld := map[string]string{
 			"event":   "subscribe",
 			"channel": "candles",
-			"symbol":  "trade:1m:t" + pair,
+			"key":     "trade:1m:t" + pair,
 		}
 
 		srv.Subscribe(tradePld)
@@ -47,10 +47,10 @@ func main() {
 		srv.Subscribe(candlesPld)
 	}
 
-	srv.Listen(func(res []byte, err error) {
+	log.Fatal(srv.Listen(func(res []byte, err error) {
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("error received: %s\n", err)
 		}
 		log.Printf("msg: %s\n", res)
-	})
+	}))
 }
