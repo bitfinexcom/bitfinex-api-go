@@ -67,21 +67,16 @@ func (m *Mux) AddClient() *Mux {
 // Listen accepts a callback func that will get called each time mux receives a
 // message from any of its clients/subscriptions. It should be called last, after
 // all setup calls are made as it's blocking
-func (m *Mux) Listen(cb func([]byte, error)) {
+func (m *Mux) Listen(cb func([]byte, error)) error {
 	if m.Err != nil {
-		cb(nil, m.Err)
-		return
+		return m.Err
 	}
-
-	log.Println("starting to listen...")
 
 	for {
 		select {
 		case msg, ok := <-m.Inbound:
-			log.Printf("m:%s, e:%v, chan:%t\n", msg.Msg, msg.Err, ok)
 			if !ok {
-				cb(nil, errors.New("channel has closed unexpectedly, restart"))
-				return
+				return errors.New("channel has closed unexpectedly, restart")
 			}
 
 			if msg.Err != nil {
