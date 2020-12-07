@@ -9,8 +9,6 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
 )
 
-const clientSubsLimit = 30
-
 // Mux will manage all connections and subscriptions. Will check if subscriptions
 // limit is reached and spawn new connection when that happens. It will also listen
 // to all incomming client messages and reconnect client with all its subscriptions
@@ -19,9 +17,8 @@ type Mux struct {
 	CID     int
 	Inbound chan client.Msg
 	Clients map[int]*client.Client
-	Subs    map[int]map[string]map[string]string
-	Err     error
 	mtx     *sync.RWMutex
+	Err     error
 	APIKey  string
 	APISec  string
 }
@@ -29,10 +26,8 @@ type Mux struct {
 // New returns pointer to instance of mux
 func New() *Mux {
 	return &Mux{
-		CID:     0,
 		Inbound: make(chan client.Msg),
 		Clients: make(map[int]*client.Client),
-		Subs:    make(map[int]map[string]map[string]string),
 		mtx:     &sync.RWMutex{},
 	}
 }
@@ -43,35 +38,16 @@ func (m *Mux) Subscribe(sub map[string]string) *Mux {
 		return m
 	}
 
-	subID := m.getSubID(sub)
-
-	// check if already subscribed
-	if _, ok := m.Subs[m.CID][subID]; ok {
+	if alreadySubscribed := m.Clients[m.CID].Subs.Added(sub); alreadySubscribed {
 		return m
 	}
 
-	// keep track of subscriptions
-	if _, ok := m.Subs[m.CID]; !ok {
-		m.Subs[m.CID] = make(map[string]map[string]string)
-	}
-
-	if _, ok := m.Subs[m.CID][subID]; !ok {
-		m.Subs[m.CID][subID] = sub
-	}
-
-	log.Printf("cID:%d <- %s\n", m.CID, subID)
-
-	// check if new subscription will not exceed the subscriptions limit per client
-	// if it does, create new client and call Subscribe recursively with same payload
-	if len(m.Subs[m.CID]) == clientSubsLimit {
-		log.Printf("%d subs limit is reached on cID: %d, spawning new conn\n", clientSubsLimit, m.CID)
-		m.AddClient()
-		return m.Subscribe(sub)
-	}
-
-	// subscribe and keep track of subscription
 	m.Clients[m.CID].Subscribe(sub)
-	m.Subs[m.CID][subID] = sub
+
+	if limitReached := m.Clients[m.CID].Subs.LimitReached(); limitReached {
+		log.Printf("30 subs limit is reached on cID: %d, spawning new conn\n", m.CID)
+		m.AddClient()
+	}
 	return m
 }
 
@@ -102,6 +78,7 @@ func (m *Mux) Listen(cb func([]byte, error)) {
 	for {
 		select {
 		case msg, ok := <-m.Inbound:
+			log.Printf("m:%s, e:%v, chan:%t\n", msg.Msg, msg.Err, ok)
 			if !ok {
 				cb(nil, errors.New("channel has closed unexpectedly, restart"))
 				return
@@ -118,34 +95,18 @@ func (m *Mux) Listen(cb func([]byte, error)) {
 	}
 }
 
-// private methods
-func (m *Mux) getSubID(sub map[string]string) (key string) {
-	for _, v := range sub {
-		key = key + "#" + v
-	}
-	return
-}
-
 func (m *Mux) reconnect(cID int) {
-	// keep track of previous client subscriptions
-	oldSubs, ok := m.Subs[cID]
-	if ok {
-		delete(m.Subs, cID)
-	}
-
-	// remove failed client from mux list
-	if _, ok := m.Clients[cID]; ok {
-		delete(m.Clients, cID)
-	}
-
-	// spawn new client
+	// pull old client subscriptions
+	subs := m.Clients[cID].Subs.GetAll()
+	// add fresh client
 	m.AddClient()
-
-	// resubscribe
-	for subID, sub := range oldSubs {
+	// resubscribe old events
+	for subID, sub := range subs {
 		log.Printf("resubscribing: %s\n", subID)
 		m.Subscribe(sub)
 	}
+	// remove old, closed channel from the lost
+	delete(m.Clients, cID)
 }
 
 func (m *Mux) addPublicClient() *Mux {
@@ -153,6 +114,7 @@ func (m *Mux) addPublicClient() *Mux {
 		return m
 	}
 
+	// adding new client so making sure we increment cid
 	m.CID++
 
 	c := client.New(m.CID).Public()
