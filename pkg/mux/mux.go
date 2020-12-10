@@ -1,11 +1,15 @@
 package mux
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"sync"
+	"unicode"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
 )
 
@@ -14,22 +18,29 @@ import (
 // to all incomming client messages and reconnect client with all its subscriptions
 // in case of a failure
 type Mux struct {
-	CID     int
-	Inbound chan client.Msg
-	Clients map[int]*client.Client
-	mtx     *sync.RWMutex
-	Err     error
-	APIKey  string
-	APISec  string
+	cid           int
+	publicInbound chan client.Msg
+	authInbound   chan client.Msg
+	clients       map[int]*client.Client
+	mtx           *sync.RWMutex
+	Err           error
+	transform     bool
+	apiKey        string
+	apiSec        string
 }
 
 // New returns pointer to instance of mux
 func New() *Mux {
 	return &Mux{
-		Inbound: make(chan client.Msg),
-		Clients: make(map[int]*client.Client),
-		mtx:     &sync.RWMutex{},
+		publicInbound: make(chan client.Msg),
+		clients:       make(map[int]*client.Client),
+		mtx:           &sync.RWMutex{},
 	}
+}
+
+func (m *Mux) TransformRaw() *Mux {
+	m.transform = true
+	return m
 }
 
 // Subscribe - given the details in form of hash table, subscribes client
@@ -38,14 +49,14 @@ func (m *Mux) Subscribe(sub map[string]string) *Mux {
 		return m
 	}
 
-	if alreadySubscribed := m.Clients[m.CID].Subs.Added(sub); alreadySubscribed {
+	if alreadySubscribed := m.clients[m.cid].Subs.Added(sub); alreadySubscribed {
 		return m
 	}
 
-	m.Clients[m.CID].Subscribe(sub)
+	m.clients[m.cid].Subscribe(sub)
 
-	if limitReached := m.Clients[m.CID].Subs.LimitReached(); limitReached {
-		log.Printf("30 subs limit is reached on cID: %d, spawning new conn\n", m.CID)
+	if limitReached := m.clients[m.cid].Subs.LimitReached(); limitReached {
+		log.Printf("30 subs limit is reached on cid: %d, spawning new conn\n", m.cid)
 		m.AddClient()
 	}
 	return m
@@ -57,7 +68,7 @@ func (m *Mux) AddClient() *Mux {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	if len(m.APIKey) == 0 && len(m.APISec) == 0 {
+	if len(m.apiKey) == 0 && len(m.apiSec) == 0 {
 		return m.addPublicClient()
 	}
 
@@ -67,16 +78,21 @@ func (m *Mux) AddClient() *Mux {
 // Listen accepts a callback func that will get called each time mux receives a
 // message from any of its clients/subscriptions. It should be called last, after
 // all setup calls are made as it's blocking
-func (m *Mux) Listen(cb func([]byte, error)) error {
+func (m *Mux) Listen(cb func(interface{}, error)) error {
 	if m.Err != nil {
 		return m.Err
 	}
 
 	for {
 		select {
-		case msg, ok := <-m.Inbound:
+		case msg, ok := <-m.authInbound:
 			if !ok {
-				return errors.New("channel has closed unexpectedly, restart")
+				return errors.New("authenticated channel has closed unexpectedly")
+			}
+			cb(msg.Data, nil)
+		case msg, ok := <-m.publicInbound:
+			if !ok {
+				return errors.New("channel has closed unexpectedly")
 			}
 
 			if msg.Err != nil {
@@ -85,14 +101,35 @@ func (m *Mux) Listen(cb func([]byte, error)) error {
 				continue
 			}
 
-			cb(msg.Msg, nil)
+			if !m.transform {
+				cb(msg.Data, nil)
+				continue
+			}
+
+			t := bytes.TrimLeftFunc(msg.Data, unicode.IsSpace)
+			if bytes.HasPrefix(t, []byte("[")) {
+				cb(msg.Data, nil)
+				continue
+			}
+
+			if bytes.HasPrefix(t, []byte("{")) {
+				e := &event.Event{}
+				if err := json.Unmarshal(msg.Data, e); err != nil {
+					cb(nil, fmt.Errorf("failed parsing msg: %s", err))
+					continue
+				}
+				cb(e, nil)
+				continue
+			}
+
+			cb(nil, fmt.Errorf("unrecognized msg signature: %s", msg.Data))
 		}
 	}
 }
 
-func (m *Mux) reconnect(cID int) {
+func (m *Mux) reconnect(cid int) {
 	// pull old client subscriptions
-	subs := m.Clients[cID].Subs.GetAll()
+	subs := m.clients[cid].Subs.GetAll()
 	// add fresh client
 	m.AddClient()
 	// resubscribe old events
@@ -101,26 +138,25 @@ func (m *Mux) reconnect(cID int) {
 		m.Subscribe(sub)
 	}
 	// remove old, closed channel from the lost
-	delete(m.Clients, cID)
+	delete(m.clients, cid)
 }
 
 func (m *Mux) addPublicClient() *Mux {
 	if m.Err != nil {
 		return m
 	}
-
 	// adding new client so making sure we increment cid
-	m.CID++
+	m.cid++
 
-	c := client.New(m.CID).Public()
+	c := client.New(m.cid).Public()
 	if c.Err != nil {
 		m.Err = c.Err
 		return m
 	}
 
-	m.Clients[m.CID] = c
+	m.clients[m.cid] = c
 	// start listening for incoming messages
-	go c.Read(m.Inbound)
+	go c.Read(m.publicInbound)
 	return m
 }
 
