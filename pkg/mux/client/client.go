@@ -12,9 +12,9 @@ import (
 )
 
 type Msg struct {
-	Msg []byte
-	Err error
-	CID int
+	Data []byte
+	Err  error
+	CID  int
 }
 
 type Client struct {
@@ -38,13 +38,7 @@ func (c *Client) Public() *Client {
 		return c
 	}
 
-	conn, _, _, err := ws.DefaultDialer.Dial(context.Background(), "wss://api-pub.bitfinex.com/ws/2")
-	if err != nil {
-		c.Err = err
-		return c
-	}
-
-	c.Conn = conn
+	c.Conn, _, _, c.Err = ws.DefaultDialer.Dial(context.Background(), "wss://api-pub.bitfinex.com/ws/2")
 	return c
 }
 
