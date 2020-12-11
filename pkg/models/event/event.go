@@ -1,40 +1,44 @@
 package event
 
-type Event struct {
-	Event     string       `json:"event,omitempty"`
-	Channel   string       `json:"channel,omitempty"`
-	ChanID    int64        `json:"chanId,omitempty"`
-	Symbol    string       `json:"symbol,omitempty"`
-	Precision string       `json:"prec,omitempty"`
-	Frequency string       `json:"freq,omitempty"`
-	Key       string       `json:"key,omitempty"`
-	Len       string       `json:"len,omitempty"`
-	Pair      string       `json:"pair,omitempty"`
-	Code      int64        `json:"code,omitempty"`
-	Version   int64        `json:"version,omitempty"`
-	ServerID  string       `json:"serverId,omitempty"`
-	Status    string       `json:"status"`
-	UserID    int64        `json:"userId,omitempty"`
-	SubID     string       `json:"subId"`
-	AuthID    string       `json:"auth_id,omitempty"`
-	Message   string       `json:"msg,omitempty"`
-	Caps      Capabilities `json:"caps"`
-	Platform  struct {
+type Subscribe struct {
+	Event     string `json:"event,omitempty"`
+	Channel   string `json:"channel,omitempty"`
+	Symbol    string `json:"symbol,omitempty"`
+	Precision string `json:"prec,omitempty"`
+	Frequency string `json:"freq,omitempty"`
+	Len       string `json:"len,omitempty"`
+	Key       string `json:"key,omitempty"`
+}
+
+type Info struct {
+	Subscribe
+	ChanID   int64        `json:"chanId,omitempty"`
+	Pair     string       `json:"pair,omitempty"`
+	Code     int64        `json:"code,omitempty"`
+	Version  int64        `json:"version,omitempty"`
+	ServerID string       `json:"serverId,omitempty"`
+	Status   string       `json:"status,omitempty"`
+	UserID   int64        `json:"userId,omitempty"`
+	SubID    string       `json:"subId,omitempty"`
+	AuthID   string       `json:"auth_id,omitempty"`
+	Message  string       `json:"msg,omitempty"`
+	Caps     Capabilities `json:"caps,omitempty"`
+	Platform struct {
 		Status int `json:"status,omitempty"`
-	} `json:"platform"`
+	} `json:"platform,omitempty"`
 }
 
 type Capability struct {
-	Read  int `json:"read"`
-	Write int `json:"write"`
+	Read  int `json:"read,omitempty"`
+	Write int `json:"write,omitempty"`
 }
 
 type Capabilities struct {
-	Orders    Capability `json:"orders"`
-	Account   Capability `json:"account"`
-	Funding   Capability `json:"funding"`
-	History   Capability `json:"history"`
-	Wallets   Capability `json:"wallets"`
-	Withdraw  Capability `json:"withdraw"`
-	Positions Capability `json:"positions"`
+	Orders    Capability `json:"orders,omitempty"`
+	Account   Capability `json:"account,omitempty"`
+	Funding   Capability `json:"funding,omitempty"`
+	History   Capability `json:"history,omitempty"`
+	Wallets   Capability `json:"wallets,omitempty"`
+	Withdraw  Capability `json:"withdraw,omitempty"`
+	Positions Capability `json:"positions,omitempty"`
 }
