@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/subs"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -43,7 +44,7 @@ func (c *Client) Public() *Client {
 }
 
 // Subscribe takes subscription payload as per docs and subscribes connection to it
-func (c *Client) Subscribe(sub map[string]string) *Client {
+func (c *Client) Subscribe(sub event.Subscribe) *Client {
 	if c.Err != nil {
 		return c
 	}
