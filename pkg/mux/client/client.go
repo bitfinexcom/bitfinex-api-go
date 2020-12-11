@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
@@ -50,15 +49,9 @@ func (c *Client) Subscribe(sub event.Subscribe) *Client {
 	}
 
 	c.Subs.Add(sub)
-
-	b, err := json.Marshal(sub)
-	if err != nil {
-		c.Err = fmt.Errorf("creating msg payload: %s, msg: %+v", err, sub)
-		return c
-	}
-
-	if err = wsutil.WriteClientBinary(c.Conn, b); err != nil {
-		c.Err = fmt.Errorf("sending msg: %s, pld: %s", err, b)
+	b, _ := json.Marshal(sub)
+	if c.Err = wsutil.WriteClientBinary(c.Conn, b); c.Err != nil {
+		c.Subs.Remove(sub)
 		return c
 	}
 
