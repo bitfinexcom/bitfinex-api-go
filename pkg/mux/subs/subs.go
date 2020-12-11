@@ -32,6 +32,11 @@ func (s *Subs) Add(sub event.Subscribe) {
 	s.Subs[sub] = true
 }
 
+// Remove adds new subscription to the list
+func (s *Subs) Remove(sub event.Subscribe) {
+	delete(s.Subs, sub)
+}
+
 // GetAll returns all subscriptions
 func (s *Subs) GetAll() (res []event.Subscribe) {
 	for sub := range s.Subs {
