@@ -44,7 +44,7 @@ func (m *Mux) TransformRaw() *Mux {
 }
 
 // Subscribe - given the details in form of hash table, subscribes client
-func (m *Mux) Subscribe(sub map[string]string) *Mux {
+func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 	if m.Err != nil {
 		return m
 	}
@@ -113,8 +113,8 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			}
 
 			if bytes.HasPrefix(t, []byte("{")) {
-				e := &event.Event{}
-				if err := json.Unmarshal(msg.Data, e); err != nil {
+				e := event.Info{}
+				if err := json.Unmarshal(msg.Data, &e); err != nil {
 					cb(nil, fmt.Errorf("failed parsing msg: %s", err))
 					continue
 				}
@@ -133,8 +133,8 @@ func (m *Mux) reconnect(cid int) {
 	// add fresh client
 	m.AddClient()
 	// resubscribe old events
-	for subID, sub := range subs {
-		log.Printf("resubscribing: %s\n", subID)
+	for _, sub := range subs {
+		log.Printf("resubscribing: %+v\n", sub)
 		m.Subscribe(sub)
 	}
 	// remove old, closed channel from the lost
