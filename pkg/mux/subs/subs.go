@@ -1,7 +1,9 @@
 package subs
 
+import "github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+
 type Subs struct {
-	Subs map[string]map[string]string
+	Subs map[event.Subscribe]bool
 }
 
 const subsLimit = 30
@@ -9,7 +11,7 @@ const subsLimit = 30
 // New returns pointer to instacne of Subscriptions
 func New() *Subs {
 	return &Subs{
-		Subs: make(map[string]map[string]string),
+		Subs: make(map[event.Subscribe]bool),
 	}
 }
 
@@ -20,25 +22,20 @@ func (s *Subs) LimitReached() bool {
 
 // Added checks if given subscription is already added. Used to
 // avoid duplicate subscriptions per client
-func (s *Subs) Added(sub map[string]string) (res bool) {
-	_, res = s.Subs[s.getID(sub)]
+func (s *Subs) Added(sub event.Subscribe) (res bool) {
+	_, res = s.Subs[sub]
 	return
 }
 
 // Add adds new subscription to the list
-func (s *Subs) Add(sub map[string]string) bool {
-	s.Subs[s.getID(sub)] = sub
-	return true
+func (s *Subs) Add(sub event.Subscribe) {
+	s.Subs[sub] = true
 }
 
 // GetAll returns all subscriptions
-func (s *Subs) GetAll() map[string]map[string]string {
-	return s.Subs
-}
-
-func (s *Subs) getID(sub map[string]string) (key string) {
-	for _, v := range sub {
-		key = key + "#" + v
+func (s *Subs) GetAll() (res []event.Subscribe) {
+	for sub := range s.Subs {
+		res = append(res, sub)
 	}
 	return
 }
