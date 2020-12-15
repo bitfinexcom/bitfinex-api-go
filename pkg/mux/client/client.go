@@ -38,6 +38,7 @@ func (c *Client) Public() *Client {
 		return c
 	}
 
+	c.Subs.SubsLimit = 30
 	c.Conn, _, _, c.Err = ws.DefaultDialer.Dial(context.Background(), "wss://api-pub.bitfinex.com/ws/2")
 	return c
 }
