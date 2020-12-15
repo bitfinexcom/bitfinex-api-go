@@ -3,10 +3,9 @@ package subs
 import "github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 
 type Subs struct {
-	Subs map[event.Subscribe]bool
+	Subs      map[event.Subscribe]bool
+	SubsLimit int
 }
-
-const subsLimit = 30
 
 // New returns pointer to instacne of Subscriptions
 func New() *Subs {
@@ -17,7 +16,7 @@ func New() *Subs {
 
 // LimitReached returns true if number of subs > subsLimit
 func (s *Subs) LimitReached() bool {
-	return len(s.Subs) == subsLimit
+	return len(s.Subs) == s.SubsLimit
 }
 
 // Added checks if given subscription is already added. Used to
