@@ -9,6 +9,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
 )
@@ -27,6 +28,7 @@ type Mux struct {
 	transform     bool
 	apiKey        string
 	apiSec        string
+	chanIdToName  map[int64]string
 }
 
 // New returns pointer to instance of mux
@@ -35,6 +37,7 @@ func New() *Mux {
 		publicInbound: make(chan client.Msg),
 		clients:       make(map[int]*client.Client),
 		mtx:           &sync.RWMutex{},
+		chanIdToName:  map[int64]string{},
 	}
 }
 
@@ -101,6 +104,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 				continue
 			}
 
+			// return raw payload data if transform is off
 			if !m.transform {
 				cb(msg.Data, nil)
 				continue
@@ -108,15 +112,22 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 
 			t := bytes.TrimLeftFunc(msg.Data, unicode.IsSpace)
 			if bytes.HasPrefix(t, []byte("[")) {
-				cb(msg.Data, nil)
+				_, err := m.processRaw(msg.Data)
+				if err != nil {
+					cb(nil, fmt.Errorf("parsing msg: %s, err: %s", msg.Data, err))
+				}
 				continue
 			}
 
 			if bytes.HasPrefix(t, []byte("{")) {
-				e := event.Info{}
-				if err := json.Unmarshal(msg.Data, &e); err != nil {
-					cb(nil, fmt.Errorf("failed parsing msg: %s", err))
-					continue
+				e, err := m.processEvent(msg.Data)
+				if err != nil {
+					cb(nil, fmt.Errorf("parsing msg: %s, err: %s", msg.Data, err))
+				}
+				// keep track of chanID:chanName mapping to know what data
+				// type to transform raw payload to
+				if e.Event == "subscribed" {
+					m.chanIdToName[e.ChanID] = e.Channel
 				}
 				cb(e, nil)
 				continue
@@ -125,6 +136,41 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			cb(nil, fmt.Errorf("unrecognized msg signature: %s", msg.Data))
 		}
 	}
+}
+
+func (m *Mux) processEvent(in []byte) (e event.Info, err error) {
+	err = json.Unmarshal(in, &e)
+	return
+}
+
+func (m *Mux) processRaw(in []byte) (raw []interface{}, err error) {
+	if err = json.Unmarshal(in, &raw); err != nil {
+		return
+	}
+
+	// payload data is always last element of the slice
+	pld := raw[len(raw)-1]
+	// chanID is alwaus 1st element of the slice
+	chID := convert.I64ValOrZero(raw[0])
+	// allocate channel name by id to know how to transform raw data
+	channel, ok := m.chanIdToName[chID]
+	if !ok {
+		err = fmt.Errorf("unrecognized chanId:%d", chID)
+		return
+	}
+
+	switch data := pld.(type) {
+	case string:
+		log.Printf("%s chan string pld: %s\n", channel, data)
+	case []interface{}:
+		if _, ok := data[0].([]interface{}); ok {
+			log.Printf("%s chan snapshot pld: %+v\n", channel, data)
+		} else {
+			log.Printf("%s chan update: %+v\n", channel, data)
+		}
+	}
+
+	return
 }
 
 func (m *Mux) reconnect(cid int) {
