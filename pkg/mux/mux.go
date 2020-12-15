@@ -21,14 +21,13 @@ import (
 type Mux struct {
 	cid           int
 	publicInbound chan client.Msg
-	authInbound   chan client.Msg
 	clients       map[int]*client.Client
 	mtx           *sync.RWMutex
 	Err           error
 	transform     bool
 	apiKey        string
 	apiSec        string
-	chanIdToName  map[int64]string
+	chanIDToName  map[int64]string
 }
 
 // New returns pointer to instance of mux
@@ -37,7 +36,7 @@ func New() *Mux {
 		publicInbound: make(chan client.Msg),
 		clients:       make(map[int]*client.Client),
 		mtx:           &sync.RWMutex{},
-		chanIdToName:  map[int64]string{},
+		chanIDToName:  map[int64]string{},
 	}
 }
 
@@ -88,11 +87,6 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 
 	for {
 		select {
-		case msg, ok := <-m.authInbound:
-			if !ok {
-				return errors.New("authenticated channel has closed unexpectedly")
-			}
-			cb(msg.Data, nil)
 		case msg, ok := <-m.publicInbound:
 			if !ok {
 				return errors.New("channel has closed unexpectedly")
@@ -127,7 +121,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 				// keep track of chanID:chanName mapping to know what data
 				// type to transform raw payload to
 				if e.Event == "subscribed" {
-					m.chanIdToName[e.ChanID] = e.Channel
+					m.chanIDToName[e.ChanID] = e.Channel
 				}
 				cb(e, nil)
 				continue
@@ -153,7 +147,7 @@ func (m *Mux) processRaw(in []byte) (raw []interface{}, err error) {
 	// chanID is alwaus 1st element of the slice
 	chID := convert.I64ValOrZero(raw[0])
 	// allocate channel name by id to know how to transform raw data
-	channel, ok := m.chanIdToName[chID]
+	channel, ok := m.chanIDToName[chID]
 	if !ok {
 		err = fmt.Errorf("unrecognized chanId:%d", chID)
 		return
@@ -165,9 +159,9 @@ func (m *Mux) processRaw(in []byte) (raw []interface{}, err error) {
 	case []interface{}:
 		if _, ok := data[0].([]interface{}); ok {
 			log.Printf("%s chan snapshot pld: %+v\n", channel, data)
-		} else {
-			log.Printf("%s chan update: %+v\n", channel, data)
+			return
 		}
+		log.Printf("%s chan update: %+v\n", channel, data)
 	}
 
 	return
