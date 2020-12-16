@@ -2,6 +2,7 @@ package trade
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
@@ -21,36 +22,31 @@ type Snapshot struct {
 	Snapshot []*Trade
 }
 
-// RawToStruct - based on condition will return snapshot of trades or single trade
-func RawToStruct(pair string, data []interface{}) (interface{}, error) {
-	_, isSnapshot := data[0].([]interface{})
-	if isSnapshot {
-		return SnapshotFromRaw(pair, convert.ToInterfaceArray(data))
-	}
-	return FromRaw(pair, data)
-}
-
 func FromRaw(pair string, raw []interface{}) (t *Trade, err error) {
-	if len(raw) < 4 {
-		return t, fmt.Errorf("data slice too short for trade: %#v", raw)
+	if strings.HasPrefix(pair, "t") && len(raw) >= 4 {
+		t = &Trade{
+			Pair:   pair,
+			ID:     convert.I64ValOrZero(raw[0]),
+			MTS:    convert.I64ValOrZero(raw[1]),
+			Amount: convert.F64ValOrZero(raw[2]),
+			Price:  convert.F64ValOrZero(raw[3]),
+		}
+		return
 	}
 
-	t = &Trade{
-		Pair:   pair,
-		ID:     convert.I64ValOrZero(raw[0]),
-		MTS:    convert.I64ValOrZero(raw[1]),
-		Amount: convert.F64ValOrZero(raw[2]),
+	if strings.HasPrefix(pair, "f") && len(raw) >= 5 {
+		t = &Trade{
+			Pair:   pair,
+			ID:     convert.I64ValOrZero(raw[0]),
+			MTS:    convert.I64ValOrZero(raw[1]),
+			Amount: convert.F64ValOrZero(raw[2]),
+			Rate:   convert.F64ValOrZero(raw[3]),
+			Period: convert.ToInt(raw[4]),
+		}
+		return
 	}
 
-	if len(raw) == 4 {
-		t.Price = convert.F64ValOrZero(raw[3])
-	}
-
-	if len(raw) >= 5 {
-		t.Rate = convert.F64ValOrZero(raw[3])
-		t.Period = convert.ToInt(raw[4])
-	}
-
+	err = fmt.Errorf("data slice too short for trade: %#v", raw)
 	return
 }
 
@@ -69,4 +65,13 @@ func SnapshotFromRaw(pair string, raw [][]interface{}) (*Snapshot, error) {
 	}
 
 	return &Snapshot{Snapshot: snapshot}, nil
+}
+
+// FromWSRaw - based on condition will return snapshot of trades or single trade
+func FromWSRaw(pair string, data []interface{}) (interface{}, error) {
+	_, isSnapshot := data[0].([]interface{})
+	if isSnapshot {
+		return SnapshotFromRaw(pair, convert.ToInterfaceArray(data))
+	}
+	return FromRaw(pair, data)
 }
