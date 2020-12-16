@@ -21,6 +21,15 @@ type Snapshot struct {
 	Snapshot []*Trade
 }
 
+// RawToStruct - based on condition will return snapshot of trades or single trade
+func RawToStruct(pair string, data []interface{}) (interface{}, error) {
+	_, isSnapshot := data[0].([]interface{})
+	if isSnapshot {
+		return SnapshotFromRaw(pair, convert.ToInterfaceArray(data))
+	}
+	return FromRaw(pair, data)
+}
+
 func FromRaw(pair string, raw []interface{}) (t *Trade, err error) {
 	if len(raw) < 4 {
 		return t, fmt.Errorf("data slice too short for trade: %#v", raw)
