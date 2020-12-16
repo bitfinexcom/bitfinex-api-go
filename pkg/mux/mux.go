@@ -11,6 +11,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
 )
 
@@ -27,7 +28,7 @@ type Mux struct {
 	transform     bool
 	apiKey        string
 	apiSec        string
-	chanIDToName  map[int64]string
+	chanInfo      map[int64]event.Info
 }
 
 // New returns pointer to instance of mux
@@ -36,10 +37,12 @@ func New() *Mux {
 		publicInbound: make(chan client.Msg),
 		clients:       make(map[int]*client.Client),
 		mtx:           &sync.RWMutex{},
-		chanIDToName:  map[int64]string{},
+		chanInfo:      map[int64]event.Info{},
 	}
 }
 
+// TransformRaw enables data transformation and mapping to appropriate
+// models before sending it to consumer
 func (m *Mux) TransformRaw() *Mux {
 	m.transform = true
 	return m
@@ -64,8 +67,7 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 	return m
 }
 
-// AddClient adds public or authenticated client depending
-// on mux api keys presence
+// AddClient adds public or authenticated client depending on mux api keys presence
 func (m *Mux) AddClient() *Mux {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -106,24 +108,12 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 
 			t := bytes.TrimLeftFunc(msg.Data, unicode.IsSpace)
 			if bytes.HasPrefix(t, []byte("[")) {
-				_, err := m.processRaw(msg.Data)
-				if err != nil {
-					cb(nil, fmt.Errorf("parsing msg: %s, err: %s", msg.Data, err))
-				}
+				cb(m.processRaw(msg.Data))
 				continue
 			}
 
 			if bytes.HasPrefix(t, []byte("{")) {
-				e, err := m.processEvent(msg.Data)
-				if err != nil {
-					cb(nil, fmt.Errorf("parsing msg: %s, err: %s", msg.Data, err))
-				}
-				// keep track of chanID:chanName mapping to know what data
-				// type to transform raw payload to
-				if e.Event == "subscribed" {
-					m.chanIDToName[e.ChanID] = e.Channel
-				}
-				cb(e, nil)
+				cb(m.processEvent(msg.Data))
 				continue
 			}
 
@@ -132,39 +122,45 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 	}
 }
 
-func (m *Mux) processEvent(in []byte) (e event.Info, err error) {
-	err = json.Unmarshal(in, &e)
+func (m *Mux) processEvent(in []byte) (i event.Info, err error) {
+	if err = json.Unmarshal(in, &i); err != nil {
+		return i, fmt.Errorf("parsing msg: %s, err: %s", in, err)
+	}
+	// keep track of chanID to chanInfo mapping
+	if i.Event == "subscribed" {
+		m.chanInfo[i.ChanID] = i
+	}
 	return
 }
 
-func (m *Mux) processRaw(in []byte) (raw []interface{}, err error) {
-	if err = json.Unmarshal(in, &raw); err != nil {
-		return
+func (m *Mux) processRaw(in []byte) (interface{}, error) {
+	var raw []interface{}
+	if err := json.Unmarshal(in, &raw); err != nil {
+		return nil, fmt.Errorf("parsing msg: %s, err: %s", in, err)
 	}
-
 	// payload data is always last element of the slice
 	pld := raw[len(raw)-1]
-	// chanID is alwaus 1st element of the slice
+	// chanID is always 1st element of the slice
 	chID := convert.I64ValOrZero(raw[0])
 	// allocate channel name by id to know how to transform raw data
-	channel, ok := m.chanIDToName[chID]
+	inf, ok := m.chanInfo[chID]
 	if !ok {
-		err = fmt.Errorf("unrecognized chanId:%d", chID)
-		return
+		return nil, fmt.Errorf("unrecognized chanId:%d", chID)
 	}
 
 	switch data := pld.(type) {
 	case string:
-		log.Printf("%s chan string pld: %s\n", channel, data)
+		log.Printf("%d string pld: %s\n", inf.ChanID, data)
 	case []interface{}:
-		if _, ok := data[0].([]interface{}); ok {
-			log.Printf("%s chan snapshot pld: %+v\n", channel, data)
-			return
+		switch inf.Channel {
+		case "trades":
+			return trade.RawToStruct(inf.Pair, data)
+		default:
+			return raw, nil
 		}
-		log.Printf("%s chan update: %+v\n", channel, data)
 	}
 
-	return
+	return nil, nil
 }
 
 func (m *Mux) reconnect(cid int) {
@@ -187,15 +183,15 @@ func (m *Mux) addPublicClient() *Mux {
 	}
 	// adding new client so making sure we increment cid
 	m.cid++
-
+	// create new public client and pass error to mux if any
 	c := client.New(m.cid).Public()
 	if c.Err != nil {
 		m.Err = c.Err
 		return m
 	}
-
+	// add new client to list for later reference
 	m.clients[m.cid] = c
-	// start listening for incoming messages
+	// start listening for incoming client messages
 	go c.Read(m.publicInbound)
 	return m
 }
