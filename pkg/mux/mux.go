@@ -11,6 +11,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
 )
@@ -154,13 +155,13 @@ func (m *Mux) processRaw(in []byte) (interface{}, error) {
 	case []interface{}:
 		switch inf.Channel {
 		case "trades":
-			return trade.RawToStruct(inf.Pair, data)
-		default:
-			return raw, nil
+			return trade.FromWSRaw(inf.Pair, data)
+		case "ticker":
+			return ticker.FromWSRaw(inf.Symbol, data)
 		}
 	}
 
-	return nil, nil
+	return raw, nil
 }
 
 func (m *Mux) reconnect(cid int) {
