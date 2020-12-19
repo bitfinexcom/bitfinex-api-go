@@ -2,6 +2,7 @@ package book
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
@@ -88,6 +89,20 @@ func FromRaw(symbol, precision string, raw []interface{}, rawNumbers interface{}
 	b.Symbol = symbol
 
 	return
+}
+
+// FromWSRaw - based on condition will return snapshot of books or single book
+func FromWSRaw(symbol, precision string, data []interface{}) (interface{}, error) {
+	if len(data) == 0 {
+		return nil, errors.New("empty data slice")
+	}
+
+	_, isSnapshot := data[0].([]interface{})
+	if isSnapshot {
+		return SnapshotFromRaw(symbol, precision, convert.ToInterfaceArray(data), data)
+	}
+
+	return FromRaw(symbol, precision, data, data)
 }
 
 func rawTradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
