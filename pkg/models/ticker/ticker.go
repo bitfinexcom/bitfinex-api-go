@@ -1,6 +1,7 @@
 package ticker
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -102,9 +103,14 @@ func FromRestRaw(raw []interface{}) (t *Ticker, err error) {
 
 // FromWSRaw - based on condition will return snapshot of trades or single trade
 func FromWSRaw(symbol string, data []interface{}) (interface{}, error) {
+	if len(data) == 0 {
+		return nil, errors.New("empty data slice")
+	}
+
 	_, isSnapshot := data[0].([]interface{})
 	if isSnapshot {
 		return SnapshotFromRaw(symbol, convert.ToInterfaceArray(data))
 	}
+
 	return FromRaw(symbol, data)
 }
