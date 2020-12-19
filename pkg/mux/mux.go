@@ -10,6 +10,8 @@ import (
 	"unicode"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
@@ -158,6 +160,10 @@ func (m *Mux) processRaw(in []byte) (interface{}, error) {
 			return trade.FromWSRaw(inf.Pair, data)
 		case "ticker":
 			return ticker.FromWSRaw(inf.Symbol, data)
+		case "book":
+			return book.FromWSRaw(inf.Symbol, inf.Precision, data)
+		case "candles":
+			return candle.FromWSRaw(inf.Key, data)
 		}
 	}
 
