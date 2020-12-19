@@ -1,6 +1,7 @@
 package trade
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -69,9 +70,14 @@ func SnapshotFromRaw(pair string, raw [][]interface{}) (*Snapshot, error) {
 
 // FromWSRaw - based on condition will return snapshot of trades or single trade
 func FromWSRaw(pair string, data []interface{}) (interface{}, error) {
+	if len(data) == 0 {
+		return nil, errors.New("empty data slice")
+	}
+
 	_, isSnapshot := data[0].([]interface{})
 	if isSnapshot {
 		return SnapshotFromRaw(pair, convert.ToInterfaceArray(data))
 	}
+
 	return FromRaw(pair, data)
 }
