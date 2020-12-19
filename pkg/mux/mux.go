@@ -157,7 +157,7 @@ func (m *Mux) processRaw(in []byte) (interface{}, error) {
 	case []interface{}:
 		switch inf.Channel {
 		case "trades":
-			return trade.FromWSRaw(inf.Pair, data)
+			return trade.FromWSRaw(inf.Symbol, data)
 		case "ticker":
 			return ticker.FromWSRaw(inf.Symbol, data)
 		case "book":
