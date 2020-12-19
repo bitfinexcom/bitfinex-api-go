@@ -1,7 +1,9 @@
 package candle
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
@@ -55,4 +57,27 @@ func FromRaw(symbol string, resolution common.CandleResolution, raw []interface{
 	}
 
 	return
+}
+
+// FromWSRaw - based on condition will return snapshot of candles or single candle
+func FromWSRaw(key string, data []interface{}) (interface{}, error) {
+	if len(data) == 0 {
+		return nil, errors.New("empty data slice")
+	}
+
+	_, isSnapshot := data[0].([]interface{})
+	ss := strings.Split(key, ":")
+
+	// basic signature is: "trade:1m:tBTCUSD"
+	if len(ss) < 3 {
+		return nil, fmt.Errorf("invalid key:%s", key)
+	}
+
+	res := common.CandleResolution(ss[1])
+	symbol := ss[2]
+
+	if isSnapshot {
+		return SnapshotFromRaw(symbol, res, convert.ToInterfaceArray(data))
+	}
+	return FromRaw(symbol, res, data)
 }
