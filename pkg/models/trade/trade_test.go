@@ -138,7 +138,7 @@ func TestFromWSRaw(t *testing.T) {
 	t.Run("missing arguments", func(t *testing.T) {
 		payload := []interface{}{}
 
-		got, err := trade.FromRaw("tBTCUSD", payload)
+		got, err := trade.FromWSRaw("tBTCUSD", payload)
 		require.NotNil(t, err)
 		require.Nil(t, got)
 	})
@@ -146,7 +146,7 @@ func TestFromWSRaw(t *testing.T) {
 	t.Run("invalid arguments", func(t *testing.T) {
 		payload := []interface{}{399251013}
 
-		got, err := trade.FromRaw("tBTCUSD", payload)
+		got, err := trade.FromWSRaw("tBTCUSD", payload)
 		require.NotNil(t, err)
 		require.Nil(t, got)
 	})
@@ -159,7 +159,7 @@ func TestFromWSRaw(t *testing.T) {
 			10682,
 		}
 
-		got, err := trade.FromRaw("tBTCUSD", payload)
+		got, err := trade.FromWSRaw("tBTCUSD", payload)
 		require.Nil(t, err)
 
 		expected := &trade.Trade{
@@ -174,15 +174,15 @@ func TestFromWSRaw(t *testing.T) {
 	})
 
 	t.Run("valid snapshot", func(t *testing.T) {
-		payload := [][]interface{}{
-			{
+		payload := []interface{}{
+			[]interface{}{
 				124486873,
 				1567526287066,
 				-210.69675707,
 				0.00034369,
 				2,
 			},
-			{
+			[]interface{}{
 				124486874,
 				1567526287066,
 				-210.69675707,
@@ -191,7 +191,7 @@ func TestFromWSRaw(t *testing.T) {
 			},
 		}
 
-		got, err := trade.SnapshotFromRaw("fUSD", payload)
+		got, err := trade.FromWSRaw("fUSD", payload)
 		require.Nil(t, err)
 
 		expected := &trade.Snapshot{

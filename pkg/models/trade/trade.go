@@ -52,7 +52,7 @@ func FromRaw(pair string, raw []interface{}) (t *Trade, err error) {
 }
 
 func SnapshotFromRaw(pair string, raw [][]interface{}) (*Snapshot, error) {
-	if len(raw) <= 0 {
+	if len(raw) == 0 {
 		return nil, fmt.Errorf("data slice is too short for trade snapshot: %#v", raw)
 	}
 

@@ -65,7 +65,7 @@ func TestNewTickerFromRaw(t *testing.T) {
 		require.Nil(t, got)
 	})
 
-	t.Run("valid len 10 trading ticker", func(t *testing.T) {
+	t.Run("valid trading ticker", func(t *testing.T) {
 		payload := []interface{}{
 			7616.5,
 			31.89055171,
@@ -99,7 +99,7 @@ func TestNewTickerFromRaw(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 
-	t.Run("valid len 16 funding ticker", func(t *testing.T) {
+	t.Run("valid funding ticker", func(t *testing.T) {
 		payload := []interface{}{
 			0.0003447013698630137,
 			0.000316,
@@ -204,6 +204,121 @@ func TestSnapshotFromRaw(t *testing.T) {
 		}
 
 		got, err := ticker.SnapshotFromRaw("tBTCUSD", payload)
+		require.Nil(t, err)
+
+		expected := &ticker.Snapshot{
+			Snapshot: []*ticker.Ticker{
+				{
+					Symbol:              "tBTCUSD",
+					Bid:                 9206.8,
+					BidSize:             21.038892079999997,
+					Ask:                 9205.9,
+					AskSize:             31.41755015,
+					DailyChange:         38.97852525,
+					DailyChangeRelative: 0.0043,
+					LastPrice:           9205.87852525,
+					Volume:              1815.68824558,
+					High:                9299,
+					Low:                 9111.8,
+				},
+				{
+					Symbol:              "tBTCUSD",
+					Bid:                 9205.8,
+					BidSize:             21.038892079999997,
+					Ask:                 9205.9,
+					AskSize:             31.41755015,
+					DailyChange:         38.97852525,
+					DailyChangeRelative: 0.0043,
+					LastPrice:           9205.87852525,
+					Volume:              1815.68824558,
+					High:                9299.1234,
+					Low:                 9111.8,
+				},
+			},
+		}
+
+		assert.Equal(t, expected, got)
+	})
+}
+
+func TestFromWSRaw(t *testing.T) {
+	t.Run("invalid arguments", func(t *testing.T) {
+		payload := []interface{}{7616.5, 31.89055171}
+		got, err := ticker.FromWSRaw("tBTCUSD", payload)
+		require.NotNil(t, err)
+		require.Nil(t, got)
+	})
+
+	t.Run("missing arguments", func(t *testing.T) {
+		payload := []interface{}{}
+		got, err := ticker.FromWSRaw("tBTCUSD", payload)
+		require.NotNil(t, err)
+		require.Nil(t, got)
+	})
+
+	t.Run("valid trading ticker", func(t *testing.T) {
+		payload := []interface{}{
+			7616.5,
+			31.89055171,
+			7617.5,
+			43.358118629999986,
+			-550.8,
+			-0.0674,
+			7617.1,
+			8314.71200815,
+			8257.8,
+			7500,
+		}
+
+		got, err := ticker.FromWSRaw("tBTCUSD", payload)
+		require.Nil(t, err)
+
+		expected := &ticker.Ticker{
+			Symbol:              "tBTCUSD",
+			Bid:                 7616.5,
+			BidSize:             31.89055171,
+			Ask:                 7617.5,
+			AskSize:             43.358118629999986,
+			DailyChange:         -550.8,
+			DailyChangeRelative: -0.0674,
+			LastPrice:           7617.1,
+			Volume:              8314.71200815,
+			High:                8257.8,
+			Low:                 7500,
+		}
+
+		assert.Equal(t, expected, got)
+	})
+
+	t.Run("valid trading ticker snapshot", func(t *testing.T) {
+		payload := []interface{}{
+			[]interface{}{
+				9206.8,
+				21.038892079999997,
+				9205.9,
+				31.41755015,
+				38.97852525,
+				0.0043,
+				9205.87852525,
+				1815.68824558,
+				9299,
+				9111.8,
+			},
+			[]interface{}{
+				9205.8,
+				21.038892079999997,
+				9205.9,
+				31.41755015,
+				38.97852525,
+				0.0043,
+				9205.87852525,
+				1815.68824558,
+				9299.1234,
+				9111.8,
+			},
+		}
+
+		got, err := ticker.FromWSRaw("tBTCUSD", payload)
 		require.Nil(t, err)
 
 		expected := &ticker.Snapshot{
