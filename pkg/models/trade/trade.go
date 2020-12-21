@@ -47,7 +47,7 @@ func FromRaw(pair string, raw []interface{}) (t *Trade, err error) {
 		return
 	}
 
-	err = fmt.Errorf("data slice too short for trade: %#v", raw)
+	err = fmt.Errorf("data slice too short for %s pair: %#v", pair, raw)
 	return
 }
 
