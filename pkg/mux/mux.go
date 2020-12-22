@@ -13,6 +13,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
@@ -164,6 +165,8 @@ func (m *Mux) processRaw(in []byte) (interface{}, error) {
 			return book.FromWSRaw(inf.Symbol, inf.Precision, data)
 		case "candles":
 			return candle.FromWSRaw(inf.Key, data)
+		case "status":
+			return status.FromWSRaw(inf.Key, data)
 		}
 	}
 

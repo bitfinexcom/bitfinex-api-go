@@ -62,7 +62,7 @@ func DerivSnapshotFromRaw(symbol string, raw [][]interface{}) (*DerivativesSnaps
 
 func DerivFromRestRaw(raw []interface{}) (t *Derivative, err error) {
 	if len(raw) == 0 {
-		return t, fmt.Errorf("data slice too short for ticker")
+		return t, fmt.Errorf("data slice too short for derivatives: %#v", raw)
 	}
 
 	return DerivFromRaw(raw[0].(string), raw[1:])
