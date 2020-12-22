@@ -51,6 +51,7 @@ func SnapshotFromRaw(symbol string, raw [][]interface{}) (*Snapshot, error) {
 }
 
 func FromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
+	// trading pair update / snapshot
 	if strings.HasPrefix(symbol, "t") && len(raw) >= 10 {
 		t = &Ticker{
 			Symbol:              symbol,
@@ -68,23 +69,30 @@ func FromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 		return
 	}
 
-	if strings.HasPrefix(symbol, "f") && len(raw) >= 16 {
-		t = &Ticker{
-			Symbol:              symbol,
-			Frr:                 convert.F64ValOrZero(raw[0]),
-			Bid:                 convert.F64ValOrZero(raw[1]),
-			BidPeriod:           convert.I64ValOrZero(raw[2]),
-			BidSize:             convert.F64ValOrZero(raw[3]),
-			Ask:                 convert.F64ValOrZero(raw[4]),
-			AskPeriod:           convert.I64ValOrZero(raw[5]),
-			AskSize:             convert.F64ValOrZero(raw[6]),
-			DailyChange:         convert.F64ValOrZero(raw[7]),
-			DailyChangeRelative: convert.F64ValOrZero(raw[8]),
-			LastPrice:           convert.F64ValOrZero(raw[9]),
-			Volume:              convert.F64ValOrZero(raw[10]),
-			High:                convert.F64ValOrZero(raw[11]),
-			Low:                 convert.F64ValOrZero(raw[12]),
-			FrrAmountAvailable:  convert.F64ValOrZero(raw[15]),
+	if strings.HasPrefix(symbol, "f") {
+		// funding pair update
+		if len(raw) >= 13 {
+			t = &Ticker{
+				Symbol:              symbol,
+				Frr:                 convert.F64ValOrZero(raw[0]),
+				Bid:                 convert.F64ValOrZero(raw[1]),
+				BidPeriod:           convert.I64ValOrZero(raw[2]),
+				BidSize:             convert.F64ValOrZero(raw[3]),
+				Ask:                 convert.F64ValOrZero(raw[4]),
+				AskPeriod:           convert.I64ValOrZero(raw[5]),
+				AskSize:             convert.F64ValOrZero(raw[6]),
+				DailyChange:         convert.F64ValOrZero(raw[7]),
+				DailyChangeRelative: convert.F64ValOrZero(raw[8]),
+				LastPrice:           convert.F64ValOrZero(raw[9]),
+				Volume:              convert.F64ValOrZero(raw[10]),
+				High:                convert.F64ValOrZero(raw[11]),
+				Low:                 convert.F64ValOrZero(raw[12]),
+			}
+		}
+
+		// funding pair snapshot
+		if len(raw) >= 16 {
+			t.FrrAmountAvailable = convert.F64ValOrZero(raw[15])
 		}
 		return
 	}
@@ -101,7 +109,7 @@ func FromRestRaw(raw []interface{}) (t *Ticker, err error) {
 	return FromRaw(raw[0].(string), raw[1:])
 }
 
-// FromWSRaw - based on condition will return snapshot of trades or single trade
+// FromWSRaw - based on condition will return snapshot of tickes or single tick
 func FromWSRaw(symbol string, data []interface{}) (interface{}, error) {
 	if len(data) == 0 {
 		return nil, errors.New("empty data slice")

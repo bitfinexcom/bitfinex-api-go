@@ -56,7 +56,7 @@ func TestNewTickerFromRestRaw(t *testing.T) {
 	})
 }
 
-func TestNewTickerFromRaw(t *testing.T) {
+func TestFromRaw(t *testing.T) {
 	t.Run("invalid arguments", func(t *testing.T) {
 		payload := []interface{}{7616.5, 31.89055171}
 
@@ -65,7 +65,7 @@ func TestNewTickerFromRaw(t *testing.T) {
 		require.Nil(t, got)
 	})
 
-	t.Run("valid trading ticker", func(t *testing.T) {
+	t.Run("trading pair update / snapshot ticker", func(t *testing.T) {
 		payload := []interface{}{
 			7616.5,
 			31.89055171,
@@ -99,7 +99,7 @@ func TestNewTickerFromRaw(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 
-	t.Run("valid funding ticker", func(t *testing.T) {
+	t.Run("funding pair spanshot ticker", func(t *testing.T) {
 		payload := []interface{}{
 			0.0003447013698630137,
 			0.000316,
@@ -142,6 +142,46 @@ func TestNewTickerFromRaw(t *testing.T) {
 
 		assert.Equal(t, expected, got)
 	})
+
+	t.Run("funding pair update ticker", func(t *testing.T) {
+		payload := []interface{}{
+			0.0003447013698630137,
+			0.000316,
+			30,
+			1682003.0922634401,
+			0.00031783,
+			4,
+			23336.958053110004,
+			0.00000707,
+			0.0209,
+			0.0003446,
+			156123478.78447533,
+			0.000347,
+			0.00009,
+		}
+
+		got, err := ticker.FromRaw("fUSD", payload)
+		require.Nil(t, err)
+
+		expected := &ticker.Ticker{
+			Symbol:              "fUSD",
+			Frr:                 0.0003447013698630137,
+			Bid:                 0.000316,
+			BidPeriod:           30,
+			BidSize:             1682003.0922634401,
+			Ask:                 0.00031783,
+			AskPeriod:           4,
+			AskSize:             23336.958053110004,
+			DailyChange:         0.00000707,
+			DailyChangeRelative: 0.0209,
+			LastPrice:           0.0003446,
+			Volume:              156123478.78447533,
+			High:                0.000347,
+			Low:                 0.00009,
+		}
+
+		assert.Equal(t, expected, got)
+	})
 }
 
 func TestSnapshotFromRaw(t *testing.T) {
@@ -175,7 +215,7 @@ func TestSnapshotFromRaw(t *testing.T) {
 		require.Nil(t, got)
 	})
 
-	t.Run("valid trade arguments", func(t *testing.T) {
+	t.Run("trading pair snapshot", func(t *testing.T) {
 		payload := [][]interface{}{
 			{
 				9206.8,
@@ -187,18 +227,6 @@ func TestSnapshotFromRaw(t *testing.T) {
 				9205.87852525,
 				1815.68824558,
 				9299,
-				9111.8,
-			},
-			{
-				9205.8,
-				21.038892079999997,
-				9205.9,
-				31.41755015,
-				38.97852525,
-				0.0043,
-				9205.87852525,
-				1815.68824558,
-				9299.1234,
 				9111.8,
 			},
 		}
@@ -219,19 +247,6 @@ func TestSnapshotFromRaw(t *testing.T) {
 					LastPrice:           9205.87852525,
 					Volume:              1815.68824558,
 					High:                9299,
-					Low:                 9111.8,
-				},
-				{
-					Symbol:              "tBTCUSD",
-					Bid:                 9205.8,
-					BidSize:             21.038892079999997,
-					Ask:                 9205.9,
-					AskSize:             31.41755015,
-					DailyChange:         38.97852525,
-					DailyChangeRelative: 0.0043,
-					LastPrice:           9205.87852525,
-					Volume:              1815.68824558,
-					High:                9299.1234,
 					Low:                 9111.8,
 				},
 			},
@@ -256,7 +271,7 @@ func TestFromWSRaw(t *testing.T) {
 		require.Nil(t, got)
 	})
 
-	t.Run("valid trading ticker", func(t *testing.T) {
+	t.Run("trading pair ticker", func(t *testing.T) {
 		payload := []interface{}{
 			7616.5,
 			31.89055171,
@@ -290,7 +305,7 @@ func TestFromWSRaw(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 
-	t.Run("valid trading ticker snapshot", func(t *testing.T) {
+	t.Run("valid trading pair ticker snapshot", func(t *testing.T) {
 		payload := []interface{}{
 			[]interface{}{
 				9206.8,
@@ -302,18 +317,6 @@ func TestFromWSRaw(t *testing.T) {
 				9205.87852525,
 				1815.68824558,
 				9299,
-				9111.8,
-			},
-			[]interface{}{
-				9205.8,
-				21.038892079999997,
-				9205.9,
-				31.41755015,
-				38.97852525,
-				0.0043,
-				9205.87852525,
-				1815.68824558,
-				9299.1234,
 				9111.8,
 			},
 		}
@@ -334,19 +337,6 @@ func TestFromWSRaw(t *testing.T) {
 					LastPrice:           9205.87852525,
 					Volume:              1815.68824558,
 					High:                9299,
-					Low:                 9111.8,
-				},
-				{
-					Symbol:              "tBTCUSD",
-					Bid:                 9205.8,
-					BidSize:             21.038892079999997,
-					Ask:                 9205.9,
-					AskSize:             31.41755015,
-					DailyChange:         38.97852525,
-					DailyChangeRelative: 0.0043,
-					LastPrice:           9205.87852525,
-					Volume:              1815.68824558,
-					High:                9299.1234,
 					Low:                 9111.8,
 				},
 			},
