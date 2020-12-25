@@ -1,22 +1,14 @@
 package mux
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"sync"
-	"unicode"
 
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/msg"
 )
 
 // Mux will manage all connections and subscriptions. Will check if subscriptions
@@ -24,24 +16,28 @@ import (
 // to all incomming client messages and reconnect client with all its subscriptions
 // in case of a failure
 type Mux struct {
-	cid           int
-	publicInbound chan client.Msg
-	clients       map[int]*client.Client
-	mtx           *sync.RWMutex
-	Err           error
-	transform     bool
-	apiKey        string
-	apiSec        string
-	chanInfo      map[int64]event.Info
+	cid            int
+	publicInbound  chan msg.Msg
+	privateInbound chan msg.Msg
+	publicClients  map[int]*client.Client
+	privateClient  *client.Client
+	mtx            *sync.RWMutex
+	Err            error
+	transform      bool
+	apikey         string
+	apisec         string
+	subInfo        map[int64]event.Info
+	authenticated  bool
 }
 
 // New returns pointer to instance of mux
 func New() *Mux {
 	return &Mux{
-		publicInbound: make(chan client.Msg),
-		clients:       make(map[int]*client.Client),
-		mtx:           &sync.RWMutex{},
-		chanInfo:      map[int64]event.Info{},
+		publicInbound:  make(chan msg.Msg),
+		privateInbound: make(chan msg.Msg),
+		publicClients:  make(map[int]*client.Client),
+		mtx:            &sync.RWMutex{},
+		subInfo:        map[int64]event.Info{},
 	}
 }
 
@@ -52,35 +48,43 @@ func (m *Mux) TransformRaw() *Mux {
 	return m
 }
 
-// Subscribe - given the details in form of hash table, subscribes client
+// WithApiKEY accepts and persists api key
+func (m *Mux) WithApiKEY(key string) *Mux {
+	m.apikey = key
+	return m
+}
+
+// WithApiSEC accepts and persists api sec
+func (m *Mux) WithApiSEC(sec string) *Mux {
+	m.apisec = sec
+	return m
+}
+
+// Subscribe - given the details in form of event.Subscribe, subscribes client
 func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	if m.Err != nil {
 		return m
 	}
 
-	if alreadySubscribed := m.clients[m.cid].Subs.Added(sub); alreadySubscribed {
+	if alreadySubscribed := m.publicClients[m.cid].Subs.Added(sub); alreadySubscribed {
 		return m
 	}
 
-	m.clients[m.cid].Subscribe(sub)
+	m.publicClients[m.cid].Subscribe(sub)
 
-	if limitReached := m.clients[m.cid].Subs.LimitReached(); limitReached {
+	if limitReached := m.publicClients[m.cid].Subs.LimitReached(); limitReached {
 		log.Printf("30 subs limit is reached on cid: %d, spawning new conn\n", m.cid)
-		m.AddClient()
+		m.addClient()
 	}
 	return m
 }
 
-// AddClient adds public or authenticated client depending on mux api keys presence
-func (m *Mux) AddClient() *Mux {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-
-	if len(m.apiKey) == 0 && len(m.apiSec) == 0 {
-		return m.addPublicClient()
-	}
-
-	return m.addPrivateClient()
+// Start creates initial clients for accepting connections
+func (m *Mux) Start() *Mux {
+	return m.addClient()
 }
 
 // Listen accepts a callback func that will get called each time mux receives a
@@ -93,104 +97,85 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 
 	for {
 		select {
-		case msg, ok := <-m.publicInbound:
+		case ms, ok := <-m.publicInbound:
 			if !ok {
 				return errors.New("channel has closed unexpectedly")
 			}
 
-			if msg.Err != nil {
-				cb(nil, fmt.Errorf("conn:%d has failed | err:%s | reconnecting", msg.CID, msg.Err))
-				m.reconnect(msg.CID)
+			if ms.Err != nil {
+				cb(nil, fmt.Errorf("conn:%d has failed | err:%s | reconnecting", ms.CID, ms.Err))
+				m.reconnect(ms.CID)
 				continue
 			}
 
 			// return raw payload data if transform is off
 			if !m.transform {
-				cb(msg.Data, nil)
+				cb(ms.Data, nil)
 				continue
 			}
 
-			t := bytes.TrimLeftFunc(msg.Data, unicode.IsSpace)
-			if bytes.HasPrefix(t, []byte("[")) {
-				cb(m.processRaw(msg.Data))
+			// handle event type message
+			if ms.IsEvent() {
+				cb(m.trackSub(ms.ProcessEvent()))
 				continue
 			}
 
-			if bytes.HasPrefix(t, []byte("{")) {
-				cb(m.processEvent(msg.Data))
+			// handle data type message
+			if ms.IsRaw() {
+				cb(ms.ProcessRaw(m.subInfo))
 				continue
 			}
 
-			cb(nil, fmt.Errorf("unrecognized msg signature: %s", msg.Data))
+			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
 		}
 	}
 }
 
-func (m *Mux) processEvent(in []byte) (i event.Info, err error) {
-	if err = json.Unmarshal(in, &i); err != nil {
-		return i, fmt.Errorf("parsing msg: %s, err: %s", in, err)
-	}
-	// keep track of chanID to chanInfo mapping
-	if i.Event == "subscribed" {
-		m.chanInfo[i.ChanID] = i
-	}
-	return
+func (m *Mux) hasAPIKeys() bool {
+	return len(m.apikey) != 0 && len(m.apisec) != 0
 }
 
-func (m *Mux) processRaw(in []byte) (interface{}, error) {
-	var raw []interface{}
-	if err := json.Unmarshal(in, &raw); err != nil {
-		return nil, fmt.Errorf("parsing msg: %s, err: %s", in, err)
-	}
-	// payload data is always last element of the slice
-	pld := raw[len(raw)-1]
-	// chanID is always 1st element of the slice
-	chID := convert.I64ValOrZero(raw[0])
-	// allocate channel name by id to know how to transform raw data
-	inf, ok := m.chanInfo[chID]
-	if !ok {
-		return nil, fmt.Errorf("unrecognized chanId:%d", chID)
+func (m *Mux) addClient() *Mux {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if m.Err != nil {
+		return m
 	}
 
-	switch data := pld.(type) {
-	case string:
-		log.Printf("%d string pld: %s\n", inf.ChanID, data)
-	case []interface{}:
-		switch inf.Channel {
-		case "trades":
-			return trade.FromWSRaw(inf.Symbol, data)
-		case "ticker":
-			return ticker.FromWSRaw(inf.Symbol, data)
-		case "book":
-			return book.FromWSRaw(inf.Symbol, inf.Precision, data)
-		case "candles":
-			return candle.FromWSRaw(inf.Key, data)
-		case "status":
-			return status.FromWSRaw(inf.Key, data)
-		}
+	if m.hasAPIKeys() && m.privateClient == nil {
+		m.addPrivateClient()
 	}
 
-	return raw, nil
+	return m.addPublicClient()
+}
+
+func (m *Mux) trackSub(i event.Info, err error) (event.Info, error) {
+	// keep track of chanID to subInfo mapping
+	if i.Event == "subscribed" || i.Event == "auth" {
+		m.subInfo[i.ChanID] = i
+	}
+	m.authenticated = i.Event == "auth"
+	return i, err
 }
 
 func (m *Mux) reconnect(cid int) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 	// pull old client subscriptions
-	subs := m.clients[cid].Subs.GetAll()
+	subs := m.publicClients[cid].Subs.GetAll()
 	// add fresh client
-	m.AddClient()
+	m.addClient()
 	// resubscribe old events
 	for _, sub := range subs {
 		log.Printf("resubscribing: %+v\n", sub)
 		m.Subscribe(sub)
 	}
 	// remove old, closed channel from the lost
-	delete(m.clients, cid)
+	delete(m.publicClients, cid)
 }
 
 func (m *Mux) addPublicClient() *Mux {
-	if m.Err != nil {
-		return m
-	}
 	// adding new client so making sure we increment cid
 	m.cid++
 	// create new public client and pass error to mux if any
@@ -200,17 +185,24 @@ func (m *Mux) addPublicClient() *Mux {
 		return m
 	}
 	// add new client to list for later reference
-	m.clients[m.cid] = c
+	m.publicClients[m.cid] = c
 	// start listening for incoming client messages
 	go c.Read(m.publicInbound)
 	return m
 }
 
 func (m *Mux) addPrivateClient() *Mux {
-	if m.Err != nil {
+	// create new private client and pass error to mux if any
+	c := client.
+		New(m.cid).
+		Private(m.apikey, m.apisec)
+
+	if c.Err != nil {
+		m.Err = c.Err
 		return m
 	}
 
-	// TODO: implement auth channel handler
+	m.privateClient = c
+	go c.Read(m.privateInbound)
 	return m
 }
