@@ -8,6 +8,11 @@ type Subscribe struct {
 	Frequency string `json:"freq,omitempty"`
 	Len       string `json:"len,omitempty"`
 	Key       string `json:"key,omitempty"`
+	// auth related part
+	APIKEY      string `json:"apiKey,omitempty"`
+	AuthSig     string `json:"authSig,omitempty"`
+	AuthPayload string `json:"authPayload,omitempty"`
+	AuthNonce   string `json:"authNonce,omitempty"`
 }
 
 type Info struct {
