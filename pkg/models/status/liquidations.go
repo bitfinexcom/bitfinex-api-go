@@ -39,6 +39,10 @@ func LiqFromRaw(raw []interface{}) (*Liquidation, error) {
 }
 
 func LiqSnapshotFromRaw(raw [][]interface{}) (*LiquidationsSnapshot, error) {
+	if len(raw) == 0 {
+		return nil, fmt.Errorf("empty data slice")
+	}
+
 	snapshot := make([]*Liquidation, len(raw))
 	for i, r := range raw {
 		l, err := LiqFromRaw(r)
