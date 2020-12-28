@@ -49,6 +49,10 @@ func DerivFromRaw(symbol string, raw []interface{}) (*Derivative, error) {
 }
 
 func DerivSnapshotFromRaw(symbol string, raw [][]interface{}) (*DerivativesSnapshot, error) {
+	if len(raw) == 0 {
+		return nil, fmt.Errorf("empty data slice")
+	}
+
 	snapshot := make([]*Derivative, len(raw))
 	for i, r := range raw {
 		d, err := DerivFromRaw(symbol, r)
