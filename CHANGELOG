@@ -1,3 +1,7 @@
+3.0.2
+- Fixes
+    - nonce issue to be compatible with other libraries
+
 3.0.1
 - New rest v2 functions
     - Pulse.AddComment
