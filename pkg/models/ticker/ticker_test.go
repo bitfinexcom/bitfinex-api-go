@@ -36,20 +36,20 @@ func TestNewTickerFromRestRaw(t *testing.T) {
 		require.Nil(t, err)
 
 		expected := &ticker.Ticker{
-			Symbol:              "tBTCUSD",
-			Frr:                 0,
-			Bid:                 10654,
-			BidPeriod:           0,
-			BidSize:             53.62425959,
-			Ask:                 10655,
-			AskPeriod:           0,
-			AskSize:             76.68743116,
-			DailyChange:         745.1,
-			DailyChangeRelative: 0.0752,
-			LastPrice:           10655,
-			Volume:              14420.34271146,
-			High:                10766,
-			Low:                 9889.1449809,
+			Symbol:          "tBTCUSD",
+			Frr:             0,
+			Bid:             10654,
+			BidPeriod:       0,
+			BidSize:         53.62425959,
+			Ask:             10655,
+			AskPeriod:       0,
+			AskSize:         76.68743116,
+			DailyChange:     745.1,
+			DailyChangePerc: 0.0752,
+			LastPrice:       10655,
+			Volume:          14420.34271146,
+			High:            10766,
+			Low:             9889.1449809,
 		}
 
 		assert.Equal(t, expected, got)
@@ -83,17 +83,17 @@ func TestFromRaw(t *testing.T) {
 		require.Nil(t, err)
 
 		expected := &ticker.Ticker{
-			Symbol:              "tBTCUSD",
-			Bid:                 7616.5,
-			BidSize:             31.89055171,
-			Ask:                 7617.5,
-			AskSize:             43.358118629999986,
-			DailyChange:         -550.8,
-			DailyChangeRelative: -0.0674,
-			LastPrice:           7617.1,
-			Volume:              8314.71200815,
-			High:                8257.8,
-			Low:                 7500,
+			Symbol:          "tBTCUSD",
+			Bid:             7616.5,
+			BidSize:         31.89055171,
+			Ask:             7617.5,
+			AskSize:         43.358118629999986,
+			DailyChange:     -550.8,
+			DailyChangePerc: -0.0674,
+			LastPrice:       7617.1,
+			Volume:          8314.71200815,
+			High:            8257.8,
+			Low:             7500,
 		}
 
 		assert.Equal(t, expected, got)
@@ -123,21 +123,21 @@ func TestFromRaw(t *testing.T) {
 		require.Nil(t, err)
 
 		expected := &ticker.Ticker{
-			Symbol:              "fUSD",
-			Frr:                 0.0003447013698630137,
-			Bid:                 0.000316,
-			BidPeriod:           30,
-			BidSize:             1682003.0922634401,
-			Ask:                 0.00031783,
-			AskPeriod:           4,
-			AskSize:             23336.958053110004,
-			DailyChange:         0.00000707,
-			DailyChangeRelative: 0.0209,
-			LastPrice:           0.0003446,
-			Volume:              156123478.78447533,
-			High:                0.000347,
-			Low:                 0.00009,
-			FrrAmountAvailable:  146247919.52883354,
+			Symbol:             "fUSD",
+			Frr:                0.0003447013698630137,
+			Bid:                0.000316,
+			BidPeriod:          30,
+			BidSize:            1682003.0922634401,
+			Ask:                0.00031783,
+			AskPeriod:          4,
+			AskSize:            23336.958053110004,
+			DailyChange:        0.00000707,
+			DailyChangePerc:    0.0209,
+			LastPrice:          0.0003446,
+			Volume:             156123478.78447533,
+			High:               0.000347,
+			Low:                0.00009,
+			FrrAmountAvailable: 146247919.52883354,
 		}
 
 		assert.Equal(t, expected, got)
@@ -164,20 +164,20 @@ func TestFromRaw(t *testing.T) {
 		require.Nil(t, err)
 
 		expected := &ticker.Ticker{
-			Symbol:              "fUSD",
-			Frr:                 0.0003447013698630137,
-			Bid:                 0.000316,
-			BidPeriod:           30,
-			BidSize:             1682003.0922634401,
-			Ask:                 0.00031783,
-			AskPeriod:           4,
-			AskSize:             23336.958053110004,
-			DailyChange:         0.00000707,
-			DailyChangeRelative: 0.0209,
-			LastPrice:           0.0003446,
-			Volume:              156123478.78447533,
-			High:                0.000347,
-			Low:                 0.00009,
+			Symbol:          "fUSD",
+			Frr:             0.0003447013698630137,
+			Bid:             0.000316,
+			BidPeriod:       30,
+			BidSize:         1682003.0922634401,
+			Ask:             0.00031783,
+			AskPeriod:       4,
+			AskSize:         23336.958053110004,
+			DailyChange:     0.00000707,
+			DailyChangePerc: 0.0209,
+			LastPrice:       0.0003446,
+			Volume:          156123478.78447533,
+			High:            0.000347,
+			Low:             0.00009,
 		}
 
 		assert.Equal(t, expected, got)
@@ -237,17 +237,17 @@ func TestSnapshotFromRaw(t *testing.T) {
 		expected := &ticker.Snapshot{
 			Snapshot: []*ticker.Ticker{
 				{
-					Symbol:              "tBTCUSD",
-					Bid:                 9206.8,
-					BidSize:             21.038892079999997,
-					Ask:                 9205.9,
-					AskSize:             31.41755015,
-					DailyChange:         38.97852525,
-					DailyChangeRelative: 0.0043,
-					LastPrice:           9205.87852525,
-					Volume:              1815.68824558,
-					High:                9299,
-					Low:                 9111.8,
+					Symbol:          "tBTCUSD",
+					Bid:             9206.8,
+					BidSize:         21.038892079999997,
+					Ask:             9205.9,
+					AskSize:         31.41755015,
+					DailyChange:     38.97852525,
+					DailyChangePerc: 0.0043,
+					LastPrice:       9205.87852525,
+					Volume:          1815.68824558,
+					High:            9299,
+					Low:             9111.8,
 				},
 			},
 		}
@@ -289,17 +289,17 @@ func TestFromWSRaw(t *testing.T) {
 		require.Nil(t, err)
 
 		expected := &ticker.Ticker{
-			Symbol:              "tBTCUSD",
-			Bid:                 7616.5,
-			BidSize:             31.89055171,
-			Ask:                 7617.5,
-			AskSize:             43.358118629999986,
-			DailyChange:         -550.8,
-			DailyChangeRelative: -0.0674,
-			LastPrice:           7617.1,
-			Volume:              8314.71200815,
-			High:                8257.8,
-			Low:                 7500,
+			Symbol:          "tBTCUSD",
+			Bid:             7616.5,
+			BidSize:         31.89055171,
+			Ask:             7617.5,
+			AskSize:         43.358118629999986,
+			DailyChange:     -550.8,
+			DailyChangePerc: -0.0674,
+			LastPrice:       7617.1,
+			Volume:          8314.71200815,
+			High:            8257.8,
+			Low:             7500,
 		}
 
 		assert.Equal(t, expected, got)
@@ -327,17 +327,17 @@ func TestFromWSRaw(t *testing.T) {
 		expected := &ticker.Snapshot{
 			Snapshot: []*ticker.Ticker{
 				{
-					Symbol:              "tBTCUSD",
-					Bid:                 9206.8,
-					BidSize:             21.038892079999997,
-					Ask:                 9205.9,
-					AskSize:             31.41755015,
-					DailyChange:         38.97852525,
-					DailyChangeRelative: 0.0043,
-					LastPrice:           9205.87852525,
-					Volume:              1815.68824558,
-					High:                9299,
-					Low:                 9111.8,
+					Symbol:          "tBTCUSD",
+					Bid:             9206.8,
+					BidSize:         21.038892079999997,
+					Ask:             9205.9,
+					AskSize:         31.41755015,
+					DailyChange:     38.97852525,
+					DailyChangePerc: 0.0043,
+					LastPrice:       9205.87852525,
+					Volume:          1815.68824558,
+					High:            9299,
+					Low:             9111.8,
 				},
 			},
 		}

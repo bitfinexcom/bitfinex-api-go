@@ -9,20 +9,20 @@ import (
 )
 
 type Ticker struct {
-	Symbol              string
-	Frr                 float64
-	Bid                 float64
-	BidPeriod           int64
-	BidSize             float64
-	Ask                 float64
-	AskPeriod           int64
-	AskSize             float64
-	DailyChange         float64
-	DailyChangeRelative float64
-	LastPrice           float64
-	Volume              float64
-	High                float64
-	Low                 float64
+	Symbol          string
+	Frr             float64
+	Bid             float64
+	BidPeriod       int64
+	BidSize         float64
+	Ask             float64
+	AskPeriod       int64
+	AskSize         float64
+	DailyChange     float64
+	DailyChangePerc float64
+	LastPrice       float64
+	Volume          float64
+	High            float64
+	Low             float64
 	// PLACEHOLDER,
 	// PLACEHOLDER,
 	FrrAmountAvailable float64
@@ -54,17 +54,17 @@ func FromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 	// trading pair update / snapshot
 	if strings.HasPrefix(symbol, "t") && len(raw) >= 10 {
 		t = &Ticker{
-			Symbol:              symbol,
-			Bid:                 convert.F64ValOrZero(raw[0]),
-			BidSize:             convert.F64ValOrZero(raw[1]),
-			Ask:                 convert.F64ValOrZero(raw[2]),
-			AskSize:             convert.F64ValOrZero(raw[3]),
-			DailyChange:         convert.F64ValOrZero(raw[4]),
-			DailyChangeRelative: convert.F64ValOrZero(raw[5]),
-			LastPrice:           convert.F64ValOrZero(raw[6]),
-			Volume:              convert.F64ValOrZero(raw[7]),
-			High:                convert.F64ValOrZero(raw[8]),
-			Low:                 convert.F64ValOrZero(raw[9]),
+			Symbol:          symbol,
+			Bid:             convert.F64ValOrZero(raw[0]),
+			BidSize:         convert.F64ValOrZero(raw[1]),
+			Ask:             convert.F64ValOrZero(raw[2]),
+			AskSize:         convert.F64ValOrZero(raw[3]),
+			DailyChange:     convert.F64ValOrZero(raw[4]),
+			DailyChangePerc: convert.F64ValOrZero(raw[5]),
+			LastPrice:       convert.F64ValOrZero(raw[6]),
+			Volume:          convert.F64ValOrZero(raw[7]),
+			High:            convert.F64ValOrZero(raw[8]),
+			Low:             convert.F64ValOrZero(raw[9]),
 		}
 		return
 	}
@@ -73,20 +73,20 @@ func FromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 		// funding pair update
 		if len(raw) >= 13 {
 			t = &Ticker{
-				Symbol:              symbol,
-				Frr:                 convert.F64ValOrZero(raw[0]),
-				Bid:                 convert.F64ValOrZero(raw[1]),
-				BidPeriod:           convert.I64ValOrZero(raw[2]),
-				BidSize:             convert.F64ValOrZero(raw[3]),
-				Ask:                 convert.F64ValOrZero(raw[4]),
-				AskPeriod:           convert.I64ValOrZero(raw[5]),
-				AskSize:             convert.F64ValOrZero(raw[6]),
-				DailyChange:         convert.F64ValOrZero(raw[7]),
-				DailyChangeRelative: convert.F64ValOrZero(raw[8]),
-				LastPrice:           convert.F64ValOrZero(raw[9]),
-				Volume:              convert.F64ValOrZero(raw[10]),
-				High:                convert.F64ValOrZero(raw[11]),
-				Low:                 convert.F64ValOrZero(raw[12]),
+				Symbol:          symbol,
+				Frr:             convert.F64ValOrZero(raw[0]),
+				Bid:             convert.F64ValOrZero(raw[1]),
+				BidPeriod:       convert.I64ValOrZero(raw[2]),
+				BidSize:         convert.F64ValOrZero(raw[3]),
+				Ask:             convert.F64ValOrZero(raw[4]),
+				AskPeriod:       convert.I64ValOrZero(raw[5]),
+				AskSize:         convert.F64ValOrZero(raw[6]),
+				DailyChange:     convert.F64ValOrZero(raw[7]),
+				DailyChangePerc: convert.F64ValOrZero(raw[8]),
+				LastPrice:       convert.F64ValOrZero(raw[9]),
+				Volume:          convert.F64ValOrZero(raw[10]),
+				High:            convert.F64ValOrZero(raw[11]),
+				Low:             convert.F64ValOrZero(raw[12]),
 			}
 		}
 
