@@ -123,3 +123,17 @@ func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 
 	return
 }
+
+func FromWSRaw(raw []interface{}, op string) (interface{}, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	switch op {
+	case "on":
+		return New(*o), nil
+	}
+
+	return o, nil
+}
