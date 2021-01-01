@@ -116,7 +116,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 
 			// handle event type message
 			if ms.IsEvent() {
-				cb(m.trackSub(ms.ProcessEvent()))
+				cb(m.handleEvent(ms.ProcessEvent()))
 				continue
 			}
 
@@ -150,12 +150,19 @@ func (m *Mux) addClient() *Mux {
 	return m.addPublicClient()
 }
 
-func (m *Mux) trackSub(i event.Info, err error) (event.Info, error) {
-	// keep track of chanID to subInfo mapping
-	if i.Event == "subscribed" || i.Event == "auth" {
+func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
+	switch i.Event {
+	case "subscribed":
 		m.subInfo[i.ChanID] = i
+		break
+	case "auth":
+		m.subInfo[i.ChanID] = i
+		m.authenticated = true
+		break
+	default:
+		fmt.Printf("unhandled evtn: %+v\n", i)
 	}
-	m.authenticated = i.Event == "auth"
+
 	return i, err
 }
 
