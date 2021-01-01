@@ -16,28 +16,28 @@ import (
 // to all incomming client messages and reconnect client with all its subscriptions
 // in case of a failure
 type Mux struct {
-	cid            int
-	publicInbound  chan msg.Msg
-	privateInbound chan msg.Msg
-	publicClients  map[int]*client.Client
-	privateClient  *client.Client
-	mtx            *sync.RWMutex
-	Err            error
-	transform      bool
-	apikey         string
-	apisec         string
-	subInfo        map[int64]event.Info
-	authenticated  bool
+	cid           int
+	publicChan    chan msg.Msg
+	publicClients map[int]*client.Client
+	privateChan   chan msg.Msg
+	privateClient *client.Client
+	mtx           *sync.RWMutex
+	Err           error
+	transform     bool
+	apikey        string
+	apisec        string
+	subInfo       map[int64]event.Info
+	authenticated bool
 }
 
 // New returns pointer to instance of mux
 func New() *Mux {
 	return &Mux{
-		publicInbound:  make(chan msg.Msg),
-		privateInbound: make(chan msg.Msg),
-		publicClients:  make(map[int]*client.Client),
-		mtx:            &sync.RWMutex{},
-		subInfo:        map[int64]event.Info{},
+		publicChan:    make(chan msg.Msg),
+		privateChan:   make(chan msg.Msg),
+		publicClients: make(map[int]*client.Client),
+		mtx:           &sync.RWMutex{},
+		subInfo:       map[int64]event.Info{},
 	}
 }
 
@@ -48,19 +48,20 @@ func (m *Mux) TransformRaw() *Mux {
 	return m
 }
 
-// WithApiKEY accepts and persists api key
-func (m *Mux) WithApiKEY(key string) *Mux {
+// WithAPIKEY accepts and persists api key
+func (m *Mux) WithAPIKEY(key string) *Mux {
 	m.apikey = key
 	return m
 }
 
-// WithApiSEC accepts and persists api sec
-func (m *Mux) WithApiSEC(sec string) *Mux {
+// WithAPISEC accepts and persists api sec
+func (m *Mux) WithAPISEC(sec string) *Mux {
 	m.apisec = sec
 	return m
 }
 
-// Subscribe - given the details in form of event.Subscribe, subscribes client
+// Subscribe - given the details in form of event.Subscribe,
+// subscribes client to public channels
 func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -76,7 +77,7 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 	m.publicClients[m.cid].Subscribe(sub)
 
 	if limitReached := m.publicClients[m.cid].Subs.LimitReached(); limitReached {
-		log.Printf("30 subs limit is reached on cid: %d, spawning new conn\n", m.cid)
+		log.Printf("subs limit is reached on cid: %d, spawning new conn\n", m.cid)
 		m.addClient()
 	}
 	return m
@@ -87,9 +88,9 @@ func (m *Mux) Start() *Mux {
 	return m.addClient()
 }
 
-// Listen accepts a callback func that will get called each time mux receives a
-// message from any of its clients/subscriptions. It should be called last, after
-// all setup calls are made as it's blocking
+// Listen accepts a callback func that will get called each time mux
+// receives a message from any of its clients/subscriptions. It
+// should be called last, after all setup calls are made
 func (m *Mux) Listen(cb func(interface{}, error)) error {
 	if m.Err != nil {
 		return m.Err
@@ -97,38 +98,67 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 
 	for {
 		select {
-		case ms, ok := <-m.publicInbound:
+		case ms, ok := <-m.publicChan:
 			if !ok {
 				return errors.New("channel has closed unexpectedly")
 			}
-
 			if ms.Err != nil {
 				cb(nil, fmt.Errorf("conn:%d has failed | err:%s | reconnecting", ms.CID, ms.Err))
 				m.reconnect(ms.CID)
 				continue
 			}
-
 			// return raw payload data if transform is off
 			if !m.transform {
 				cb(ms.Data, nil)
 				continue
 			}
-
 			// handle event type message
 			if ms.IsEvent() {
 				cb(m.handleEvent(ms.ProcessEvent()))
 				continue
 			}
-
 			// handle data type message
 			if ms.IsRaw() {
 				cb(ms.ProcessRaw(m.subInfo))
 				continue
 			}
-
+			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
+		case ms, ok := <-m.privateChan:
+			if !ok {
+				return errors.New("private channel has closed unexpectedly")
+			}
+			if ms.Err != nil {
+				cb(nil, fmt.Errorf("conn has failed | err:%s | reconnecting", ms.Err))
+				// m.reconnectPrivate(ms.CID) // TODO
+				continue
+			}
+			// return raw payload data if transform is off
+			if !m.transform {
+				cb(ms.Data, nil)
+				continue
+			}
+			// handle event type message
+			if ms.IsEvent() {
+				cb(m.handleEvent(ms.ProcessEvent()))
+				continue
+			}
+			// handle data type message
+			if ms.IsRaw() {
+				cb(ms.ProcessPrivateRaw())
+				continue
+			}
 			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
 		}
 	}
+}
+
+// Send meant for authenticated input, takes payload in form of interface
+// and calls client with it
+func (m *Mux) Send(pld interface{}) error {
+	if !m.authenticated || m.privateClient == nil {
+		return errors.New("not authorized")
+	}
+	return m.privateClient.Send(pld)
 }
 
 func (m *Mux) hasAPIKeys() bool {
@@ -156,13 +186,14 @@ func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
 		m.subInfo[i.ChanID] = i
 		break
 	case "auth":
-		m.subInfo[i.ChanID] = i
-		m.authenticated = true
+		if i.Status == "OK" {
+			m.subInfo[i.ChanID] = i
+			m.authenticated = true
+		}
 		break
 	default:
 		fmt.Printf("unhandled evtn: %+v\n", i)
 	}
-
 	return i, err
 }
 
@@ -194,7 +225,7 @@ func (m *Mux) addPublicClient() *Mux {
 	// add new client to list for later reference
 	m.publicClients[m.cid] = c
 	// start listening for incoming client messages
-	go c.Read(m.publicInbound)
+	go c.Read(m.publicChan)
 	return m
 }
 
@@ -210,6 +241,6 @@ func (m *Mux) addPrivateClient() *Mux {
 	}
 
 	m.privateClient = c
-	go c.Read(m.privateInbound)
+	go c.Read(m.privateChan)
 	return m
 }
