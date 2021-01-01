@@ -166,9 +166,6 @@ func (m *Mux) hasAPIKeys() bool {
 }
 
 func (m *Mux) addClient() *Mux {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-
 	if m.Err != nil {
 		return m
 	}
