@@ -11,6 +11,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
@@ -65,6 +66,30 @@ func (m Msg) ProcessRaw(chanInfo map[int64]event.Info) (interface{}, error) {
 			return candle.FromWSRaw(inf.Key, data)
 		case "status":
 			return status.FromWSRaw(inf.Key, data)
+		}
+	}
+
+	return raw, nil
+}
+
+func (m Msg) ProcessPrivateRaw() (interface{}, error) {
+	var raw []interface{}
+	if err := json.Unmarshal(m.Data, &raw); err != nil {
+		return nil, fmt.Errorf("parsing auth msg: %s, err: %s", m.Data, err)
+	}
+
+	// payload data is always last element of the slice
+	pld := raw[len(raw)-1]
+	// op name is 2nd element
+	op := convert.SValOrEmpty(raw[1])
+
+	switch data := pld.(type) {
+	case string:
+		log.Printf("string pld: %s\n", pld) // [chan_id, "event_name"]
+	case []interface{}:
+		switch op {
+		case "on":
+			return order.FromWSRaw(data, op)
 		}
 	}
 
