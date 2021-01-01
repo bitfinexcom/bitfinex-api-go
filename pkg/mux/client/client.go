@@ -52,7 +52,6 @@ func (c *Client) Private(key, sec string) *Client {
 		return c
 	}
 
-	// nonce := fmt.Sprintf("%v", time.Now().UTC().UnixNano()/1000)
 	nonce := c.nonceGen.GetNonce()
 	c.Subs.SubsLimit = 20
 	c.Conn, _, _, c.Err = ws.DefaultDialer.Dial(context.Background(), "wss://api.staging.bitfinex.com/ws/2")
@@ -83,13 +82,21 @@ func (c *Client) Subscribe(sub event.Subscribe) *Client {
 	}
 
 	c.Subs.Add(sub)
-	b, _ := json.Marshal(sub)
-	if c.Err = wsutil.WriteClientBinary(c.Conn, b); c.Err != nil {
+	if c.Err = c.Send(sub); c.Err != nil {
 		c.Subs.Remove(sub)
 		return c
 	}
 
 	return c
+}
+
+// Send takes payload in form of interface and sends it to api
+func (c *Client) Send(pld interface{}) error {
+	if c.Err != nil {
+		return nil
+	}
+	b, _ := json.Marshal(pld)
+	return wsutil.WriteClientBinary(c.Conn, b)
 }
 
 func (c *Client) Read(ch chan<- msg.Msg) {
