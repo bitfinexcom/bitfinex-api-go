@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
@@ -207,21 +208,21 @@ func TestCreateNewSocket(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id) + `,"key":"trade:15m:` + ticker + `","subId":"` + id1 + `"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + fmt.Sprintf("%d", id) + `,"key":"trade:15m:` + ticker + `","subId":"` + id1 + `"}`)
 		// subscribe to 1hr candles
 		id2, err := ws.SubscribeCandles(context.Background(), ticker, common.OneHour)
 		if err != nil {
 			t.Fatal(err)
 		}
 		// subscribe ack
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id+1) + `,"key":"trade:1hr:` + ticker + `","subId":"` + id2 + `"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + fmt.Sprintf("%d", id+1) + `,"key":"trade:1hr:` + ticker + `","subId":"` + id2 + `"}`)
 		// subscribe to 30min candles
 		id3, err := ws.SubscribeCandles(context.Background(), ticker, common.OneHour)
 		if err != nil {
 			t.Fatal(err)
 		}
 		// subscribe ack
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(id+2) + `,"key":"trade:30m:` + ticker + `","subId":"` + id3 + `"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + fmt.Sprintf("%d", id+2) + `,"key":"trade:30m:` + ticker + `","subId":"` + id3 + `"}`)
 	}
 	conCount := ws.ConnectionCount()
 	if conCount != 6 {

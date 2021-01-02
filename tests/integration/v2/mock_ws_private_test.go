@@ -639,7 +639,7 @@ func TestUsesAuthenticatedSocket(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + string(i) + `,"key":"trade:15m:` + ticker + `","subId":"` + id + `"}`)
+		async.Publish(`{"event":"subscribed","channel":"candles","chanId":` + fmt.Sprintf("%d", i) + `,"key":"trade:15m:` + ticker + `","subId":"` + id + `"}`)
 	}
 	authSocket, err := ws.GetAuthenticatedSocket()
 	if err != nil {
