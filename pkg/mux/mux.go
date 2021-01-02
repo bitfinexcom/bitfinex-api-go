@@ -181,13 +181,11 @@ func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
 	switch i.Event {
 	case "subscribed":
 		m.subInfo[i.ChanID] = i
-		break
 	case "auth":
 		if i.Status == "OK" {
 			m.subInfo[i.ChanID] = i
 			m.authenticated = true
 		}
-		break
 	default:
 		fmt.Printf("unhandled evtn: %+v\n", i)
 	}

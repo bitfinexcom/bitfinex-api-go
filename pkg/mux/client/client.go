@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
@@ -61,7 +62,10 @@ func (c *Client) Private(key, sec string) *Client {
 
 	payload := "AUTH" + nonce
 	sig := hmac.New(sha512.New384, []byte(sec))
-	sig.Write([]byte(payload))
+	if _, err := sig.Write([]byte(payload)); err != nil {
+		fmt.Printf("err generating sig:%s\n", err)
+		return c
+	}
 	pldSign := hex.EncodeToString(sig.Sum(nil))
 	sub := event.Subscribe{
 		Event:       "auth",
