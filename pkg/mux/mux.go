@@ -78,14 +78,22 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 
 	if limitReached := m.publicClients[m.cid].Subs.LimitReached(); limitReached {
 		log.Printf("subs limit is reached on cid: %d, spawning new conn\n", m.cid)
-		m.addClient()
+		m.addPublicClient()
 	}
 	return m
 }
 
 // Start creates initial clients for accepting connections
 func (m *Mux) Start() *Mux {
-	return m.addClient()
+	if m.Err != nil {
+		return m
+	}
+
+	if m.hasAPIKeys() && m.privateClient == nil {
+		m.addPrivateClient()
+	}
+
+	return m.addPublicClient()
 }
 
 // Listen accepts a callback func that will get called each time mux
@@ -104,7 +112,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			}
 			if ms.Err != nil {
 				cb(nil, fmt.Errorf("conn:%d has failed | err:%s | reconnecting", ms.CID, ms.Err))
-				m.reconnect(ms.CID)
+				m.resetPublicClient(ms.CID)
 				continue
 			}
 			// return raw payload data if transform is off
@@ -128,8 +136,8 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 				return errors.New("private channel has closed unexpectedly")
 			}
 			if ms.Err != nil {
-				cb(nil, fmt.Errorf("conn has failed | err:%s | reconnecting", ms.Err))
-				// m.reconnectPrivate(ms.CID) // TODO
+				cb(nil, fmt.Errorf("err: %s | reconnecting", ms.Err))
+				m.resetPrivateClient()
 				continue
 			}
 			// return raw payload data if transform is off
@@ -165,18 +173,6 @@ func (m *Mux) hasAPIKeys() bool {
 	return len(m.apikey) != 0 && len(m.apisec) != 0
 }
 
-func (m *Mux) addClient() *Mux {
-	if m.Err != nil {
-		return m
-	}
-
-	if m.hasAPIKeys() && m.privateClient == nil {
-		m.addPrivateClient()
-	}
-
-	return m.addPublicClient()
-}
-
 func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
 	switch i.Event {
 	case "subscribed":
@@ -186,26 +182,32 @@ func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
 			m.subInfo[i.ChanID] = i
 			m.authenticated = true
 		}
-	default:
-		fmt.Printf("unhandled evtn: %+v\n", i)
 	}
+	// add more cases if/when needed
 	return i, err
 }
 
-func (m *Mux) reconnect(cid int) {
+func (m *Mux) resetPublicClient(cid int) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 	// pull old client subscriptions
 	subs := m.publicClients[cid].Subs.GetAll()
 	// add fresh client
-	m.addClient()
+	m.addPublicClient()
 	// resubscribe old events
 	for _, sub := range subs {
 		log.Printf("resubscribing: %+v\n", sub)
 		m.Subscribe(sub)
 	}
-	// remove old, closed channel from the lost
+	// remove old, closed channel from the list
 	delete(m.publicClients, cid)
+}
+
+func (m *Mux) resetPrivateClient() {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	m.privateClient = nil
+	m.addPrivateClient()
 }
 
 func (m *Mux) addPublicClient() *Mux {
@@ -226,10 +228,7 @@ func (m *Mux) addPublicClient() *Mux {
 
 func (m *Mux) addPrivateClient() *Mux {
 	// create new private client and pass error to mux if any
-	c := client.
-		New(m.cid).
-		Private(m.apikey, m.apisec)
-
+	c := client.New(0).Private(m.apikey, m.apisec)
 	if c.Err != nil {
 		m.Err = c.Err
 		return m
