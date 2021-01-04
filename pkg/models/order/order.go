@@ -125,6 +125,10 @@ func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 }
 
 func FromWSRaw(raw []interface{}, op string) (interface{}, error) {
+	if op == "os" {
+		return SnapshotFromRaw(raw)
+	}
+
 	o, err := FromRaw(raw)
 	if err != nil {
 		return nil, err
@@ -135,5 +139,5 @@ func FromWSRaw(raw []interface{}, op string) (interface{}, error) {
 		return New(*o), nil
 	}
 
-	return o, nil
+	return nil, fmt.Errorf("unrecognized order operation: %s", op)
 }
