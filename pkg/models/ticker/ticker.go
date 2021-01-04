@@ -109,7 +109,7 @@ func FromRestRaw(raw []interface{}) (t *Ticker, err error) {
 	return FromRaw(raw[0].(string), raw[1:])
 }
 
-// FromWSRaw - based on condition will return snapshot of tickes or single tick
+// FromWSRaw - based on condition will return snapshot of tickers or single tick
 func FromWSRaw(symbol string, data []interface{}) (interface{}, error) {
 	if len(data) == 0 {
 		return nil, errors.New("empty data slice")

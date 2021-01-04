@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"unicode"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
@@ -35,11 +34,11 @@ func (m Msg) IsRaw() bool {
 }
 
 func (m Msg) ProcessRaw(chanInfo map[int64]event.Info) (interface{}, error) {
+	fmt.Printf("raw: %s\n", m.Data)
 	var raw []interface{}
 	if err := json.Unmarshal(m.Data, &raw); err != nil {
 		return nil, fmt.Errorf("parsing msg: %s, err: %s", m.Data, err)
 	}
-
 	// payload data is always last element of the slice
 	pld := raw[len(raw)-1]
 	// chanID is always 1st element of the slice
@@ -52,12 +51,14 @@ func (m Msg) ProcessRaw(chanInfo map[int64]event.Info) (interface{}, error) {
 
 	switch data := pld.(type) {
 	case string:
-		// possibly a Heartbeating event or similar [chan_id, "event_name"]
-		log.Printf("%d string pld: %s\n", inf.ChanID, data)
+		return event.Info{
+			ChanID:    chID,
+			Subscribe: event.Subscribe{Event: data},
+		}, nil
 	case []interface{}:
 		switch inf.Channel {
 		case "trades":
-			return trade.FromWSRaw(inf.Symbol, data)
+			return trade.FromWSRaw(inf.Symbol, data) // must handle "tu" and "te" event types
 		case "ticker":
 			return ticker.FromWSRaw(inf.Symbol, data)
 		case "book":
@@ -77,7 +78,6 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 	if err := json.Unmarshal(m.Data, &raw); err != nil {
 		return nil, fmt.Errorf("parsing auth msg: %s, err: %s", m.Data, err)
 	}
-
 	// payload data is always last element of the slice
 	pld := raw[len(raw)-1]
 	// op name is 2nd element
@@ -85,10 +85,13 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 
 	switch data := pld.(type) {
 	case string:
-		log.Printf("string pld: %s\n", pld) // [chan_id, "event_name"]
+		return event.Info{
+			ChanID:    convert.I64ValOrZero(raw[0]),
+			Subscribe: event.Subscribe{Event: data},
+		}, nil
 	case []interface{}:
 		switch op {
-		case "on":
+		case "on", "os":
 			return order.FromWSRaw(data, op)
 		}
 	}
