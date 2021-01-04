@@ -2,6 +2,8 @@ package subs
 
 import "github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 
+const defaultLimit = 20
+
 type Subs struct {
 	Subs      map[event.Subscribe]bool
 	SubsLimit int
@@ -10,7 +12,8 @@ type Subs struct {
 // New returns pointer to instacne of Subscriptions
 func New() *Subs {
 	return &Subs{
-		Subs: make(map[event.Subscribe]bool),
+		Subs:      make(map[event.Subscribe]bool),
+		SubsLimit: defaultLimit,
 	}
 }
 
