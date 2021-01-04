@@ -28,9 +28,11 @@ type Info struct {
 	AuthID   string       `json:"auth_id,omitempty"`
 	Message  string       `json:"msg,omitempty"`
 	Caps     Capabilities `json:"caps,omitempty"`
-	Platform struct {
-		Status int `json:"status,omitempty"`
-	} `json:"platform,omitempty"`
+	Platform Platform     `json:"platform,omitempty"`
+}
+
+type Platform struct {
+	Status int `json:"status,omitempty"`
 }
 
 type Capability struct {
