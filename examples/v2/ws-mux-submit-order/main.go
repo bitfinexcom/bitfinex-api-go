@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
@@ -30,8 +31,13 @@ func main() {
 				if v.Event == "auth" && v.Status == "OK" {
 					auth <- true
 				}
-			case order.New:
+			case *order.New:
 				log.Printf("%T: %+v\n", v, v)
+			case *order.Snapshot:
+				log.Printf("%T: %+v\n", v, v)
+				for _, ss := range v.Snapshot {
+					log.Printf("%T snapshot: %+v\n", ss, ss)
+				}
 			default:
 				log.Printf("unrecognized: %T: %+v\n", v, v)
 			}
@@ -41,7 +47,8 @@ func main() {
 	for {
 		select {
 		case err := <-crash:
-			log.Fatal(err)
+			fmt.Printf("err: %s\n", err)
+			os.Exit(1)
 		case <-auth:
 			// authenticated, safe to submit orders etc
 			if err := m.Send(&order.NewRequest{
