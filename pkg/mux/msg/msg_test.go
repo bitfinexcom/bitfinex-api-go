@@ -3,6 +3,7 @@ package msg_test
 import (
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
@@ -219,6 +220,54 @@ func TestProcessRaw(t *testing.T) {
 				High:       828.42,
 				Low:        827.67,
 				Volume:     2.32080241,
+			},
+		},
+		"raw book snapshot": {
+			pld: []byte(`[869944,[[55804480297,33766,2]]]`),
+			inf: map[int64]event.Info{
+				869944: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tBTCUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tBTCUSD",
+						ID:          55804480297,
+						Price:       33766,
+						Amount:      2,
+						PriceJsNum:  "33766",
+						AmountJsNum: "2",
+						Side:        1,
+						Action:      0,
+					},
+				},
+			},
+		},
+		"raw book": {
+			pld: []byte(`[869944,[55804480297,33766,2]]`),
+			inf: map[int64]event.Info{
+				869944: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tBTCUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Book{
+				Symbol:      "tBTCUSD",
+				ID:          55804480297,
+				Price:       33766,
+				Amount:      2,
+				PriceJsNum:  "33766",
+				AmountJsNum: "2",
+				Side:        1,
+				Action:      0,
 			},
 		},
 	}
