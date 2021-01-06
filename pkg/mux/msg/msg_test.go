@@ -6,6 +6,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/msg"
@@ -322,6 +323,128 @@ func TestProcessRaw(t *testing.T) {
 				AmountJsNum: "5",
 				Side:        1,
 				Action:      0,
+			},
+		},
+		"derivatives status snapshot": {
+			pld: []byte(`[
+				799830,
+				[[
+					1609921474000,null,34568.786626655,34575.5,null,1856521.42387705,
+					null,1609948800000,-0.00004348,481,null,0,null,null,34593.64333333333,
+					null,null,11153.74635347,null,null,null,null,null
+				]]
+			]`),
+			inf: map[int64]event.Info{
+				799830: {
+					Subscribe: event.Subscribe{
+						Channel: "status",
+						Key:     "deriv:tBTCF0:USTF0",
+					},
+				},
+			},
+			expected: &status.DerivativesSnapshot{
+				Snapshot: []*status.Derivative{
+					{
+						Symbol:               "tBTCF0:USTF0",
+						MTS:                  1609921474000,
+						Price:                34568.786626655,
+						SpotPrice:            34575.5,
+						InsuranceFundBalance: 1.85652142387705e+06,
+						FundingEventMTS:      1609948800000,
+						FundingAccrued:       -4.348e-05,
+						FundingStep:          481,
+						MarkPrice:            34593.64333333333,
+						OpenInterest:         11153.74635347,
+					},
+				},
+			},
+		},
+		"derivatives status": {
+			pld: []byte(`[
+				799830,
+				[
+					1609921474000,null,34568.786626655,34575.5,null,1856521.42387705,
+					null,1609948800000,-0.00004348,481,null,0,null,null,34593.64333333333,
+					null,null,11153.74635347,null,null,null,null,null
+				]
+			]`),
+			inf: map[int64]event.Info{
+				799830: {
+					Subscribe: event.Subscribe{
+						Channel: "status",
+						Key:     "deriv:tBTCF0:USTF0",
+					},
+				},
+			},
+			expected: &status.Derivative{
+				Symbol:               "tBTCF0:USTF0",
+				MTS:                  1609921474000,
+				Price:                34568.786626655,
+				SpotPrice:            34575.5,
+				InsuranceFundBalance: 1.85652142387705e+06,
+				FundingEventMTS:      1609948800000,
+				FundingAccrued:       -4.348e-05,
+				FundingStep:          481,
+				MarkPrice:            34593.64333333333,
+				OpenInterest:         11153.74635347,
+			},
+		},
+		"liquidation status snapshot": {
+			pld: []byte(`[
+				521209,
+				[[
+					"pos",145511476,1609921778489,null,"tBTCF0:USTF0",
+					0.12173,34618.82986269,null,1,1,null,34281
+				]]
+			]`),
+			inf: map[int64]event.Info{
+				521209: {
+					Subscribe: event.Subscribe{
+						Channel: "status",
+						Key:     "liq:global",
+					},
+				},
+			},
+			expected: &status.LiquidationsSnapshot{
+				Snapshot: []*status.Liquidation{
+					{
+						Symbol:        "tBTCF0:USTF0",
+						PositionID:    145511476,
+						MTS:           1609921778489,
+						Amount:        0.12173,
+						BasePrice:     34618.82986269,
+						IsMatch:       1,
+						IsMarketSold:  1,
+						PriceAcquired: 34281,
+					},
+				},
+			},
+		},
+		"liquidation status": {
+			pld: []byte(`[
+				521209,
+				[
+					"pos",145511476,1609921778489,null,"tBTCF0:USTF0",
+					0.12173,34618.82986269,null,1,1,null,34281
+				]
+			]`),
+			inf: map[int64]event.Info{
+				521209: {
+					Subscribe: event.Subscribe{
+						Channel: "status",
+						Key:     "liq:global",
+					},
+				},
+			},
+			expected: &status.Liquidation{
+				Symbol:        "tBTCF0:USTF0",
+				PositionID:    145511476,
+				MTS:           1609921778489,
+				Amount:        0.12173,
+				BasePrice:     34618.82986269,
+				IsMatch:       1,
+				IsMarketSold:  1,
+				PriceAcquired: 34281,
 			},
 		},
 	}
