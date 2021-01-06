@@ -270,6 +270,60 @@ func TestProcessRaw(t *testing.T) {
 				Action:      0,
 			},
 		},
+		"book snapshot": {
+			pld: []byte(`[793767,[[676.3,1,5]]]`),
+			inf: map[int64]event.Info{
+				793767: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tETHEUR",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tETHEUR",
+						Count:       1,
+						Period:      0,
+						Price:       676.3,
+						Amount:      5,
+						Rate:        0,
+						PriceJsNum:  "676.3",
+						AmountJsNum: "5",
+						Side:        1,
+						Action:      0,
+					},
+				},
+			},
+		},
+		"book": {
+			pld: []byte(`[793767,[676.3,1,5]]`),
+			inf: map[int64]event.Info{
+				793767: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tETHEUR",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Book{
+				Symbol:      "tETHEUR",
+				Count:       1,
+				Period:      0,
+				Price:       676.3,
+				Amount:      5,
+				Rate:        0,
+				PriceJsNum:  "676.3",
+				AmountJsNum: "5",
+				Side:        1,
+				Action:      0,
+			},
+		},
 	}
 
 	for k, v := range cases {
