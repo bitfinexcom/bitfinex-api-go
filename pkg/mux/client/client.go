@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 
@@ -22,7 +23,6 @@ type Client struct {
 	Subs     *subs.Subs
 	Err      error
 	ID       int
-	isPublic bool
 	nonceGen *utils.EpochNonceGenerator
 }
 
@@ -41,7 +41,6 @@ func (c *Client) Public() *Client {
 		return c
 	}
 
-	c.isPublic = true
 	c.Subs.SubsLimit = 25
 	c.Conn, _, _, c.Err = ws.DefaultDialer.Dial(context.Background(), "wss://api-pub.bitfinex.com/ws/2")
 	return c
@@ -104,24 +103,24 @@ func (c *Client) Send(pld interface{}) error {
 }
 
 func (c *Client) Read(ch chan<- msg.Msg) {
+	defer c.Conn.Close()
+
 	for {
-		ms, _, err := wsutil.ReadServerData(c.Conn)
+		ms, opCode, err := wsutil.ReadServerData(c.Conn)
+		m := msg.Msg{Data: ms, CID: c.ID}
+
 		if err != nil {
-			c.Conn.Close()
-			ch <- msg.Msg{
-				Data:     nil,
-				Err:      err,
-				CID:      c.ID,
-				IsPublic: c.isPublic,
-			}
+			m.Err = err
+			ch <- m
 			return
 		}
 
-		ch <- msg.Msg{
-			Data:     ms,
-			Err:      nil,
-			CID:      c.ID,
-			IsPublic: c.isPublic,
+		if opCode == ws.OpClose {
+			m.Err = errors.New("client has closed unexpectedly")
+			ch <- m
+			return
 		}
+
+		ch <- m
 	}
 }
