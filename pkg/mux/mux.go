@@ -133,7 +133,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
 		case ms, ok := <-m.privateChan:
 			if !ok {
-				return errors.New("private channel has closed unexpectedly")
+				return errors.New("channel has closed unexpectedly")
 			}
 			if ms.Err != nil {
 				cb(nil, fmt.Errorf("err: %s | reconnecting", ms.Err))
@@ -188,8 +188,6 @@ func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
 }
 
 func (m *Mux) resetPublicClient(cid int) {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
 	// pull old client subscriptions
 	subs := m.publicClients[cid].Subs.GetAll()
 	// add fresh client
@@ -204,8 +202,6 @@ func (m *Mux) resetPublicClient(cid int) {
 }
 
 func (m *Mux) resetPrivateClient() {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
 	m.privateClient = nil
 	m.addPrivateClient()
 }
