@@ -13,7 +13,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
 )
 
 type Msg struct {
@@ -58,7 +58,7 @@ func (m Msg) ProcessRaw(chanInfo map[int64]event.Info) (interface{}, error) {
 	case []interface{}:
 		switch inf.Channel {
 		case "trades":
-			return trade.FromWSRaw(inf.Symbol, data) // must handle "tu" and "te" event types
+			return trades.FromWSRaw(inf.Symbol, raw, data)
 		case "ticker":
 			return ticker.FromWSRaw(inf.Symbol, data)
 		case "book":
