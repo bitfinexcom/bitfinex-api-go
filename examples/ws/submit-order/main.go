@@ -13,8 +13,8 @@ import (
 func main() {
 	m := mux.New().
 		TransformRaw().
-		WithAPIKEY("URJ0mNaT0oM7cmwHoaWRqwF433urbujGlsVnFnSrYuG").
-		WithAPISEC("Ovvs6zU5L2ZXjEXhtKJV3ITrY8KsS6tSLmvSV6Wn9j0").
+		WithAPIKEY("YOUR_API_KEY").
+		WithAPISEC("YOUR_API_SECRET").
 		Start()
 
 	crash := make(chan error)
