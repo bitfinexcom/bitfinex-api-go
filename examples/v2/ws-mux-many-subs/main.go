@@ -10,7 +10,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux"
 )
 
@@ -48,16 +48,25 @@ func main() {
 			Key:     "trade:1m:t" + pair,
 		}
 
-		bookPld := event.Subscribe{
+		rawBookPld := event.Subscribe{
 			Event:     "subscribe",
 			Channel:   "book",
 			Precision: "R0",
 			Symbol:    "t" + pair,
 		}
 
+		bookPld := event.Subscribe{
+			Event:     "subscribe",
+			Channel:   "book",
+			Precision: "P0",
+			Frequency: "F0",
+			Symbol:    "t" + pair,
+		}
+
 		m.Subscribe(tradePld)
 		m.Subscribe(tickPld)
 		m.Subscribe(candlesPld)
+		m.Subscribe(rawBookPld)
 		m.Subscribe(bookPld)
 	}
 
@@ -73,8 +82,15 @@ func main() {
 		Key:     "liq:global",
 	}
 
+	fundingPairTrade := event.Subscribe{
+		Event:   "subscribe",
+		Channel: "trades",
+		Symbol:  "fUSD",
+	}
+
 	m.Subscribe(derivStatusPld)
 	m.Subscribe(liqStatusPld)
+	m.Subscribe(fundingPairTrade)
 
 	crash := make(chan error)
 
@@ -87,50 +103,61 @@ func main() {
 			switch v := msg.(type) {
 			case event.Info:
 				log.Printf("%T: %+v\n", v, v)
-			case *trade.Trade:
-				log.Printf("%T: %+v\n", v, v)
-			case *trade.Snapshot:
+			case trades.TradeSnapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
-					log.Printf("%T snapshot: %+v\n", ss, ss)
+					log.Printf("%T item: %+v\n", ss, ss)
 				}
+			case trades.FundingTradeSnapshot:
+				log.Printf("%T: %+v\n", v, v)
+				for _, ss := range v.Snapshot {
+					log.Printf("%T item: %+v\n", ss, ss)
+				}
+			case trades.TradeUpdate:
+				log.Printf("%T: %+v\n", v, v)
+			case trades.TradeExecuted:
+				log.Printf("%T: %+v\n", v, v)
+			case trades.FundingTradeUpdate:
+				log.Printf("%T: %+v\n", v, v)
+			case trades.FundingTradeExecuted:
+				log.Printf("%T: %+v\n", v, v)
 			case *ticker.Ticker:
 				log.Printf("%T: %+v\n", v, v)
 			case *ticker.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
-					log.Printf("%T snapshot: %+v\n", ss, ss)
+					log.Printf("%T item: %+v\n", ss, ss)
 				}
 			case *book.Book:
 				log.Printf("%T: %+v\n", v, v)
 			case *book.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
-					log.Printf("%T snapshot: %+v\n", ss, ss)
+					log.Printf("%T item: %+v\n", ss, ss)
 				}
 			case *candle.Candle:
 				log.Printf("%T: %+v\n", v, v)
 			case *candle.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
-					log.Printf("%T snapshot: %+v\n", ss, ss)
+					log.Printf("%T item: %+v\n", ss, ss)
 				}
 			case *status.Derivative:
 				log.Printf("%T: %+v\n", v, v)
 			case *status.DerivativesSnapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
-					log.Printf("%T snapshot: %+v\n", ss, ss)
+					log.Printf("%T item: %+v\n", ss, ss)
 				}
 			case *status.Liquidation:
 				log.Printf("%T: %+v\n", v, v)
 			case *status.LiquidationsSnapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
-					log.Printf("%T snapshot: %+v\n", ss, ss)
+					log.Printf("%T item: %+v\n", ss, ss)
 				}
 			default:
-				log.Printf("unrecognized msg: %T: %s\n", v, v)
+				log.Printf("raw/unrecognized msg: %T: %s\n", v, v)
 			}
 		})
 	}()
