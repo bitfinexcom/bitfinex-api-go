@@ -91,8 +91,14 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		}, nil
 	case []interface{}:
 		switch op {
-		case "on", "os", "ou", "oc":
-			return order.FromWSRaw(data, op)
+		case "os":
+			return order.SnapshotFromRaw(data)
+		case "on":
+			return order.NewFromRaw(data)
+		case "ou":
+			return order.UpdateFromRaw(data)
+		case "oc":
+			return order.CancelFromRaw(data)
 		case "ws":
 			return wallet.SnapshotFromRaw(data, wallet.FromWsRaw)
 		case "wu":
