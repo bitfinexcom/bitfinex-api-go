@@ -6,8 +6,10 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
+// FundingTrade data structure for mapping funding/margin
+// currency raw data with "f" prefix in SYMBOL from public feed
 type FundingTrade struct {
-	Pair   string
+	Symbol string
 	ID     int64
 	MTS    int64
 	Amount float64
@@ -16,16 +18,17 @@ type FundingTrade struct {
 }
 
 type FundingTradeUpdate FundingTrade
-type FundingTradeExecute FundingTrade
+type FundingTradeExecuted FundingTrade
 
 type FundingTradeSnapshot struct {
 	Snapshot []FundingTrade
 }
 
+// FTFromRaw maps raw data slice to instance of FundingTrade
 func FTFromRaw(pair string, raw []interface{}) (t FundingTrade, err error) {
 	if len(raw) >= 5 {
 		t = FundingTrade{
-			Pair:   pair,
+			Symbol: pair,
 			ID:     convert.I64ValOrZero(raw[0]),
 			MTS:    convert.I64ValOrZero(raw[1]),
 			Amount: convert.F64ValOrZero(raw[2]),
@@ -39,15 +42,17 @@ func FTFromRaw(pair string, raw []interface{}) (t FundingTrade, err error) {
 	return
 }
 
-func FTEFromRaw(pair string, raw []interface{}) (FundingTradeExecute, error) {
+// FTEFromRaw maps raw data slice to instance of FundingTradeExecuted
+func FTEFromRaw(pair string, raw []interface{}) (FundingTradeExecuted, error) {
 	ft, err := FTFromRaw(pair, raw)
 	if err != nil {
-		return FundingTradeExecute{}, err
+		return FundingTradeExecuted{}, err
 	}
 
-	return FundingTradeExecute(ft), nil
+	return FundingTradeExecuted(ft), nil
 }
 
+// FTUFromRaw maps raw data slice to instance of FundingTradeUpdate
 func FTUFromRaw(pair string, raw []interface{}) (FundingTradeUpdate, error) {
 	ft, err := FTFromRaw(pair, raw)
 	if err != nil {
@@ -57,6 +62,7 @@ func FTUFromRaw(pair string, raw []interface{}) (FundingTradeUpdate, error) {
 	return FundingTradeUpdate(ft), nil
 }
 
+// FTSnapshotFromRaw maps raw data slice to funding trade data structures
 func FTSnapshotFromRaw(pair string, raw [][]interface{}) (FundingTradeSnapshot, error) {
 	if len(raw) == 0 {
 		return FundingTradeSnapshot{}, fmt.Errorf("funding trade snapshot data slice too short:%#v", raw)
