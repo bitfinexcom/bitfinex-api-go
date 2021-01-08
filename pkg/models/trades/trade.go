@@ -6,6 +6,8 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
+// Trade data structure for mapping trading pair currency raw
+// data with "t" prefix in SYMBOL from public feed
 type Trade struct {
 	Pair   string
 	ID     int64
@@ -15,12 +17,13 @@ type Trade struct {
 }
 
 type TradeUpdate Trade
-type TradeExecute Trade
+type TradeExecuted Trade
 
 type TradeSnapshot struct {
 	Snapshot []Trade
 }
 
+// TFromRaw maps raw data slice to instance of Trade
 func TFromRaw(pair string, raw []interface{}) (t Trade, err error) {
 	if len(raw) >= 4 {
 		t = Trade{
@@ -37,6 +40,7 @@ func TFromRaw(pair string, raw []interface{}) (t Trade, err error) {
 	return
 }
 
+// TUFromRaw maps raw data slice to instance of TradeUpdate
 func TUFromRaw(pair string, raw []interface{}) (TradeUpdate, error) {
 	t, err := TFromRaw(pair, raw)
 	if err != nil {
@@ -46,15 +50,17 @@ func TUFromRaw(pair string, raw []interface{}) (TradeUpdate, error) {
 	return TradeUpdate(t), nil
 }
 
-func TEFromRaw(pair string, raw []interface{}) (TradeExecute, error) {
+// TEFromRaw maps raw data slice to instance of TradeExecuted
+func TEFromRaw(pair string, raw []interface{}) (TradeExecuted, error) {
 	t, err := TFromRaw(pair, raw)
 	if err != nil {
-		return TradeExecute{}, err
+		return TradeExecuted{}, err
 	}
 
-	return TradeExecute(t), nil
+	return TradeExecuted(t), nil
 }
 
+// TSnapshotFromRaw maps raw data slice to trading data structures
 func TSnapshotFromRaw(pair string, raw [][]interface{}) (TradeSnapshot, error) {
 	if len(raw) == 0 {
 		return TradeSnapshot{}, fmt.Errorf("trade snapshot data slice too short:%#v", raw)
