@@ -55,6 +55,18 @@ func FromWsRaw(raw []interface{}) (w *Wallet, err error) {
 	return
 }
 
+// UpdateFromWsRaw reds "wu" type message from authenticated data
+// sream and maps it to wallet.Update data structure
+func UpdateFromWsRaw(raw []interface{}) (*Update, error) {
+	w, err := FromWsRaw(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	u := Update(*w)
+	return &u, nil
+}
+
 func SnapshotFromRaw(raw []interface{}, transformer transformerFn) (s *Snapshot, err error) {
 	if len(raw) == 0 {
 		return s, fmt.Errorf("data slice too short for wallet: %#v", raw)
