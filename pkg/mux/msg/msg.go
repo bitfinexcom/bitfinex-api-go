@@ -14,6 +14,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 )
 
 type Msg struct {
@@ -34,7 +35,6 @@ func (m Msg) IsRaw() bool {
 }
 
 func (m Msg) ProcessRaw(chanInfo map[int64]event.Info) (interface{}, error) {
-	fmt.Printf("raw: %s\n", m.Data)
 	var raw []interface{}
 	if err := json.Unmarshal(m.Data, &raw); err != nil {
 		return nil, fmt.Errorf("parsing msg: %s, err: %s", m.Data, err)
@@ -91,8 +91,12 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		}, nil
 	case []interface{}:
 		switch op {
-		case "on", "os":
+		case "on", "os", "ou", "oc":
 			return order.FromWSRaw(data, op)
+		case "ws":
+			return wallet.SnapshotFromRaw(data, wallet.FromWsRaw)
+		case "wu":
+			return wallet.UpdateFromWsRaw(data)
 		}
 	}
 
