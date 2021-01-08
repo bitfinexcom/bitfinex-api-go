@@ -97,6 +97,39 @@ func FromRaw(raw []interface{}) (o *Order, err error) {
 	return
 }
 
+// NewFromRaw reds "on" type message from data sream and
+// maps it to order.New data structure
+func NewFromRaw(raw []interface{}) (New, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return New{}, err
+	}
+
+	return New(*o), nil
+}
+
+// UpdateFromRaw reds "ou" type message from data sream and
+// maps it to order.Update data structure
+func UpdateFromRaw(raw []interface{}) (Update, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return Update{}, err
+	}
+
+	return Update(*o), nil
+}
+
+// CancelFromRaw reds "oc" type message from data sream and
+// maps it to order.Cancel data structure
+func CancelFromRaw(raw []interface{}) (Cancel, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return Cancel{}, err
+	}
+
+	return Cancel(*o), nil
+}
+
 // SnapshotFromRaw takes a raw list of values as returned from the websocket
 // service and tries to convert it into an Snapshot.
 func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
@@ -122,22 +155,4 @@ func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 	s = &Snapshot{Snapshot: os}
 
 	return
-}
-
-func FromWSRaw(raw []interface{}, op string) (interface{}, error) {
-	if op == "os" {
-		return SnapshotFromRaw(raw)
-	}
-
-	o, err := FromRaw(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	switch op {
-	case "on":
-		return New(*o), nil
-	}
-
-	return nil, fmt.Errorf("unrecognized order operation: %s", op)
 }
