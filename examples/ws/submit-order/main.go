@@ -13,8 +13,8 @@ import (
 func main() {
 	m := mux.New().
 		TransformRaw().
-		WithAPIKEY("YOUR_API_KEY").
-		WithAPISEC("YOUR_API_SECRET").
+		WithAPIKEY("URJ0mNaT0oM7cmwHoaWRqwF433urbujGlsVnFnSrYuG").
+		WithAPISEC("Ovvs6zU5L2ZXjEXhtKJV3ITrY8KsS6tSLmvSV6Wn9j0").
 		Start()
 
 	crash := make(chan error)
@@ -36,10 +36,10 @@ func main() {
 			case *order.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
-					log.Printf("%T snapshot: %+v\n", ss, ss)
+					log.Printf("%T item: %+v\n", ss, ss)
 				}
 			default:
-				log.Printf("unrecognized: %T: %+v\n", v, v)
+				log.Printf("raw/unhandled: %T: %+v\n", v, v)
 			}
 		})
 	}()

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
@@ -19,14 +17,16 @@ func main() {
 		TransformRaw().
 		Start()
 
-	pairs := []string{}
-	dat, err := ioutil.ReadFile("./testpairs.json")
-	if err != nil {
-		log.Panic(err)
-	}
-
-	if err := json.Unmarshal(dat, &pairs); err != nil {
-		log.Panic(err)
+	pairs := []string{
+		"BTCUSD",
+		"BTCUST",
+		"BTCXCH",
+		"ETHBTC",
+		"ETHEUR",
+		"ETHGBP",
+		"ETHJPY",
+		"ETHUSD",
+		"ETHUST",
 	}
 
 	for _, pair := range pairs {
