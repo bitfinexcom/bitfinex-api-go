@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
@@ -103,6 +104,8 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 			return wallet.SnapshotFromRaw(data, wallet.FromWsRaw)
 		case "wu":
 			return wallet.UpdateFromWsRaw(data)
+		case "bu":
+			return balanceinfo.UpdateFromRaw(data)
 		}
 	}
 
