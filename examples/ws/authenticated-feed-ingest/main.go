@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
@@ -45,6 +46,8 @@ func main() {
 				for _, ss := range v.Snapshot {
 					log.Printf("%T item: %+v\n", ss, ss)
 				}
+			case balanceinfo.Update:
+				log.Printf("%T: %+v\n", v, v)
 			default:
 				log.Printf("raw/unhandled: %T: %+v\n", v, v)
 			}
