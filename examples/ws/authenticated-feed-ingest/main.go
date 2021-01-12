@@ -28,18 +28,18 @@ func main() {
 			switch v := msg.(type) {
 			case event.Info:
 				log.Printf("%T: %+v\n", v, v)
-			case *order.New:
+			case order.New:
 				log.Printf("%T: %+v\n", v, v)
 			case *order.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
 					log.Printf("%T item: %+v\n", ss, ss)
 				}
-			case *order.Update:
+			case order.Update:
 				log.Printf("%T: %+v\n", v, v)
-			case *order.Cancel:
+			case order.Cancel:
 				log.Printf("%T: %+v\n", v, v)
-			case *wallet.Update:
+			case wallet.Update:
 				log.Printf("%T: %+v\n", v, v)
 			case *wallet.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
