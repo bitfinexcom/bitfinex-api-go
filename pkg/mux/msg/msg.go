@@ -103,7 +103,7 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "ws":
 			return wallet.SnapshotFromRaw(data, wallet.FromWsRaw)
 		case "wu":
-			return wallet.UpdateFromWsRaw(data)
+			return wallet.UpdateFromRaw(data)
 		case "bu":
 			return balanceinfo.UpdateFromRaw(data)
 		}
