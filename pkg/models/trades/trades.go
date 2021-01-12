@@ -38,5 +38,5 @@ func FromWSRaw(pair string, raw, data []interface{}) (interface{}, error) {
 		}
 	}
 
-	return nil, nil
+	return TFromRaw(pair, data)
 }
