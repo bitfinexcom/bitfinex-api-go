@@ -1,6 +1,7 @@
 package wallet_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
@@ -183,4 +184,14 @@ func TestWalletSnapshotFromRaw(t *testing.T) {
 		require.NotNil(t, err)
 		require.Nil(t, ss)
 	})
+}
+
+func TestUpdateFromRaw(t *testing.T) {
+	pld := []interface{}{"exchange", "SAN", 19.76, 0, 12.1234}
+	expected := "wallet.Update"
+	o, err := wallet.UpdateFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
 }
