@@ -8,7 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
-	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/msg"
 	"github.com/stretchr/testify/assert"
 )
@@ -117,8 +117,8 @@ func TestProcessRaw(t *testing.T) {
 					},
 				},
 			},
-			expected: &trade.Snapshot{
-				Snapshot: []*trade.Trade{
+			expected: trades.TradeSnapshot{
+				Snapshot: []trades.Trade{
 					{
 						Pair:   "tBTCUST",
 						ID:     559273857,
@@ -139,7 +139,7 @@ func TestProcessRaw(t *testing.T) {
 					},
 				},
 			},
-			expected: &trade.Trade{
+			expected: trades.Trade{
 				Pair:   "tBTCUST",
 				ID:     559273857,
 				MTS:    1609665708633,
