@@ -90,7 +90,7 @@ func FromRaw(raw []interface{}) (o *Order, err error) {
 		PlacedID:      convert.I64ValOrZero(raw[25]),
 	}
 
-	if len(raw) >= 31 {
+	if len(raw) >= 32 {
 		o.Meta = convert.SiMapOrEmpty(raw[31])
 	}
 
