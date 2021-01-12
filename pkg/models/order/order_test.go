@@ -1,6 +1,7 @@
 package order_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
@@ -262,4 +263,46 @@ func TestOrdersSnapshotFromRaw(t *testing.T) {
 
 		assert.Equal(t, expected, got)
 	})
+}
+
+func TestNewFromRaw(t *testing.T) {
+	pld := []interface{}{
+		33950998276, nil, 1573476747887, "tETHUSD", 1573476748000, 1573476748000, -0.5,
+		-0.5, "LIMIT", nil, nil, nil, 0, "ACTIVE", nil, nil, 220, 0, 0, 0, nil, nil,
+		nil, 0, 1, nil, nil, nil, "BFX", nil, nil, nil,
+	}
+	expected := "order.New"
+	o, err := order.NewFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
+}
+
+func TestUpdateFromRaw(t *testing.T) {
+	pld := []interface{}{
+		33950998276, nil, 1573476747887, "tETHUSD", 1573476748000, 1573476748000, -0.5,
+		-0.5, "LIMIT", nil, nil, nil, 0, "ACTIVE", nil, nil, 220, 0, 0, 0, nil, nil,
+		nil, 0, 1, nil, nil, nil, "BFX", nil, nil, nil,
+	}
+	expected := "order.Update"
+	o, err := order.UpdateFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
+}
+
+func TestCancelFromRaw(t *testing.T) {
+	pld := []interface{}{
+		33950998276, nil, 1573476747887, "tETHUSD", 1573476748000, 1573476748000, -0.5,
+		-0.5, "LIMIT", nil, nil, nil, 0, "ACTIVE", nil, nil, 220, 0, 0, 0, nil, nil,
+		nil, 0, 1, nil, nil, nil, "BFX", nil, nil, nil,
+	}
+	expected := "order.Cancel"
+	o, err := order.CancelFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
 }
