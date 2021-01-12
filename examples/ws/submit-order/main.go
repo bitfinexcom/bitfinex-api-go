@@ -31,15 +31,13 @@ func main() {
 				if v.Event == "auth" && v.Status == "OK" {
 					auth <- true
 				}
-			case *order.New:
+			case order.New:
 				log.Printf("%T: %+v\n", v, v)
 			case *order.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
 					log.Printf("%T item: %+v\n", ss, ss)
 				}
-			default:
-				log.Printf("raw/unhandled: %T: %+v\n", v, v)
 			}
 		})
 	}()
