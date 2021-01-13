@@ -112,6 +112,8 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 			return fundingoffer.CancelFromRaw(data)
 		case "fon":
 			return fundingoffer.NewFromRaw(data)
+		case "fos":
+			return fundingoffer.SnapshotFromRaw(data)
 		case "fcs":
 			return fundingcredit.SnapshotFromRaw(data)
 		case "fcn":
@@ -120,6 +122,10 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 			return fundingcredit.UpdateFromRaw(raw)
 		case "fcc":
 			return fundingcredit.CancelFromRaw(raw)
+		case "ftu":
+			return trades.AFTUFromRaw(raw)
+		case "fte":
+			return trades.AFTEFromRaw(raw)
 		}
 	}
 
