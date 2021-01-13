@@ -1,6 +1,7 @@
 package fundingoffer_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
@@ -232,4 +233,18 @@ func TestFundingOfferSubmitRequest(t *testing.T) {
 		expected := "[0, \"fon\", null, {\"type\":\"LIMIT\",\"symbol\":\"fETH\",\"amount\":\"0.29797676\",\"rate\":\"0.0002\",\"period\":2}]"
 		assert.Equal(t, expected, string(got))
 	})
+}
+
+func TestCancelFromRaw(t *testing.T) {
+	pld := []interface{}{
+		652606505, "fETH", 1574000611000, 1574000611000, 0.29797676, 0.29797676, "LIMIT",
+		nil, nil, 0, "ACTIVE", nil, nil, nil, 0.0002, 2, 1, nil, nil, 0, nil,
+	}
+
+	expected := "fundingoffer.Cancel"
+	o, err := fundingoffer.CancelFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
 }
