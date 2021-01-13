@@ -56,6 +56,8 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case fundingcredit.New:
 				log.Printf("%T: %+v\n", v, v)
+			case fundingcredit.Update:
+				log.Printf("%T: %+v\n", v, v)
 			case *fundingcredit.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {

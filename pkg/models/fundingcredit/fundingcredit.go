@@ -98,6 +98,14 @@ func NewFromRaw(raw []interface{}) (New, error) {
 	return New(*c), nil
 }
 
+func UpdateFromRaw(raw []interface{}) (Update, error) {
+	c, err := FromRaw(raw)
+	if err != nil {
+		return Update{}, nil
+	}
+	return Update(*c), nil
+}
+
 func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {
 	if len(raw) == 0 {
 		return snap, fmt.Errorf("data slice too short for credit: %#v", raw)

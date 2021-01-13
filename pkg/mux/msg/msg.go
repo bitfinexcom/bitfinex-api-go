@@ -116,6 +116,8 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 			return fundingcredit.SnapshotFromRaw(data)
 		case "fcn":
 			return fundingcredit.NewFromRaw(raw)
+		case "fcu":
+			return fundingcredit.UpdateFromRaw(raw)
 		}
 	}
 

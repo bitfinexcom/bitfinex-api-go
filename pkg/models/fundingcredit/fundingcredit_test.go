@@ -241,3 +241,17 @@ func TestNewFromRaw(t *testing.T) {
 	got := reflect.TypeOf(o).String()
 	assert.Equal(t, expected, got)
 }
+
+func TestUpdateFromRaw(t *testing.T) {
+	pld := []interface{}{
+		26222883, "fUST", 1, 1574013661000, 1574079687000, 350, nil, "ACTIVE", nil, nil,
+		nil, 0.0024, 2, 1574013661000, 1574078487000, 1, nil, nil, 0, nil, 1, "tBTCUST",
+	}
+
+	expected := "fundingcredit.Update"
+	o, err := fundingcredit.UpdateFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
+}
