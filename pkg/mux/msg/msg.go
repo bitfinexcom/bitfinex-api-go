@@ -11,6 +11,8 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
@@ -106,6 +108,10 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 			return wallet.UpdateFromRaw(data)
 		case "bu":
 			return balanceinfo.UpdateFromRaw(data)
+		case "foc":
+			return fundingoffer.CancelFromRaw(data)
+		case "fcs":
+			return fundingcredit.SnapshotFromRaw(data)
 		}
 	}
 
