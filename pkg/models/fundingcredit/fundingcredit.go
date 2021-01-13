@@ -106,6 +106,14 @@ func UpdateFromRaw(raw []interface{}) (Update, error) {
 	return Update(*c), nil
 }
 
+func CancelFromRaw(raw []interface{}) (Cancel, error) {
+	c, err := FromRaw(raw)
+	if err != nil {
+		return Cancel{}, nil
+	}
+	return Cancel(*c), nil
+}
+
 func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {
 	if len(raw) == 0 {
 		return snap, fmt.Errorf("data slice too short for credit: %#v", raw)
