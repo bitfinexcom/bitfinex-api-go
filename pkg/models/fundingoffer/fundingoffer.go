@@ -133,6 +133,15 @@ func CancelFromRaw(raw []interface{}) (Cancel, error) {
 	return Cancel(*o), nil
 }
 
+func NewFromRaw(raw []interface{}) (New, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return New{}, err
+	}
+
+	return New(*o), nil
+}
+
 func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {
 	if len(raw) == 0 {
 		return snap, fmt.Errorf("data slice too short for offer: %#v", raw)
