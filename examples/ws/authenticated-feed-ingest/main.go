@@ -5,6 +5,7 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux"
@@ -48,6 +49,11 @@ func main() {
 				}
 			case balanceinfo.Update:
 				log.Printf("%T: %+v\n", v, v)
+			case *fundingcredit.Snapshot:
+				log.Printf("%T: %+v\n", v, v)
+				for _, ss := range v.Snapshot {
+					log.Printf("%T item: %+v\n", ss, ss)
+				}
 			default:
 				log.Printf("raw/unhandled: %T: %+v\n", v, v)
 			}
