@@ -129,7 +129,6 @@ func CancelFromRaw(raw []interface{}) (Cancel, error) {
 	if err != nil {
 		return Cancel{}, err
 	}
-
 	return Cancel(*o), nil
 }
 
@@ -138,7 +137,6 @@ func NewFromRaw(raw []interface{}) (New, error) {
 	if err != nil {
 		return New{}, err
 	}
-
 	return New(*o), nil
 }
 
