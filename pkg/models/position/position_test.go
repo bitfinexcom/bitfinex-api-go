@@ -381,3 +381,26 @@ func TestUpdateFromRaw(t *testing.T) {
 	assert.Equal(t, expected, got)
 	assert.Equal(t, "pu", p.Type)
 }
+
+func TestCancelFromRaw(t *testing.T) {
+	pld := []interface{}{
+		"tETHUST", "ACTIVE", 0.2, 153.71, 0, 0, -0.07944800000000068, -0.05855181835925015,
+		67.52755254906451, 1.409288545397275, nil, 142420429, nil, nil, nil, 0, nil, 0, 0,
+		map[string]interface{}{
+			"reason":        "TRADE",
+			"order_id":      34934099168,
+			"order_id_oppo": 34934090814,
+			"liq_stage":     nil,
+			"trade_price":   "153.71",
+			"trade_amount":  "0.2",
+		},
+	}
+
+	expected := "position.Cancel"
+	p, err := position.CancelFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(p).String()
+	assert.Equal(t, expected, got)
+	assert.Equal(t, "pc", p.Type)
+}
