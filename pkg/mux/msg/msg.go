@@ -101,11 +101,11 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "ps":
 			return position.SnapshotFromRaw(data)
 		case "pn":
-			// TODO
+			return position.NewFromRaw(data)
 		case "pu":
-			// TODO
+			return position.UpdateFromRaw(data)
 		case "pc":
-			// TODO
+			return position.CancelFromRaw(data)
 		case "ws":
 			return wallet.SnapshotFromRaw(data, wallet.FromWsRaw)
 		case "wu":
