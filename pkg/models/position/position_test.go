@@ -232,3 +232,105 @@ func TestFromRaw(t *testing.T) {
 		})
 	}
 }
+
+func TestSnapshotFromRaw(t *testing.T) {
+	cases := map[string]struct {
+		pld      []interface{}
+		expected *position.Snapshot
+		err      func(*testing.T, error)
+	}{
+		"invalid pld": {
+			pld:      []interface{}{},
+			expected: nil,
+			err: func(t *testing.T, err error) {
+				assert.NotNil(t, err)
+			},
+		},
+		"rest positions snapshot": {
+			pld: []interface{}{
+				[]interface{}{
+					"tETHUSD", "ACTIVE", -0.2, 167.01, 0, 0, nil, nil, nil, nil, nil,
+					142661142, 1579552390000, 1579552390000, nil, nil, nil, nil, nil, nil,
+				},
+				[]interface{}{
+					"tETHUSD", "ACTIVE", -0.2, 167.01, 0, 0, nil, nil, nil, nil, nil,
+					142661143, 1579552390000, 1579552390000, nil, nil, nil, nil, nil, nil,
+				},
+			},
+			expected: &position.Snapshot{
+				Snapshot: []*position.Position{
+					{
+						Id:        142661142,
+						Symbol:    "tETHUSD",
+						Status:    "ACTIVE",
+						Amount:    -0.2,
+						BasePrice: 167.01,
+						MtsCreate: 1579552390000,
+						MtsUpdate: 1579552390000,
+						Type:      "ps",
+					},
+					{
+						Id:        142661143,
+						Symbol:    "tETHUSD",
+						Status:    "ACTIVE",
+						Amount:    -0.2,
+						BasePrice: 167.01,
+						MtsCreate: 1579552390000,
+						MtsUpdate: 1579552390000,
+						Type:      "ps",
+					},
+				},
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+		"ws positions snapshot": {
+			pld: []interface{}{
+				[]interface{}{
+					"tETHUST", "ACTIVE", 0.2, 153.71, 0, 0, nil, nil, nil,
+					nil, nil, 142420429, nil, nil, nil, 0, nil, 0, nil,
+					map[string]interface{}{
+						"reason":        "TRADE",
+						"order_id":      34934099168,
+						"order_id_oppo": 34934090814,
+						"liq_stage":     nil,
+						"trade_price":   "153.71",
+						"trade_amount":  "0.2",
+					},
+				},
+			},
+			expected: &position.Snapshot{
+				Snapshot: []*position.Position{
+					{
+						Id:        142420429,
+						Symbol:    "tETHUST",
+						Status:    "ACTIVE",
+						Amount:    0.2,
+						BasePrice: 153.71,
+						Type:      "ps",
+						Meta: map[string]interface{}{
+							"reason":        "TRADE",
+							"order_id":      34934099168,
+							"order_id_oppo": 34934090814,
+							"liq_stage":     nil,
+							"trade_price":   "153.71",
+							"trade_amount":  "0.2",
+						},
+					},
+				},
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+	}
+
+	for k, v := range cases {
+		t.Run(k, func(t *testing.T) {
+			got, err := position.SnapshotFromRaw(v.pld)
+			v.err(t, err)
+			assert.Equal(t, v.expected, got)
+		})
+	}
+}
