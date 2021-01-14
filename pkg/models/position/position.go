@@ -7,12 +7,10 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
-type Status string
-
 type Position struct {
 	Id                   int64
 	Symbol               string
-	Status               Status
+	Status               string
 	Amount               float64
 	BasePrice            float64
 	MarginFunding        float64
@@ -21,47 +19,80 @@ type Position struct {
 	ProfitLossPercentage float64
 	LiquidationPrice     float64
 	Leverage             float64
+	Flag                 interface{}
+	MtsCreate            int64
+	MtsUpdate            int64
+	Type                 string
+	Collateral           float64
+	CollateralMin        float64
+	Meta                 map[string]interface{}
 }
 
-func FromRaw(raw []interface{}) (o *Position, err error) {
-	if len(raw) < 6 {
-		return o, fmt.Errorf("data slice too short for position: %#v", raw)
+type New Position
+type Update Position
+type Cancel Position
+
+type Snapshot struct {
+	Snapshot []*Position
+}
+
+func FromRaw(raw []interface{}) (p *Position, err error) {
+	if len(raw) < 20 {
+		return p, fmt.Errorf("data slice too short for position: %#v", raw)
 	}
 
-	o = &Position{
-		Symbol:            convert.SValOrEmpty(raw[0]),
-		Status:            Status(convert.SValOrEmpty(raw[1])),
-		Amount:            convert.F64ValOrZero(raw[2]),
-		BasePrice:         convert.F64ValOrZero(raw[3]),
-		MarginFunding:     convert.F64ValOrZero(raw[4]),
-		MarginFundingType: convert.I64ValOrZero(raw[5]),
+	p = &Position{
+		Symbol:               convert.SValOrEmpty(raw[0]),
+		Status:               convert.SValOrEmpty(raw[1]),
+		Amount:               convert.F64ValOrZero(raw[2]),
+		BasePrice:            convert.F64ValOrZero(raw[3]),
+		MarginFunding:        convert.F64ValOrZero(raw[4]),
+		MarginFundingType:    convert.I64ValOrZero(raw[5]),
+		ProfitLoss:           convert.F64ValOrZero(raw[6]),
+		ProfitLossPercentage: convert.F64ValOrZero(raw[7]),
+		LiquidationPrice:     convert.F64ValOrZero(raw[8]),
+		Leverage:             convert.F64ValOrZero(raw[9]),
+		Id:                   convert.I64ValOrZero(raw[11]),
+		MtsCreate:            convert.I64ValOrZero(raw[12]),
+		MtsUpdate:            convert.I64ValOrZero(raw[13]),
+		Type:                 convert.SValOrEmpty(raw[15]),
+		Collateral:           convert.F64ValOrZero(raw[17]),
+		CollateralMin:        convert.F64ValOrZero(raw[18]),
 	}
 
-	if len(raw) == 10 {
-		o.ProfitLoss = convert.F64ValOrZero(raw[6])
-		o.ProfitLossPercentage = convert.F64ValOrZero(raw[7])
-		o.LiquidationPrice = convert.F64ValOrZero(raw[8])
-		o.Leverage = convert.F64ValOrZero(raw[9])
-		return
-	}
-
-	if len(raw) > 10 {
-		o.ProfitLoss = convert.F64ValOrZero(raw[6])
-		o.ProfitLossPercentage = convert.F64ValOrZero(raw[7])
-		o.LiquidationPrice = convert.F64ValOrZero(raw[8])
-		o.Leverage = convert.F64ValOrZero(raw[9])
-		o.Id = int64(convert.F64ValOrZero(raw[11]))
+	if meta, ok := raw[19].(map[string]interface{}); ok {
+		p.Meta = meta
 	}
 
 	return
 }
 
-type Snapshot struct {
-	Snapshot []*Position
+func NewFromRaw(raw []interface{}) (New, error) {
+	p, err := FromRaw(raw)
+	if err != nil {
+		return New{}, err
+	}
+	p.Type = "pn"
+	return New(*p), nil
 }
-type New Position
-type Update Position
-type Cancel Position
+
+func UpdateFromRaw(raw []interface{}) (Update, error) {
+	p, err := FromRaw(raw)
+	if err != nil {
+		return Update{}, err
+	}
+	p.Type = "pu"
+	return Update(*p), nil
+}
+
+func CancelFromRaw(raw []interface{}) (Cancel, error) {
+	p, err := FromRaw(raw)
+	if err != nil {
+		return Cancel{}, err
+	}
+	p.Type = "pc"
+	return Cancel(*p), nil
+}
 
 func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 	if len(raw) == 0 {
@@ -74,6 +105,7 @@ func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				p, err := FromRaw(l)
+				p.Type = "ps"
 				if err != nil {
 					return s, err
 				}
