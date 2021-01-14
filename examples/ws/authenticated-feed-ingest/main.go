@@ -6,8 +6,10 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux"
@@ -55,6 +57,8 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case fundingoffer.Cancel:
 				log.Printf("%T: %+v\n", v, v)
+			case fundingoffer.Update:
+				log.Printf("%T: %+v\n", v, v)
 			case *fundingoffer.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 				for _, ss := range v.Snapshot {
@@ -75,6 +79,22 @@ func main() {
 				for _, ss := range v.Snapshot {
 					log.Printf("%T item: %+v\n", ss, ss)
 				}
+			case *position.Snapshot:
+				log.Printf("%T: %+v\n", v, v)
+				for _, ss := range v.Snapshot {
+					log.Printf("%T item: %+v\n", ss, ss)
+				}
+			case *fundingloan.Snapshot:
+				log.Printf("%T: %+v\n", v, v)
+				for _, ss := range v.Snapshot {
+					log.Printf("%T item: %+v\n", ss, ss)
+				}
+			case fundingloan.New:
+				log.Printf("%T: %+v\n", v, v)
+			case fundingloan.Update:
+				log.Printf("%T: %+v\n", v, v)
+			case fundingloan.Cancel:
+				log.Printf("%T: %+v\n", v, v)
 			default:
 				log.Printf("raw/unhandled: %T: %+v\n", v, v)
 			}
