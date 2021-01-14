@@ -37,9 +37,6 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case *order.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case order.Update:
 				log.Printf("%T: %+v\n", v, v)
 			case order.Cancel:
@@ -48,9 +45,6 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case *wallet.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case balanceinfo.Update:
 				log.Printf("%T: %+v\n", v, v)
 			case fundingoffer.New:
@@ -61,9 +55,6 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case *fundingoffer.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case fundingcredit.New:
 				log.Printf("%T: %+v\n", v, v)
 			case fundingcredit.Update:
@@ -76,19 +67,16 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case *fundingcredit.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case *position.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
+			case position.New:
+				log.Printf("%T: %+v\n", v, v)
+			case position.Update:
+				log.Printf("%T: %+v\n", v, v)
+			case position.Cancel:
+				log.Printf("%T: %+v\n", v, v)
 			case *fundingloan.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case fundingloan.New:
 				log.Printf("%T: %+v\n", v, v)
 			case fundingloan.Update:
