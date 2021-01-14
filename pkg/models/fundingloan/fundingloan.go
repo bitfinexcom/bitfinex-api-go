@@ -88,6 +88,30 @@ func FromRaw(raw []interface{}) (l *Loan, err error) {
 	return
 }
 
+func NewFromRaw(raw []interface{}) (New, error) {
+	r, err := FromRaw(raw)
+	if err != nil {
+		return New{}, err
+	}
+	return New(*r), nil
+}
+
+func UpdateFromRaw(raw []interface{}) (Update, error) {
+	r, err := FromRaw(raw)
+	if err != nil {
+		return Update{}, err
+	}
+	return Update(*r), nil
+}
+
+func CancelFromRaw(raw []interface{}) (Cancel, error) {
+	r, err := FromRaw(raw)
+	if err != nil {
+		return Cancel{}, err
+	}
+	return Cancel(*r), nil
+}
+
 func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {
 	if len(raw) == 0 {
 		return snap, fmt.Errorf("data slice too short for loan: %#v", raw)
