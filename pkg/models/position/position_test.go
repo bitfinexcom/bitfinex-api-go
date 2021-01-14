@@ -1,6 +1,7 @@
 package position_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -333,4 +334,27 @@ func TestSnapshotFromRaw(t *testing.T) {
 			assert.Equal(t, v.expected, got)
 		})
 	}
+}
+
+func TestNewFromRaw(t *testing.T) {
+	pld := []interface{}{
+		"tETHUST", "ACTIVE", 0.2, 153.71, 0, 0, -0.07944800000000068, -0.05855181835925015,
+		67.52755254906451, 1.409288545397275, nil, 142420429, nil, nil, nil, 0, nil, 0, 0,
+		map[string]interface{}{
+			"reason":        "TRADE",
+			"order_id":      34934099168,
+			"order_id_oppo": 34934090814,
+			"liq_stage":     nil,
+			"trade_price":   "153.71",
+			"trade_amount":  "0.2",
+		},
+	}
+
+	expected := "position.New"
+	p, err := position.NewFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(p).String()
+	assert.Equal(t, expected, got)
+	assert.Equal(t, "pn", p.Type)
 }
