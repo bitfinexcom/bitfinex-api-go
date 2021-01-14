@@ -1,6 +1,7 @@
 package fundingloan_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
@@ -218,4 +219,46 @@ func TestFundingLoanCancelRequest(t *testing.T) {
 		expected := "[0, \"flc\", null, {\"id\":123}]"
 		assert.Equal(t, expected, string(got))
 	})
+}
+
+func TestNewFromRaw(t *testing.T) {
+	pld := []interface{}{
+		2995368, "fUST", 0, 1574077517000, 1574077517000, 100, nil, "ACTIVE", nil,
+		nil, nil, 0.0024, 2, 1574077517000, 1574077517000, 0, nil, nil, 1, nil, 0,
+	}
+
+	expected := "fundingloan.New"
+	o, err := fundingloan.NewFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
+}
+
+func TestUpdateFromRaw(t *testing.T) {
+	pld := []interface{}{
+		2995368, "fUST", 0, 1574077517000, 1574077517000, 100, nil, "ACTIVE", nil,
+		nil, nil, 0.0024, 2, 1574077517000, 1574077517000, 0, nil, nil, 1, nil, 0,
+	}
+
+	expected := "fundingloan.Update"
+	o, err := fundingloan.UpdateFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
+}
+
+func TestCancelFromRaw(t *testing.T) {
+	pld := []interface{}{
+		2995368, "fUST", 0, 1574077517000, 1574077517000, 100, nil, "ACTIVE", nil,
+		nil, nil, 0.0024, 2, 1574077517000, 1574077517000, 0, nil, nil, 1, nil, 0,
+	}
+
+	expected := "fundingloan.Cancel"
+	o, err := fundingloan.CancelFromRaw(pld)
+	assert.Nil(t, err)
+
+	got := reflect.TypeOf(o).String()
+	assert.Equal(t, expected, got)
 }
