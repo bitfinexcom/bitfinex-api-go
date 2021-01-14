@@ -12,8 +12,10 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
@@ -94,38 +96,76 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		}, nil
 	case []interface{}:
 		switch op {
-		case "os":
-			return order.SnapshotFromRaw(data)
-		case "on":
-			return order.NewFromRaw(data)
-		case "ou":
-			return order.UpdateFromRaw(data)
-		case "oc":
-			return order.CancelFromRaw(data)
+		case "bu":
+			return balanceinfo.UpdateFromRaw(data)
+		case "ps":
+			return position.SnapshotFromRaw(data)
+		case "pn":
+			// TODO
+		case "pu":
+			// TODO
+		case "pc":
+			// TODO
 		case "ws":
 			return wallet.SnapshotFromRaw(data, wallet.FromWsRaw)
 		case "wu":
 			return wallet.UpdateFromRaw(data)
-		case "bu":
-			return balanceinfo.UpdateFromRaw(data)
-		case "foc":
-			return fundingoffer.CancelFromRaw(data)
-		case "fon":
-			return fundingoffer.NewFromRaw(data)
+		case "os":
+			return order.SnapshotFromRaw(data)
+		case "on":
+			return order.NewFromRaw(data)
+		case "on-req":
+			// TODO
+		case "ou":
+			return order.UpdateFromRaw(data)
+		case "oc":
+			return order.CancelFromRaw(data)
+		case "oc-req":
+			// TODO
+		case "oc_multi-req":
+			// TODO
+		case "te":
+			// TODO
+		case "tu":
+			// TODO
+		case "fte":
+			return trades.AFTEFromRaw(data)
+		case "ftu":
+			return trades.AFTUFromRaw(data)
+		case "mis":
+			// TODO
+		case "miu":
+			// TODO
+		case "n":
+			// TODO
 		case "fos":
 			return fundingoffer.SnapshotFromRaw(data)
+		case "fon":
+			return fundingoffer.NewFromRaw(data)
+		case "fou":
+			return fundingoffer.UpdateFromRaw(data)
+		case "foc":
+			return fundingoffer.CancelFromRaw(data)
 		case "fcs":
 			return fundingcredit.SnapshotFromRaw(data)
 		case "fcn":
-			return fundingcredit.NewFromRaw(raw)
+			return fundingcredit.NewFromRaw(data)
 		case "fcu":
-			return fundingcredit.UpdateFromRaw(raw)
+			return fundingcredit.UpdateFromRaw(data)
 		case "fcc":
-			return fundingcredit.CancelFromRaw(raw)
-		case "ftu":
-			return trades.AFTUFromRaw(raw)
-		case "fte":
-			return trades.AFTEFromRaw(raw)
+			return fundingcredit.CancelFromRaw(data)
+		case "fls":
+			return fundingloan.SnapshotFromRaw(data)
+		case "fln":
+			return fundingloan.NewFromRaw(data)
+		case "flu":
+			return fundingloan.UpdateFromRaw(data)
+		case "flc":
+			return fundingloan.CancelFromRaw(data)
+		case "hfts":
+			// TODO
+		case "uac":
+			// TODO
 		}
 	}
 
