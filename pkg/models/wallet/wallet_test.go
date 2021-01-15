@@ -1,197 +1,228 @@
 package wallet_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestNewWalletFromRaw(t *testing.T) {
-	t.Run("insufficient arguments", func(t *testing.T) {
-		payload := []interface{}{"exchange"}
-
-		w, err := wallet.FromRaw(payload)
-		require.NotNil(t, err)
-		require.Nil(t, w)
-	})
-
-	t.Run("valid arguments", func(t *testing.T) {
-		payload := []interface{}{
-			"exchange",
-			"SAN",
-			19.76,
-			0,
-		}
-
-		w, err := wallet.FromRaw(payload)
-		require.Nil(t, err)
-
-		expected := &wallet.Wallet{
-			Type:              "exchange",
-			Currency:          "SAN",
-			Balance:           19.76,
-			UnsettledInterest: 0,
-		}
-
-		assert.Equal(t, expected, w)
-	})
-}
-
-func TestNewWalletFromWsRaw(t *testing.T) {
-	t.Run("insufficient arguments", func(t *testing.T) {
-		payload := []interface{}{"exchange"}
-
-		invc, err := wallet.FromWsRaw(payload)
-		require.NotNil(t, err)
-		require.Nil(t, invc)
-	})
-
-	t.Run("valid arguments", func(t *testing.T) {
-		payload := []interface{}{
-			"exchange",
-			"SAN",
-			19.76,
-			0,
-			12.1234,
-		}
-
-		w, err := wallet.FromWsRaw(payload)
-		require.Nil(t, err)
-
-		expected := &wallet.Wallet{
-			Type:              "exchange",
-			Currency:          "SAN",
-			Balance:           19.76,
-			UnsettledInterest: 0,
-			BalanceAvailable:  12.1234,
-		}
-
-		assert.Equal(t, expected, w)
-	})
-}
-
-func TestWalletSnapshotFromRaw(t *testing.T) {
-	t.Run("rest success", func(t *testing.T) {
-		payload := []interface{}{
-			[]interface{}{
-				"exchange",
-				"SAN",
-				19.76,
-				0,
-			},
-			[]interface{}{
-				"exchange",
-				"SAN",
-				20.76,
-				2,
-			},
-		}
-
-		ss, err := wallet.SnapshotFromRaw(payload, wallet.FromRaw)
-		require.Nil(t, err)
-
-		assert.Equal(t, &wallet.Snapshot{
-			Snapshot: []*wallet.Wallet{
-				{
-					Type:              "exchange",
-					Currency:          "SAN",
-					Balance:           19.76,
-					UnsettledInterest: 0,
-				},
-				{
-					Type:              "exchange",
-					Currency:          "SAN",
-					Balance:           20.76,
-					UnsettledInterest: 2,
-				},
-			},
-		}, ss)
-	})
-
-	t.Run("rest fail", func(t *testing.T) {
-		payload := []interface{}{
-			[]interface{}{"exchange"},
-			[]interface{}{
-				"exchange",
-				"SAN",
-				20.76,
-				2,
-			},
-		}
-
-		ss, err := wallet.SnapshotFromRaw(payload, wallet.FromRaw)
-		require.NotNil(t, err)
-		require.Nil(t, ss)
-	})
-
-	t.Run("ws success", func(t *testing.T) {
-		payload := []interface{}{
-			[]interface{}{
-				"exchange",
-				"SAN",
-				19.76,
-				0,
-				12.1234,
-			},
-			[]interface{}{
-				"exchange",
-				"SAN",
-				20.76,
-				2,
-				12.12345,
-			},
-		}
-
-		ss, err := wallet.SnapshotFromRaw(payload, wallet.FromWsRaw)
-		require.Nil(t, err)
-
-		assert.Equal(t, &wallet.Snapshot{
-			Snapshot: []*wallet.Wallet{
-				{
-					Type:              "exchange",
-					Currency:          "SAN",
-					Balance:           19.76,
-					UnsettledInterest: 0,
-					BalanceAvailable:  12.1234,
-				},
-				{
-					Type:              "exchange",
-					Currency:          "SAN",
-					Balance:           20.76,
-					UnsettledInterest: 2,
-					BalanceAvailable:  12.12345,
-				},
-			},
-		}, ss)
-	})
-
-	t.Run("ws fail", func(t *testing.T) {
-		payload := []interface{}{
-			[]interface{}{"exchange"},
-			[]interface{}{
-				"exchange",
-				"SAN",
-				20.76,
-				2,
-				12.12345,
-			},
-		}
-
-		ss, err := wallet.SnapshotFromRaw(payload, wallet.FromWsRaw)
-		require.NotNil(t, err)
-		require.Nil(t, ss)
-	})
-}
-
 func TestUpdateFromRaw(t *testing.T) {
-	pld := []interface{}{"exchange", "SAN", 19.76, 0, 12.1234}
-	expected := "wallet.Update"
-	o, err := wallet.UpdateFromRaw(pld)
-	assert.Nil(t, err)
+	cases := map[string]struct {
+		pld      []interface{}
+		expected *wallet.Wallet
+		err      func(*testing.T, error)
+	}{
+		"invalid pld": {
+			pld:      []interface{}{"exchange"},
+			expected: nil,
+			err: func(t *testing.T, err error) {
+				assert.NotNil(t, err)
+			},
+		},
+		"valid rest pld with meta": {
+			pld: []interface{}{
+				"exchange", "UST", 19788.6529257, 0, 19788.6529257,
+				"Exchange 2.0 UST for USD @ 11.696",
+				map[string]interface{}{
+					"reason":        "TRADE",
+					"order_id":      1189740779,
+					"order_id_oppo": 1189785673,
+					"trade_price":   "11.696",
+					"trade_amount":  "-2.0",
+					"order_cid":     1598516362757,
+					"order_gid":     1598516362629,
+				},
+			},
+			expected: &wallet.Wallet{
+				Type:              "exchange",
+				Currency:          "UST",
+				Balance:           19788.6529257,
+				UnsettledInterest: 0,
+				BalanceAvailable:  19788.6529257,
+				LastChange:        "Exchange 2.0 UST for USD @ 11.696",
+				TradeDetails: map[string]interface{}{
+					"order_cid":     1598516362757,
+					"order_gid":     1598516362629,
+					"order_id":      1189740779,
+					"order_id_oppo": 1189785673,
+					"reason":        "TRADE",
+					"trade_amount":  "-2.0",
+					"trade_price":   "11.696",
+				},
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+		"valid rest pld no meta": {
+			pld: []interface{}{
+				"exchange", "UST", 19788.6529257, 0, 19788.6529257,
+				"Exchange 2.0 UST for USD @ 11.696", nil,
+			},
+			expected: &wallet.Wallet{
+				Type:              "exchange",
+				Currency:          "UST",
+				Balance:           19788.6529257,
+				UnsettledInterest: 0,
+				BalanceAvailable:  19788.6529257,
+				LastChange:        "Exchange 2.0 UST for USD @ 11.696",
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+		"valid ws wallet with meta": {
+			pld: []interface{}{
+				"exchange", "BTC", 1.61169184, 0, nil,
+				"Exchange 0.01 BTC for USD @ 7804.6",
+				map[string]interface{}{
+					"reason":        "TRADE",
+					"order_id":      34988418651,
+					"order_id_oppo": 34990541044,
+					"trade_price":   "7804.6",
+					"trade_amount":  "0.01",
+				},
+			},
+			expected: &wallet.Wallet{
+				Type:              "exchange",
+				Currency:          "BTC",
+				Balance:           1.61169184,
+				UnsettledInterest: 0,
+				BalanceAvailable:  0,
+				LastChange:        "Exchange 0.01 BTC for USD @ 7804.6",
+				TradeDetails: map[string]interface{}{
+					"order_id":      34988418651,
+					"order_id_oppo": 34990541044,
+					"reason":        "TRADE",
+					"trade_amount":  "0.01",
+					"trade_price":   "7804.6",
+				},
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+		"valid ws wallet no meta": {
+			pld: []interface{}{
+				"exchange", "BTC", 1.61169184, 0, nil,
+				"Exchange 0.01 BTC for USD @ 7804.6", nil,
+			},
+			expected: &wallet.Wallet{
+				Type:              "exchange",
+				Currency:          "BTC",
+				Balance:           1.61169184,
+				UnsettledInterest: 0,
+				BalanceAvailable:  0,
+				LastChange:        "Exchange 0.01 BTC for USD @ 7804.6",
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+	}
 
-	got := reflect.TypeOf(o).String()
-	assert.Equal(t, expected, got)
+	for k, v := range cases {
+		t.Run(k, func(t *testing.T) {
+			got, err := wallet.FromRaw(v.pld)
+			v.err(t, err)
+			assert.Equal(t, v.expected, got)
+		})
+	}
+}
+
+func TestSnapshotFromRaw(t *testing.T) {
+	cases := map[string]struct {
+		pld      []interface{}
+		expected *wallet.Snapshot
+		err      func(*testing.T, error)
+	}{
+		"invalid pld": {
+			pld:      []interface{}{},
+			expected: nil,
+			err: func(t *testing.T, err error) {
+				assert.NotNil(t, err)
+			},
+		},
+		"valid rest pld": {
+			pld: []interface{}{
+				[]interface{}{
+					"exchange", "UST", 19788.6529257, 0, 19788.6529257,
+					"Exchange 2.0 UST for USD @ 11.696",
+					map[string]interface{}{
+						"reason":        "TRADE",
+						"order_id":      1189740779,
+						"order_id_oppo": 1189785673,
+						"trade_price":   "11.696",
+						"trade_amount":  "-2.0",
+						"order_cid":     1598516362757,
+						"order_gid":     1598516362629,
+					},
+				},
+				[]interface{}{
+					"exchange", "UST", 19788.6529257, 0, 19788.6529257,
+					"Exchange 2.0 UST for USD @ 11.696", nil,
+				},
+			},
+			expected: &wallet.Snapshot{
+				Snapshot: []*wallet.Wallet{
+					{
+						Type:              "exchange",
+						Currency:          "UST",
+						Balance:           19788.6529257,
+						UnsettledInterest: 0,
+						BalanceAvailable:  19788.6529257,
+						LastChange:        "Exchange 2.0 UST for USD @ 11.696",
+						TradeDetails: map[string]interface{}{
+							"order_cid":     1598516362757,
+							"order_gid":     1598516362629,
+							"order_id":      1189740779,
+							"order_id_oppo": 1189785673,
+							"reason":        "TRADE",
+							"trade_amount":  "-2.0",
+							"trade_price":   "11.696",
+						},
+					},
+					{
+						Type:              "exchange",
+						Currency:          "UST",
+						Balance:           19788.6529257,
+						UnsettledInterest: 0,
+						BalanceAvailable:  19788.6529257,
+						LastChange:        "Exchange 2.0 UST for USD @ 11.696",
+					},
+				},
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+		"valid ws pld": {
+			pld: []interface{}{
+				[]interface{}{"exchange", "SAN", 19.76, 0, nil, nil, nil},
+			},
+			expected: &wallet.Snapshot{
+				Snapshot: []*wallet.Wallet{
+					{
+						Type:              "exchange",
+						Currency:          "SAN",
+						Balance:           19.76,
+						UnsettledInterest: 0,
+						BalanceAvailable:  0,
+					},
+				},
+			},
+			err: func(t *testing.T, err error) {
+				assert.Nil(t, err)
+			},
+		},
+	}
+
+	for k, v := range cases {
+		t.Run(k, func(t *testing.T) {
+			got, err := wallet.SnapshotFromRaw(v.pld)
+			v.err(t, err)
+			assert.Equal(t, v.expected, got)
+		})
+	}
 }
