@@ -105,14 +105,8 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case trades.TradeSnapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case trades.FundingTradeSnapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case trades.TradeUpdate:
 				log.Printf("%T: %+v\n", v, v)
 			case trades.TradeExecuted:
@@ -125,37 +119,22 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case *ticker.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case *book.Book:
 				log.Printf("%T: %+v\n", v, v)
 			case *book.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case *candle.Candle:
 				log.Printf("%T: %+v\n", v, v)
 			case *candle.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case *status.Derivative:
 				log.Printf("%T: %+v\n", v, v)
 			case *status.DerivativesSnapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			case *status.Liquidation:
 				log.Printf("%T: %+v\n", v, v)
 			case *status.LiquidationsSnapshot:
 				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
 			default:
 				log.Printf("raw/unrecognized msg: %T: %s\n", v, v)
 			}
