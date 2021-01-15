@@ -21,11 +21,18 @@ func TestFromRaw(t *testing.T) {
 				assert.NotNil(t, err)
 			},
 		},
-		"retrieve positions": {
+		"rest retrieve positions": {
 			pld: []interface{}{
 				"tBTCUSD", "ACTIVE", 0.0195, 8565.0267019, 0, 0, -0.33455568705000516, -0.0003117550117425625,
 				7045.876419249083, 3.0673001895895604, nil, 142355652, 1574002216000, 1574002216000, nil, 0, nil, 0, 0,
-				map[string]interface{}{"reason": "TRADE", "order_id": 34271018124, "liq_stage": nil, "trade_price": "8565.0267019", "trade_amount": "0.0195", "order_id_oppo": 34277498022},
+				map[string]interface{}{
+					"reason":        "TRADE",
+					"order_id":      34271018124,
+					"liq_stage":     nil,
+					"trade_price":   "8565.0267019",
+					"trade_amount":  "0.0195",
+					"order_id_oppo": 34277498022,
+				},
 			},
 			expected: &position.Position{
 				Id:                   142355652,
@@ -58,7 +65,7 @@ func TestFromRaw(t *testing.T) {
 				assert.Nil(t, err)
 			},
 		},
-		"claim position": {
+		"rest claim position": {
 			pld: []interface{}{
 				"tBTCUSD", "ACTIVE", -0.001, 10119, 0, 0, nil, nil, nil, nil, nil, 142031891,
 				1568650294000, 1568650294000, nil, 0, nil, 0, nil,
@@ -104,7 +111,7 @@ func TestFromRaw(t *testing.T) {
 				assert.Nil(t, err)
 			},
 		},
-		"position history item": {
+		"rest position history item": {
 			pld: []interface{}{
 				"tBTCUSD", "CLOSED", 0, 8639.50216298, 0, 0, nil, nil, nil, nil, nil,
 				142355652, 1574002216000, 1574003099000, nil, nil, nil, nil, nil, nil,
@@ -133,7 +140,7 @@ func TestFromRaw(t *testing.T) {
 				assert.Nil(t, err)
 			},
 		},
-		"position audit": {
+		"rest position audit": {
 			pld: []interface{}{
 				"tETHUSD", "ACTIVE", 0.9682, 182.76, 0, 0, nil, nil, nil, nil, nil,
 				142358085, 1574088504000, 1574088504000, nil, nil, nil, 0, nil,
