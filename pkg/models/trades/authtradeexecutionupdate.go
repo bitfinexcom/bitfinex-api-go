@@ -21,7 +21,8 @@ type AuthExecutionUpdate struct {
 	FeeCurrency string
 }
 
-func AuthExecutionUpdateFromRaw(raw []interface{}) (eu AuthExecutionUpdate, err error) {
+// ATEUFromRaw authenticated trade execution update mapping to data type
+func ATEUFromRaw(raw []interface{}) (eu AuthExecutionUpdate, err error) {
 	if len(raw) < 11 {
 		return AuthExecutionUpdate{}, fmt.Errorf("data slice too short for auth trade execution update: %#v", raw)
 	}

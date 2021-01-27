@@ -20,7 +20,8 @@ type AuthExecution struct {
 	ClientOrderID int64
 }
 
-func AuthExecutionFromRaw(raw []interface{}) (e AuthExecution, err error) {
+// ATEFromRaw - authenticated trade execution mapping to data type
+func ATEFromRaw(raw []interface{}) (e AuthExecution, err error) {
 	if len(raw) < 12 {
 		return AuthExecution{}, fmt.Errorf("data slice too short for auth trade execution: %#v", raw)
 	}

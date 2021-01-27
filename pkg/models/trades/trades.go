@@ -7,6 +7,9 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
+// FromWSRaw acts as a relay for public trades channel to abstract complexity from msg.
+// Data arrives under "trades" channel and then splits into sub types:
+// ["tu", "te", "ftu", "fte"] and can also be a snapshot.
 func FromWSRaw(pair string, raw, data []interface{}) (interface{}, error) {
 	if len(data) == 0 {
 		return nil, errors.New("empty data slice for trade")

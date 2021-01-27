@@ -125,9 +125,9 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "oc_multi-req":
 			// TODO
 		case "te":
-			// TODO
+			return trades.ATEFromRaw(data)
 		case "tu":
-			// TODO
+			return trades.ATEUFromRaw(data)
 		case "fte":
 			return trades.AFTEFromRaw(data)
 		case "ftu":
