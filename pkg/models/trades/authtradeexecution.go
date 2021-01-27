@@ -6,8 +6,8 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 )
 
-// AuthExecution used for mapping authenticated trade execution raw messages
-type AuthExecution struct {
+// AuthTradeExecution used for mapping authenticated trade execution raw messages
+type AuthTradeExecution struct {
 	ID            int64
 	Pair          string
 	MTS           int64
@@ -21,12 +21,12 @@ type AuthExecution struct {
 }
 
 // ATEFromRaw - authenticated trade execution mapping to data type
-func ATEFromRaw(raw []interface{}) (e AuthExecution, err error) {
+func ATEFromRaw(raw []interface{}) (e AuthTradeExecution, err error) {
 	if len(raw) < 12 {
-		return AuthExecution{}, fmt.Errorf("data slice too short for auth trade execution: %#v", raw)
+		return AuthTradeExecution{}, fmt.Errorf("data slice too short for auth trade execution: %#v", raw)
 	}
 
-	e = AuthExecution{
+	e = AuthTradeExecution{
 		ID:            convert.I64ValOrZero(raw[0]),
 		Pair:          convert.SValOrEmpty(raw[1]),
 		MTS:           convert.I64ValOrZero(raw[2]),

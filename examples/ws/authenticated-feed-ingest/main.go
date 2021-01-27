@@ -65,6 +65,10 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case trades.AuthFundingTradeExecuted:
 				log.Printf("%T: %+v\n", v, v)
+			case trades.AuthTradeExecution:
+				log.Printf("%T: %+v\n", v, v)
+			case trades.AuthTradeExecutionUpdate:
+				log.Printf("%T: %+v\n", v, v)
 			case *fundingcredit.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
 			case *position.Snapshot:
