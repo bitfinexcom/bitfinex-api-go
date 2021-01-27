@@ -519,6 +519,120 @@ func TestProcessPrivateRaw(t *testing.T) {
 				},
 			},
 		},
+		"position new": {
+			pld: []byte(`[
+				0,
+				"pn",
+				[
+					"tETHUST","ACTIVE",0.2,153.71,0,0,-0.07944800000000068,-0.05855181835925015,
+					67.52755254906451, 1.409288545397275,null,142420429,null,null,null,0,null,0,0,
+					{
+						"reason":"TRADE",
+						"order_id":34934099168,
+						"order_id_oppo":34934090814,
+						"liq_stage":null,
+						"trade_price":"153.71",
+						"trade_amount":"0.2"
+					}
+				]
+			]`),
+			expected: position.New{
+				Id:                   142420429,
+				Symbol:               "tETHUST",
+				Status:               "ACTIVE",
+				Amount:               0.2,
+				BasePrice:            153.71,
+				Type:                 "pn",
+				ProfitLoss:           -0.07944800000000068,
+				ProfitLossPercentage: -0.05855181835925015,
+				LiquidationPrice:     67.52755254906451,
+				Leverage:             1.409288545397275,
+				Meta: map[string]interface{}{
+					"liq_stage":     nil,
+					"order_id":      3.4934099168e+10,
+					"order_id_oppo": 3.4934090814e+10,
+					"reason":        "TRADE",
+					"trade_amount":  "0.2",
+					"trade_price":   "153.71",
+				},
+			},
+		},
+		"position update": {
+			pld: []byte(`[
+				0,
+				"pu",
+				[
+					"tETHUST","ACTIVE",0.2,153.71,0,0,-0.07944800000000068,-0.05855181835925015,
+					67.52755254906451, 1.409288545397275,null,142420429,null,null,null,0,null,0,0,
+					{
+						"reason":"TRADE",
+						"order_id":34934099168,
+						"order_id_oppo":34934090814,
+						"liq_stage":null,
+						"trade_price":"153.71",
+						"trade_amount":"0.2"
+					}
+				]
+			]`),
+			expected: position.Update{
+				Id:                   142420429,
+				Symbol:               "tETHUST",
+				Status:               "ACTIVE",
+				Amount:               0.2,
+				BasePrice:            153.71,
+				Type:                 "pu",
+				ProfitLoss:           -0.07944800000000068,
+				ProfitLossPercentage: -0.05855181835925015,
+				LiquidationPrice:     67.52755254906451,
+				Leverage:             1.409288545397275,
+				Meta: map[string]interface{}{
+					"liq_stage":     nil,
+					"order_id":      3.4934099168e+10,
+					"order_id_oppo": 3.4934090814e+10,
+					"reason":        "TRADE",
+					"trade_amount":  "0.2",
+					"trade_price":   "153.71",
+				},
+			},
+		},
+		"position close": {
+			pld: []byte(`[
+				0,
+				"pc",
+				[
+					"tETHUST","ACTIVE",0.2,153.71,0,0,-0.07944800000000068,-0.05855181835925015,
+					67.52755254906451, 1.409288545397275,null,142420429,null,null,null,0,null,0,0,
+					{
+						"reason":"TRADE",
+						"order_id":34934099168,
+						"order_id_oppo":34934090814,
+						"liq_stage":null,
+						"trade_price":"153.71",
+						"trade_amount":"0.2"
+					}
+				]
+			]`),
+			expected: position.Cancel{
+				Id:                   142420429,
+				Symbol:               "tETHUST",
+				Status:               "ACTIVE",
+				Amount:               0.2,
+				BasePrice:            153.71,
+				Type:                 "pc",
+				ProfitLoss:           -0.07944800000000068,
+				ProfitLossPercentage: -0.05855181835925015,
+				LiquidationPrice:     67.52755254906451,
+				Leverage:             1.409288545397275,
+				Meta: map[string]interface{}{
+					"liq_stage":     nil,
+					"order_id":      3.4934099168e+10,
+					"order_id_oppo": 3.4934090814e+10,
+					"reason":        "TRADE",
+					"trade_amount":  "0.2",
+					"trade_price":   "153.71",
+				},
+			},
+		},
 	}
 
 	for k, v := range cases {
