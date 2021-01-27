@@ -3,9 +3,11 @@ package msg_test
 import (
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/balanceinfo"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
@@ -453,6 +455,76 @@ func TestProcessRaw(t *testing.T) {
 		t.Run(k, func(t *testing.T) {
 			m := msg.Msg{Data: v.pld}
 			got, err := m.ProcessRaw(v.inf)
+			assert.NoError(t, err)
+			assert.Equal(t, v.expected, got)
+		})
+	}
+}
+
+func TestProcessPrivateRaw(t *testing.T) {
+	cases := map[string]struct {
+		pld      []byte
+		expected interface{}
+		inf      map[int64]event.Info
+	}{
+		"info event": {
+			pld: []byte(`[0, "hb"]`),
+			expected: event.Info{
+				ChanID:    0,
+				Subscribe: event.Subscribe{Event: "hb"},
+			},
+		},
+		"balance info update": {
+			pld: []byte(`[0,"bu",[4131,4131.85]]`),
+			expected: balanceinfo.Update{
+				TotalAUM: 4131,
+				NetAUM:   4131.85,
+			},
+		},
+		"position snapshot": {
+			pld: []byte(`[
+				0,
+				"ps",
+				[[
+					"tETHUST","ACTIVE",0.2,153.71,0,0,null,null,null,
+					null,null,142420429,null,null,null,0,null,0,null,
+					{
+						"reason":"TRADE",
+						"order_id":34934099168,
+						"order_id_oppo":34934090814,
+						"liq_stage":null,
+						"trade_price":"153.71",
+						"trade_amount":"0.2"
+					}
+				]]
+			]`),
+			expected: &position.Snapshot{
+				Snapshot: []*position.Position{
+					{
+						Id:        142420429,
+						Symbol:    "tETHUST",
+						Status:    "ACTIVE",
+						Amount:    0.2,
+						BasePrice: 153.71,
+						Type:      "ps",
+						Meta: map[string]interface{}{
+							"liq_stage":     nil,
+							"order_id":      3.4934099168e+10,
+							"order_id_oppo": 3.4934090814e+10,
+							"reason":        "TRADE",
+							"trade_amount":  "0.2",
+							"trade_price":   "153.71",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for k, v := range cases {
+		t.Run(k, func(t *testing.T) {
+			m := msg.Msg{Data: v.pld}
+			got, err := m.ProcessPrivateRaw()
 			assert.NoError(t, err)
 			assert.Equal(t, v.expected, got)
 		})
