@@ -11,6 +11,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/msg"
 	"github.com/stretchr/testify/assert"
 )
@@ -630,6 +631,50 @@ func TestProcessPrivateRaw(t *testing.T) {
 					"reason":        "TRADE",
 					"trade_amount":  "0.2",
 					"trade_price":   "153.71",
+				},
+			},
+		},
+		"wallet snapshot": {
+			pld: []byte(`[0,"ws",[["exchange","SAN",19.76,0,null,null,null]]]`),
+			expected: &wallet.Snapshot{
+				Snapshot: []*wallet.Wallet{
+					{
+						Type:         "exchange",
+						Currency:     "SAN",
+						Balance:      19.76,
+						TradeDetails: nil,
+					},
+				},
+			},
+		},
+		"wallet update": {
+			pld: []byte(`[
+				0,
+				"wu",
+				[
+					"exchange","BTC",1.61169184,0,null,"Exchange 0.01 BTC for USD @ 7804.6",
+					{
+						"reason":"TRADE",
+						"order_id":34988418651,
+						"order_id_oppo":34990541044,
+						"trade_price":"7804.6",
+						"trade_amount":"0.01"
+					}
+				]
+			]`),
+			expected: wallet.Update{
+				Type:              "exchange",
+				Currency:          "BTC",
+				Balance:           1.61169184,
+				UnsettledInterest: 0,
+				BalanceAvailable:  0,
+				LastChange:        "Exchange 0.01 BTC for USD @ 7804.6",
+				TradeDetails: map[string]interface{}{
+					"order_id":      3.4988418651e+10,
+					"order_id_oppo": 3.4990541044e+10,
+					"reason":        "TRADE",
+					"trade_amount":  "0.01",
+					"trade_price":   "7804.6",
 				},
 			},
 		},
