@@ -7,6 +7,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/ticker"
@@ -676,6 +677,150 @@ func TestProcessPrivateRaw(t *testing.T) {
 					"trade_amount":  "0.01",
 					"trade_price":   "7804.6",
 				},
+			},
+		},
+		"order snapshot": {
+			pld: []byte(`[
+				0,
+				"os",
+				[[
+					34930659963,null,1574955083558,"tETHUSD",1574955083558,1574955083573,
+					0.201104,0.201104,"EXCHANGE LIMIT",null,null,null,0,"ACTIVE",null,null,
+					120,0,0,0,null,null,null,0,0,null,null,null,"BFX",null,null,null
+				]]
+			]`),
+			expected: &order.Snapshot{
+				Snapshot: []*order.Order{
+					{
+						ID:            34930659963,
+						GID:           0,
+						CID:           1574955083558,
+						Symbol:        "tETHUSD",
+						MTSCreated:    1574955083558,
+						MTSUpdated:    1574955083573,
+						Amount:        0.201104,
+						AmountOrig:    0.201104,
+						Type:          "EXCHANGE LIMIT",
+						TypePrev:      "",
+						MTSTif:        0,
+						Flags:         0,
+						Status:        "ACTIVE",
+						Price:         120,
+						PriceAvg:      0,
+						PriceTrailing: 0,
+						PriceAuxLimit: 0,
+						Notify:        false,
+						Hidden:        false,
+						PlacedID:      0,
+						Routing:       "BFX",
+						Meta:          nil,
+					},
+				},
+			},
+		},
+		"order new": {
+			pld: []byte(`[
+				0,
+				"on",
+				[
+					34930659963,null,1574955083558,"tETHUSD",1574955083558,1574955354487,
+					0.201104,0.201104,"EXCHANGE LIMIT",null,null,null,0,"CANCELED",null,
+					null,120,0,0,0,null,null,null,0,0,null,null,null,"BFX",null,null,null
+				]
+			]`),
+			expected: order.New{
+				ID:            34930659963,
+				GID:           0,
+				CID:           1574955083558,
+				Symbol:        "tETHUSD",
+				MTSCreated:    1574955083558,
+				MTSUpdated:    1574955354487,
+				Amount:        0.201104,
+				AmountOrig:    0.201104,
+				Type:          "EXCHANGE LIMIT",
+				TypePrev:      "",
+				MTSTif:        0,
+				Flags:         0,
+				Status:        "CANCELED",
+				Price:         120,
+				PriceAvg:      0,
+				PriceTrailing: 0,
+				PriceAuxLimit: 0,
+				Notify:        false,
+				Hidden:        false,
+				PlacedID:      0,
+				Routing:       "BFX",
+				Meta:          nil,
+			},
+		},
+		"order update": {
+			pld: []byte(`[
+				0,
+				"ou",
+				[
+					34930659963,null,1574955083558,"tETHUSD",1574955083558,1574955354487,
+					0.201104,0.201104,"EXCHANGE LIMIT",null,null,null,0,"CANCELED",null,
+					null,120,0,0,0,null,null,null,0,0,null,null,null,"BFX",null,null,null
+				]
+			]`),
+			expected: order.Update{
+				ID:            34930659963,
+				GID:           0,
+				CID:           1574955083558,
+				Symbol:        "tETHUSD",
+				MTSCreated:    1574955083558,
+				MTSUpdated:    1574955354487,
+				Amount:        0.201104,
+				AmountOrig:    0.201104,
+				Type:          "EXCHANGE LIMIT",
+				TypePrev:      "",
+				MTSTif:        0,
+				Flags:         0,
+				Status:        "CANCELED",
+				Price:         120,
+				PriceAvg:      0,
+				PriceTrailing: 0,
+				PriceAuxLimit: 0,
+				Notify:        false,
+				Hidden:        false,
+				PlacedID:      0,
+				Routing:       "BFX",
+				Meta:          nil,
+			},
+		},
+		"order cancel": {
+			pld: []byte(`[
+				0,
+				"oc",
+				[
+					34930659963,null,1574955083558,"tETHUSD",1574955083558,1574955354487,
+					0.201104,0.201104,"EXCHANGE LIMIT",null,null,null,0,"CANCELED",null,
+					null,120,0,0,0,null,null,null,0,0,null,null,null,"BFX",null,null,null
+				]
+			]`),
+			expected: order.Cancel{
+				ID:            34930659963,
+				GID:           0,
+				CID:           1574955083558,
+				Symbol:        "tETHUSD",
+				MTSCreated:    1574955083558,
+				MTSUpdated:    1574955354487,
+				Amount:        0.201104,
+				AmountOrig:    0.201104,
+				Type:          "EXCHANGE LIMIT",
+				TypePrev:      "",
+				MTSTif:        0,
+				Flags:         0,
+				Status:        "CANCELED",
+				Price:         120,
+				PriceAvg:      0,
+				PriceTrailing: 0,
+				PriceAuxLimit: 0,
+				Notify:        false,
+				Hidden:        false,
+				PlacedID:      0,
+				Routing:       "BFX",
+				Meta:          nil,
 			},
 		},
 	}
