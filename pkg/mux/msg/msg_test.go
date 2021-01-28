@@ -7,6 +7,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -997,6 +998,129 @@ func TestProcessPrivateRaw(t *testing.T) {
 				Insure:     false,
 				Renew:      false,
 				RateReal:   0,
+			},
+		},
+		"funding credits snapshot": {
+			pld: []byte(`[
+				0,
+				"fcs",
+				[[
+					26223578,"fUST",1,1575052261000,1575296187000,350,0,"ACTIVE",null,null,
+					null,0,30,1575052261000,1575293487000,0,0,null,0,null,0,"tBTCUST"
+				]]
+			]`),
+			expected: &fundingcredit.Snapshot{
+				Snapshot: []*fundingcredit.Credit{
+					{
+						ID:            26223578,
+						Symbol:        "fUST",
+						Side:          1,
+						MTSCreated:    1575052261000,
+						MTSUpdated:    1575296187000,
+						Amount:        350,
+						Status:        "ACTIVE",
+						Period:        30,
+						MTSOpened:     1575052261000,
+						MTSLastPayout: 1575293487000,
+						PositionPair:  "tBTCUST",
+					},
+				},
+			},
+		},
+		"funding credit new": {
+			pld: []byte(`[
+				0,
+				"fcn",
+				[
+					26223578,"fUST",1,1575052261000,1575296787000,350,0,"ACTIVE",null,null,
+					null,0,30,1575052261000,1575293487000,0,0,null,0,null,0,"tBTCUST"
+				]
+			]`),
+			expected: fundingcredit.New{
+				ID:            26223578,
+				Symbol:        "fUST",
+				Side:          1,
+				MTSCreated:    1575052261000,
+				MTSUpdated:    1575296787000,
+				Amount:        350,
+				Flags:         map[string]interface{}(nil),
+				Status:        "ACTIVE",
+				RateType:      "",
+				Rate:          0,
+				Period:        30,
+				MTSOpened:     1575052261000,
+				MTSLastPayout: 1575293487000,
+				Notify:        false,
+				Hidden:        false,
+				Insure:        false,
+				Renew:         false,
+				RateReal:      0,
+				NoClose:       false,
+				PositionPair:  "tBTCUST",
+			},
+		},
+		"funding credit update": {
+			pld: []byte(`[
+				0,
+				"fcu",
+				[
+					26223578,"fUST",1,1575052261000,1575296787000,350,0,"ACTIVE",null,null,
+					null,0,30,1575052261000,1575293487000,0,0,null,0,null,0,"tBTCUST"
+				]
+			]`),
+			expected: fundingcredit.Update{
+				ID:            26223578,
+				Symbol:        "fUST",
+				Side:          1,
+				MTSCreated:    1575052261000,
+				MTSUpdated:    1575296787000,
+				Amount:        350,
+				Flags:         map[string]interface{}(nil),
+				Status:        "ACTIVE",
+				RateType:      "",
+				Rate:          0,
+				Period:        30,
+				MTSOpened:     1575052261000,
+				MTSLastPayout: 1575293487000,
+				Notify:        false,
+				Hidden:        false,
+				Insure:        false,
+				Renew:         false,
+				RateReal:      0,
+				NoClose:       false,
+				PositionPair:  "tBTCUST",
+			},
+		},
+		"funding credit close": {
+			pld: []byte(`[
+				0,
+				"fcc",
+				[
+					26223578,"fUST",1,1575052261000,1575296787000,350,0,"ACTIVE",null,null,
+					null,0,30,1575052261000,1575293487000,0,0,null,0,null,0,"tBTCUST"
+				]
+			]`),
+			expected: fundingcredit.Cancel{
+				ID:            26223578,
+				Symbol:        "fUST",
+				Side:          1,
+				MTSCreated:    1575052261000,
+				MTSUpdated:    1575296787000,
+				Amount:        350,
+				Flags:         map[string]interface{}(nil),
+				Status:        "ACTIVE",
+				RateType:      "",
+				Rate:          0,
+				Period:        30,
+				MTSOpened:     1575052261000,
+				MTSLastPayout: 1575293487000,
+				Notify:        false,
+				Hidden:        false,
+				Insure:        false,
+				Renew:         false,
+				RateReal:      0,
+				NoClose:       false,
+				PositionPair:  "tBTCUST",
 			},
 		},
 	}
