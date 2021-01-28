@@ -862,6 +862,32 @@ func TestProcessPrivateRaw(t *testing.T) {
 				FeeCurrency: "USD",
 			},
 		},
+		"funding trade executed": {
+			pld: []byte(`[0,"fte",[636854,"fUSD",1575282446000,41238905,-1000,0.002,7,null]]`),
+			expected: trades.AuthFundingTradeExecuted{
+				ID:         636854,
+				Symbol:     "fUSD",
+				MTSCreated: 1575282446000,
+				OfferID:    41238905,
+				Amount:     -1000,
+				Rate:       0.002,
+				Period:     7,
+				Maker:      0,
+			},
+		},
+		"funding trade update": {
+			pld: []byte(`[0,"ftu",[636854,"fUSD",1575282446000,41238905,-1000,0.002,7,null]]`),
+			expected: trades.AuthFundingTradeUpdate{
+				ID:         636854,
+				Symbol:     "fUSD",
+				MTSCreated: 1575282446000,
+				OfferID:    41238905,
+				Amount:     -1000,
+				Rate:       0.002,
+				Period:     7,
+				Maker:      0,
+			},
+		},
 	}
 
 	for k, v := range cases {
