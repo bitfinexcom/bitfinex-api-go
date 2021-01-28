@@ -823,6 +823,45 @@ func TestProcessPrivateRaw(t *testing.T) {
 				Meta:          nil,
 			},
 		},
+		"trade execution": {
+			pld: []byte(`[
+				0,
+				"te",
+				[402088407,"tETHUST",1574963975602,34938060782,-0.2,153.57,"MARKET",0,-1,null,null,0]
+			]`),
+			expected: trades.AuthTradeExecution{
+				ID:            402088407,
+				Pair:          "tETHUST",
+				MTS:           1574963975602,
+				OrderID:       34938060782,
+				ExecAmount:    -0.2,
+				ExecPrice:     153.57,
+				OrderType:     "MARKET",
+				OrderPrice:    0,
+				Maker:         -1,
+				ClientOrderID: 0,
+			},
+		},
+		"trade execution update": {
+			pld: []byte(`[
+				0,
+				"tu",
+				[402088407,"tETHUST",1574963975602,34938060782,-0.2,153.57,"MARKET",0,-1,-0.061668,"USD"]
+			]`),
+			expected: trades.AuthTradeExecutionUpdate{
+				ID:          402088407,
+				Pair:        "tETHUST",
+				MTS:         1574963975602,
+				OrderID:     34938060782,
+				ExecAmount:  -0.2,
+				ExecPrice:   153.57,
+				OrderType:   "MARKET",
+				OrderPrice:  0,
+				Maker:       -1,
+				Fee:         -0.061668,
+				FeeCurrency: "USD",
+			},
+		},
 	}
 
 	for k, v := range cases {
