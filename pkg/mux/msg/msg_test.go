@@ -7,6 +7,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/book"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
@@ -886,6 +887,116 @@ func TestProcessPrivateRaw(t *testing.T) {
 				Rate:       0.002,
 				Period:     7,
 				Maker:      0,
+			},
+		},
+		"funding offer snapshot": {
+			pld: []byte(`[
+				0,
+				"fos",
+				[[
+					41237920,"fETH",1573912039000,1573912039000,0.5,0.5,"LIMIT",
+					null,null,0,"ACTIVE",null,null,null,0.0024,2,0,0,null,0,null
+				]]
+			]`),
+			expected: &fundingoffer.Snapshot{
+				Snapshot: []*fundingoffer.Offer{
+					{
+						ID:         41237920,
+						Symbol:     "fETH",
+						MTSCreated: 1573912039000,
+						MTSUpdated: 1573912039000,
+						Amount:     0.5,
+						AmountOrig: 0.5,
+						Type:       "LIMIT",
+						Status:     "ACTIVE",
+						Rate:       0.0024,
+						Period:     2,
+					},
+				},
+			},
+		},
+		"funding offer new": {
+			pld: []byte(`[
+				0,
+				"fon",
+				[
+					41238747,"fUST",1575026670000,1575026670000,5000,5000,"LIMIT",null,null,
+					0,"ACTIVE",null,null,null,0.006000000000000001,30,0,0,null,0,null
+				]
+			]`),
+			expected: fundingoffer.New{
+				ID:         41238747,
+				Symbol:     "fUST",
+				MTSCreated: 1575026670000,
+				MTSUpdated: 1575026670000,
+				Amount:     5000,
+				AmountOrig: 5000,
+				Type:       "LIMIT",
+				Flags:      nil,
+				Status:     "ACTIVE",
+				Rate:       0.006000000000000001,
+				Period:     30,
+				Notify:     false,
+				Hidden:     false,
+				Insure:     false,
+				Renew:      false,
+				RateReal:   0,
+			},
+		},
+		"funding offer update": {
+			pld: []byte(`[
+				0,
+				"fou",
+				[
+					41238747,"fUST",1575026670000,1575026670000,5000,5000,"LIMIT",null,null,
+					0,"ACTIVE",null,null,null,0.006000000000000001,30,0,0,null,0,null
+				]
+			]`),
+			expected: fundingoffer.Update{
+				ID:         41238747,
+				Symbol:     "fUST",
+				MTSCreated: 1575026670000,
+				MTSUpdated: 1575026670000,
+				Amount:     5000,
+				AmountOrig: 5000,
+				Type:       "LIMIT",
+				Flags:      nil,
+				Status:     "ACTIVE",
+				Rate:       0.006000000000000001,
+				Period:     30,
+				Notify:     false,
+				Hidden:     false,
+				Insure:     false,
+				Renew:      false,
+				RateReal:   0,
+			},
+		},
+		"funding offer cancel": {
+			pld: []byte(`[
+				0,
+				"foc",
+				[
+					41238747,"fUST",1575026670000,1575026670000,5000,5000,"LIMIT",null,null,
+					0,"ACTIVE",null,null,null,0.006000000000000001,30,0,0,null,0,null
+				]
+			]`),
+			expected: fundingoffer.Cancel{
+				ID:         41238747,
+				Symbol:     "fUST",
+				MTSCreated: 1575026670000,
+				MTSUpdated: 1575026670000,
+				Amount:     5000,
+				AmountOrig: 5000,
+				Type:       "LIMIT",
+				Flags:      nil,
+				Status:     "ACTIVE",
+				Rate:       0.006000000000000001,
+				Period:     30,
+				Notify:     false,
+				Hidden:     false,
+				Insure:     false,
+				Renew:      false,
+				RateReal:   0,
 			},
 		},
 	}
