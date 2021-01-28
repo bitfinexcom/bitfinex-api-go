@@ -8,6 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/candle"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -1121,6 +1122,102 @@ func TestProcessPrivateRaw(t *testing.T) {
 				RateReal:      0,
 				NoClose:       false,
 				PositionPair:  "tBTCUST",
+			},
+		},
+		"funding loan snapshot": {
+			pld: []byte(`[
+				0,
+				"fls",
+				[[
+					2995442,"fUSD",-1,1575291961000,1575295850000,820,0,"ACTIVE",null,
+					null,null,0.002,7,1575282446000,1575295850000,0,0,null,0,null,0
+				]]
+			]`),
+			expected: &fundingloan.Snapshot{
+				Snapshot: []*fundingloan.Loan{
+					{
+						ID:            2995442,
+						Symbol:        "fUSD",
+						Side:          -1,
+						MTSCreated:    1575291961000,
+						MTSUpdated:    1575295850000,
+						Amount:        820,
+						Status:        "ACTIVE",
+						Rate:          0.002,
+						Period:        7,
+						MTSOpened:     1575282446000,
+						MTSLastPayout: 1575295850000,
+					},
+				},
+			},
+		},
+		"funding loan new": {
+			pld: []byte(`[
+				0,
+				"fln",
+				[
+					2995444,"fUSD",-1,1575298742000,1575298742000,1000,0,"ACTIVE",null,
+					null,null,0.002,7,1575298742000,1575298742000,0,0,null,0,null,0
+				]
+			]`),
+			expected: fundingloan.New{
+				ID:            2995444,
+				Symbol:        "fUSD",
+				Side:          -1,
+				MTSCreated:    1575298742000,
+				MTSUpdated:    1575298742000,
+				Amount:        1000,
+				Status:        "ACTIVE",
+				Rate:          0.002,
+				Period:        7,
+				MTSOpened:     1575298742000,
+				MTSLastPayout: 1575298742000,
+			},
+		},
+		"funding loan update": {
+			pld: []byte(`[
+				0,
+				"flu",
+				[
+					2995444,"fUSD",-1,1575298742000,1575298742000,1000,0,"ACTIVE",null,
+					null,null,0.002,7,1575298742000,1575298742000,0,0,null,0,null,0
+				]
+			]`),
+			expected: fundingloan.Update{
+				ID:            2995444,
+				Symbol:        "fUSD",
+				Side:          -1,
+				MTSCreated:    1575298742000,
+				MTSUpdated:    1575298742000,
+				Amount:        1000,
+				Status:        "ACTIVE",
+				Rate:          0.002,
+				Period:        7,
+				MTSOpened:     1575298742000,
+				MTSLastPayout: 1575298742000,
+			},
+		},
+		"funding loan close": {
+			pld: []byte(`[
+				0,
+				"flc",
+				[
+					2995444,"fUSD",-1,1575298742000,1575298742000,1000,0,"ACTIVE",null,
+					null,null,0.002,7,1575298742000,1575298742000,0,0,null,0,null,0
+				]
+			]`),
+			expected: fundingloan.Cancel{
+				ID:            2995444,
+				Symbol:        "fUSD",
+				Side:          -1,
+				MTSCreated:    1575298742000,
+				MTSUpdated:    1575298742000,
+				Amount:        1000,
+				Status:        "ACTIVE",
+				Rate:          0.002,
+				Period:        7,
+				MTSOpened:     1575298742000,
+				MTSLastPayout: 1575298742000,
 			},
 		},
 	}
