@@ -114,6 +114,147 @@ func TestProcessRaw(t *testing.T) {
 				Subscribe: event.Subscribe{Event: "hb"},
 			},
 		},
+		"ticker trading pair snapshot": {
+			pld: []byte(`[
+				111,
+				[[
+					7616.5,31.89055171,7617.5,43.358118629999986,
+					-550.8,-0.0674,7617.1,8314.71200815,8257.8,7500
+				]]
+			]`),
+			inf: map[int64]event.Info{
+				111: {
+					Subscribe: event.Subscribe{
+						Channel: "ticker",
+						Symbol:  "tBTCUST",
+					},
+				},
+			},
+			expected: &ticker.Snapshot{
+				Snapshot: []*ticker.Ticker{
+					{
+						Symbol:          "tBTCUST",
+						Bid:             7616.5,
+						BidSize:         31.89055171,
+						Ask:             7617.5,
+						AskSize:         43.358118629999986,
+						DailyChange:     -550.8,
+						DailyChangePerc: -0.0674,
+						LastPrice:       7617.1,
+						Volume:          8314.71200815,
+						High:            8257.8,
+						Low:             7500,
+					},
+				},
+			},
+		},
+		"ticker trading pair update": {
+			pld: []byte(`[
+				111,
+				[
+					7617,52.98726298,7617.1,53.601795929999994,
+					-550.9,-0.0674,7617,8318.92961981,8257.8,7500
+				]
+			]`),
+			inf: map[int64]event.Info{
+				111: {
+					Subscribe: event.Subscribe{
+						Channel: "ticker",
+						Symbol:  "tBTCUST",
+					},
+				},
+			},
+			expected: &ticker.Ticker{
+				Symbol:          "tBTCUST",
+				Frr:             0,
+				Bid:             7617,
+				BidPeriod:       0,
+				BidSize:         52.98726298,
+				Ask:             7617.1,
+				AskPeriod:       0,
+				AskSize:         53.601795929999994,
+				DailyChange:     -550.9,
+				DailyChangePerc: -0.0674,
+				LastPrice:       7617,
+				Volume:          8318.92961981,
+				High:            8257.8,
+				Low:             7500,
+			},
+		},
+		"ticker funding pair snapshot": {
+			pld: []byte(`[
+				111,
+				[[
+					0.0003193369863013699,0.0002401,30,3939629.6177260396,0.00019012,2,
+					307776.1592138799,-0.00005823,-0.2344,0.00019016,122156333.45260866,
+					0.00027397,6.8e-7,null,null,3441851.73330503
+				]]
+			]`),
+			inf: map[int64]event.Info{
+				111: {
+					Subscribe: event.Subscribe{
+						Channel: "ticker",
+						Symbol:  "fUSD",
+					},
+				},
+			},
+			expected: &ticker.Snapshot{
+				Snapshot: []*ticker.Ticker{
+					{
+						Symbol:             "fUSD",
+						Frr:                0.0003193369863013699,
+						Bid:                0.0002401,
+						BidPeriod:          30,
+						BidSize:            3.9396296177260396e+06,
+						Ask:                0.00019012,
+						AskPeriod:          2,
+						AskSize:            307776.1592138799,
+						DailyChange:        -5.823e-05,
+						DailyChangePerc:    -0.2344,
+						LastPrice:          0.00019016,
+						Volume:             1.2215633345260866e+08,
+						High:               0.00027397,
+						Low:                6.8e-07,
+						FrrAmountAvailable: 3.44185173330503e+06,
+					},
+				},
+			},
+		},
+		"ticker funding trading pair update": {
+			pld: []byte(`[
+				111,
+				[
+					0.0003193315068493151,0.0002401,30,4037829.0804227195,0.000189,4,
+					384507.7314462898,-0.00005939,-0.2391,0.000189,122159083.98991197,
+					0.00027397,6.8e-7,null,null,3441851.73330503
+				]
+			]`),
+			inf: map[int64]event.Info{
+				111: {
+					Subscribe: event.Subscribe{
+						Channel: "ticker",
+						Symbol:  "fUSD",
+					},
+				},
+			},
+			expected: &ticker.Ticker{
+				Symbol:             "fUSD",
+				Frr:                0.0003193315068493151,
+				Bid:                0.0002401,
+				BidPeriod:          30,
+				BidSize:            4.0378290804227195e+06,
+				Ask:                0.000189,
+				AskPeriod:          4,
+				AskSize:            384507.7314462898,
+				DailyChange:        -5.939e-05,
+				DailyChangePerc:    -0.2391,
+				LastPrice:          0.000189,
+				Volume:             1.2215908398991197e+08,
+				High:               0.00027397,
+				Low:                6.8e-07,
+				FrrAmountAvailable: 3.44185173330503e+06,
+			},
+		},
 		"trades snapshot": {
 			pld: []byte(`[111,[[559273857,1609665708633,-0.0048,34113]]]`),
 			inf: map[int64]event.Info{
@@ -152,36 +293,6 @@ func TestProcessRaw(t *testing.T) {
 				MTS:    1609665708633,
 				Amount: -0.0048,
 				Price:  34113,
-			},
-		},
-		"ticker": {
-			pld: []byte(`[
-				111,
-				[
-					34072,0.019999999999999997,34080,6.69793272,4350,
-					0.1464,34062,4047.85335915,34758,29490
-				]
-			]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "ticker",
-						Symbol:  "tBTCUST",
-					},
-				},
-			},
-			expected: &ticker.Ticker{
-				Symbol:          "tBTCUST",
-				Bid:             34072,
-				BidSize:         0.019999999999999997,
-				Ask:             34080,
-				AskSize:         6.69793272,
-				DailyChange:     4350,
-				DailyChangePerc: 0.1464,
-				LastPrice:       34062,
-				Volume:          4047.85335915,
-				High:            34758,
-				Low:             29490,
 			},
 		},
 		"candles snapshot": {
