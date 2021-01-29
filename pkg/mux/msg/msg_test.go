@@ -295,6 +295,80 @@ func TestProcessRaw(t *testing.T) {
 				Price:  34113,
 			},
 		},
+		"trade execution": {
+			pld: []byte(`[17470,"te",[401597395,1574694478808,0.005,7245.3]]`),
+			inf: map[int64]event.Info{
+				17470: {
+					Subscribe: event.Subscribe{
+						Channel: "trades",
+						Symbol:  "tBTCUST",
+					},
+				},
+			},
+			expected: trades.TradeExecuted{
+				Pair:   "tBTCUST",
+				ID:     401597395,
+				MTS:    1574694478808,
+				Amount: 0.005,
+				Price:  7245.3,
+			},
+		},
+		"trade execution update": {
+			pld: []byte(`[17470,"tu",[401597395,1574694478808,0.005,7245.3]]`),
+			inf: map[int64]event.Info{
+				17470: {
+					Subscribe: event.Subscribe{
+						Channel: "trades",
+						Symbol:  "tBTCUST",
+					},
+				},
+			},
+			expected: trades.TradeExecutionUpdate{
+				Pair:   "tBTCUST",
+				ID:     401597395,
+				MTS:    1574694478808,
+				Amount: 0.005,
+				Price:  7245.3,
+			},
+		},
+		"funding trade execution": {
+			pld: []byte(`[337371,"fte",[133323543,1574694605000,-59.84,0.00023647,2]]`),
+			inf: map[int64]event.Info{
+				337371: {
+					Subscribe: event.Subscribe{
+						Channel: "trades",
+						Symbol:  "fUSD",
+					},
+				},
+			},
+			expected: trades.FundingTradeExecuted{
+				Symbol: "fUSD",
+				ID:     133323543,
+				MTS:    1574694605000,
+				Amount: -59.84,
+				Rate:   0.00023647,
+				Period: 2,
+			},
+		},
+		"funding trade execution update": {
+			pld: []byte(`[337371,"ftu",[133323543,1574694605000,-59.84,0.00023647,2]]`),
+			inf: map[int64]event.Info{
+				337371: {
+					Subscribe: event.Subscribe{
+						Channel: "trades",
+						Symbol:  "fUSD",
+					},
+				},
+			},
+			expected: trades.FundingTradeExecutionUpdate{
+				Symbol: "fUSD",
+				ID:     133323543,
+				MTS:    1574694605000,
+				Amount: -59.84,
+				Rate:   0.00023647,
+				Period: 2,
+			},
+		},
 		"candles snapshot": {
 			pld: []byte(`[111,[[1609668540000,828.01,827.67,828.42,827.67,2.32080241]]]`),
 			inf: map[int64]event.Info{
