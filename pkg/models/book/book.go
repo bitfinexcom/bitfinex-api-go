@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
@@ -64,30 +65,45 @@ func IsRawBook(precision string) bool {
 // to interpret the side (baked into Count versus Amount)
 // raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
 func FromRaw(symbol, precision string, raw []interface{}, rawNumbers interface{}) (b *Book, err error) {
-	if len(raw) < 3 {
-		return b, fmt.Errorf("raw slice too short for book update, expected %d got %d: %#v", 3, len(raw), raw)
+	isRaw := IsRawBook(precision)
+	isFunding := strings.HasPrefix(symbol, "f")
+	isTrading := strings.HasPrefix(symbol, "t")
+
+	if len(raw) < 3 && isTrading {
+		err = fmt.Errorf("raw slice too short for trading pair book, got len %d: %#v", len(raw), raw)
+		return
 	}
 
-	rawBook := IsRawBook(precision)
+	if len(raw) < 4 && isFunding {
+		err = fmt.Errorf("raw slice too short for funding pair book, got len %d: %#v", len(raw), raw)
+		return
+	}
 
-	if len(raw) == 3 && rawBook {
+	if isTrading && isRaw {
 		b = rawTradingPairsBook(raw, rawNumbers)
+		b.Symbol = symbol
+		return
 	}
 
-	if len(raw) == 3 && !rawBook {
+	if isTrading && !isRaw {
 		b = tradingPairsBook(raw, rawNumbers)
+		b.Symbol = symbol
+		return
 	}
 
-	if len(raw) >= 4 && rawBook {
+	if isFunding && isRaw {
 		b = rawFundingPairsBook(raw, rawNumbers)
+		b.Symbol = symbol
+		return
 	}
 
-	if len(raw) >= 4 && !rawBook {
+	if isFunding && !isRaw {
 		b = fundingPairsBook(raw, rawNumbers)
+		b.Symbol = symbol
+		return
 	}
 
-	b.Symbol = symbol
-
+	err = fmt.Errorf("unrecognized data slice: %#v", raw)
 	return
 }
 
@@ -113,8 +129,8 @@ func rawTradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 	)
 
 	rawNumSlice := rawNumbers.([]interface{})
-	amount := convert.F64ValOrZero(raw[2])
 	price := convert.F64ValOrZero(raw[1])
+	amount := convert.F64ValOrZero(raw[2])
 
 	if amount > 0 {
 		side = common.Bid
@@ -142,11 +158,11 @@ func rawTradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 func tradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 	// [ PRICE, COUNT, AMOUNT ] - trading pairs signature
 	var (
-		price, actionCtrl float64
-		count             int64
-		priceNum          json.Number
-		side              common.OrderSide
-		action            BookAction
+		price    float64
+		count    int64
+		priceNum json.Number
+		side     common.OrderSide
+		action   BookAction
 	)
 
 	rawNumSlice := rawNumbers.([]interface{})
@@ -156,7 +172,6 @@ func tradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 	price = convert.F64ValOrZero(raw[0])
 	priceNum = convert.FloatToJsonNumber(rawNumSlice[0])
 	count = convert.I64ValOrZero(raw[1])
-	actionCtrl = float64(count)
 
 	if amount > 0 {
 		side = common.Bid
@@ -164,7 +179,7 @@ func tradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 		side = common.Ask
 	}
 
-	if actionCtrl <= 0 {
+	if count <= 0 {
 		action = BookRemoveEntry
 	} else {
 		action = BookEntry
