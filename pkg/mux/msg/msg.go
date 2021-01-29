@@ -14,6 +14,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
@@ -114,16 +115,10 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 			return order.SnapshotFromRaw(data)
 		case "on":
 			return order.NewFromRaw(data)
-		case "on-req":
-			// TODO
 		case "ou":
 			return order.UpdateFromRaw(data)
 		case "oc":
 			return order.CancelFromRaw(data)
-		case "oc-req":
-			// TODO
-		case "oc_multi-req":
-			// TODO
 		case "te":
 			return trades.ATEFromRaw(data)
 		case "tu":
@@ -137,7 +132,7 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "miu":
 			// TODO
 		case "n":
-			// TODO
+			return notification.FromRaw(data)
 		case "fos":
 			return fundingoffer.SnapshotFromRaw(data)
 		case "fon":
