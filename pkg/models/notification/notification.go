@@ -47,19 +47,13 @@ func FromRaw(raw []interface{}) (n *Notification, err error) {
 	case "on-req":
 		// will be a set of orders if created via rest
 		// this is to accommodate OCO orders
-		if _, ok := nraw[0].([]interface{}); ok {
+		if _, isSnapshot := nraw[0].([]interface{}); isSnapshot {
 			n.NotifyInfo, err = order.SnapshotFromRaw(nraw)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			on, err := order.FromRaw(nraw)
-			if err != nil {
-				return nil, err
-			}
-			oNew := order.New(*on)
-			n.NotifyInfo = &oNew
+			return
 		}
+
+		n.NotifyInfo, err = order.NewFromRaw(nraw)
+		return
 	case "ou-req", "ou":
 		on, err := order.FromRaw(nraw)
 		if err != nil {
