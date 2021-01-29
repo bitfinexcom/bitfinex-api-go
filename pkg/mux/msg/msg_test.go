@@ -369,6 +369,299 @@ func TestProcessRaw(t *testing.T) {
 				Period: 2,
 			},
 		},
+		"book snapshot trading pair bid entry": {
+			pld: []byte(`[17082,[[7254.7,3,3.3]]]`),
+			inf: map[int64]event.Info{
+				17082: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tETHEUR",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tETHEUR",
+						Count:       3,
+						Price:       7254.7,
+						Amount:      3.3,
+						PriceJsNum:  "7254.7",
+						AmountJsNum: "3.3",
+						Side:        1,
+						Action:      0,
+					},
+				},
+			},
+		},
+		"book snapshot trading pair ask entry": {
+			pld: []byte(`[17082,[[7254.7,3,-3.3]]]`),
+			inf: map[int64]event.Info{
+				17082: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tETHEUR",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tETHEUR",
+						Count:       3,
+						Price:       7254.7,
+						Amount:      3.3,
+						PriceJsNum:  "7254.7",
+						AmountJsNum: "-3.3",
+						Side:        2,
+						Action:      0,
+					},
+				},
+			},
+		},
+		"book snapshot trading pair exit": {
+			pld: []byte(`[17082,[[7254.7,0,3.3]]]`),
+			inf: map[int64]event.Info{
+				17082: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tETHEUR",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tETHEUR",
+						Count:       0,
+						Price:       7254.7,
+						Amount:      3.3,
+						PriceJsNum:  "7254.7",
+						AmountJsNum: "3.3",
+						Side:        1,
+						Action:      1,
+					},
+				},
+			},
+		},
+		"book snapshot funding pair": {
+			pld: []byte(`[431549,[[0.00023112,30,1,-15190.7005375]]]`),
+			inf: map[int64]event.Info{
+				431549: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "fUSD",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "fUSD",
+						Count:       1,
+						Period:      30,
+						Amount:      -15190.7005375,
+						Rate:        0.00023112,
+						AmountJsNum: "-15190.7005375",
+					},
+				},
+			},
+		},
+		"book trading pair update": {
+			pld: []byte(`[17082,[7254.7,3,3.3]]`),
+			inf: map[int64]event.Info{
+				17082: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tETHEUR",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Book{
+				Symbol:      "tETHEUR",
+				Count:       3,
+				Price:       7254.7,
+				Amount:      3.3,
+				PriceJsNum:  "7254.7",
+				AmountJsNum: "3.3",
+				Side:        1,
+				Action:      0,
+			},
+		},
+		"book funding pair update": {
+			pld: []byte(`[348748,[0.00023157,2,1,66.35007188]]`),
+			inf: map[int64]event.Info{
+				348748: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "fUSD",
+						Precision: "P0",
+						Frequency: "F0",
+					},
+				},
+			},
+			expected: &book.Book{
+				Symbol:      "fUSD",
+				Count:       1,
+				Period:      2,
+				Amount:      66.35007188,
+				Rate:        0.00023157,
+				AmountJsNum: "66.35007188",
+			},
+		},
+		"raw trading pair book snapshot bid entry": {
+			pld: []byte(`[869944,[[55804480297,33766,2]]]`),
+			inf: map[int64]event.Info{
+				869944: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tBTCUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tBTCUSD",
+						ID:          55804480297,
+						Price:       33766,
+						Amount:      2,
+						PriceJsNum:  "33766",
+						AmountJsNum: "2",
+						Side:        1,
+						Action:      0,
+					},
+				},
+			},
+		},
+		"raw trading pair book snapshot ask entry": {
+			pld: []byte(`[869944,[[55804480297,33766,-2]]]`),
+			inf: map[int64]event.Info{
+				869944: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tBTCUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tBTCUSD",
+						ID:          55804480297,
+						PriceJsNum:  "33766",
+						AmountJsNum: "-2",
+						Side:        2,
+						Action:      0,
+						Price:       33766,
+						Amount:      2,
+					},
+				},
+			},
+		},
+		"raw trading pair book snapshot remove entry": {
+			pld: []byte(`[869944,[[55804480297,0,2]]]`),
+			inf: map[int64]event.Info{
+				869944: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tBTCUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "tBTCUSD",
+						ID:          55804480297,
+						Price:       0,
+						Amount:      2,
+						PriceJsNum:  "0",
+						AmountJsNum: "2",
+						Side:        1,
+						Action:      1,
+					},
+				},
+			},
+		},
+		"raw funding pair book snapshot": {
+			pld: []byte(`[472778,[[658282397,30,0.000233,-530]]]`),
+			inf: map[int64]event.Info{
+				472778: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "fUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Snapshot{
+				Snapshot: []*book.Book{
+					{
+						Symbol:      "fUSD",
+						ID:          658282397,
+						Period:      30,
+						Amount:      -530,
+						Rate:        0.000233,
+						AmountJsNum: "-530",
+					},
+				},
+			},
+		},
+		"raw trading pair book update": {
+			pld: []byte(`[433290,[34753006045,0,-1]]`),
+			inf: map[int64]event.Info{
+				433290: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "tBTCUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Book{
+				Symbol:      "tBTCUSD",
+				ID:          34753006045,
+				PriceJsNum:  "0",
+				AmountJsNum: "-1",
+				Amount:      1,
+				Side:        2,
+				Action:      1,
+			},
+		},
+		"raw funding pair book update": {
+			pld: []byte(`[472778,[658286906,2,0,1]]`),
+			inf: map[int64]event.Info{
+				472778: {
+					Subscribe: event.Subscribe{
+						Channel:   "book",
+						Symbol:    "fUSD",
+						Precision: "R0",
+					},
+				},
+			},
+			expected: &book.Book{
+				Symbol:      "fUSD",
+				ID:          658286906,
+				Period:      2,
+				Amount:      1,
+				Rate:        0,
+				AmountJsNum: "1",
+			},
+		},
 		"candles snapshot": {
 			pld: []byte(`[111,[[1609668540000,828.01,827.67,828.42,827.67,2.32080241]]]`),
 			inf: map[int64]event.Info{
@@ -413,108 +706,6 @@ func TestProcessRaw(t *testing.T) {
 				High:       828.42,
 				Low:        827.67,
 				Volume:     2.32080241,
-			},
-		},
-		"raw book snapshot": {
-			pld: []byte(`[869944,[[55804480297,33766,2]]]`),
-			inf: map[int64]event.Info{
-				869944: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tBTCUSD",
-						Precision: "R0",
-					},
-				},
-			},
-			expected: &book.Snapshot{
-				Snapshot: []*book.Book{
-					{
-						Symbol:      "tBTCUSD",
-						ID:          55804480297,
-						Price:       33766,
-						Amount:      2,
-						PriceJsNum:  "33766",
-						AmountJsNum: "2",
-						Side:        1,
-						Action:      0,
-					},
-				},
-			},
-		},
-		"raw book": {
-			pld: []byte(`[869944,[55804480297,33766,2]]`),
-			inf: map[int64]event.Info{
-				869944: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tBTCUSD",
-						Precision: "R0",
-					},
-				},
-			},
-			expected: &book.Book{
-				Symbol:      "tBTCUSD",
-				ID:          55804480297,
-				Price:       33766,
-				Amount:      2,
-				PriceJsNum:  "33766",
-				AmountJsNum: "2",
-				Side:        1,
-				Action:      0,
-			},
-		},
-		"book snapshot": {
-			pld: []byte(`[793767,[[676.3,1,5]]]`),
-			inf: map[int64]event.Info{
-				793767: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tETHEUR",
-						Precision: "P0",
-						Frequency: "F0",
-					},
-				},
-			},
-			expected: &book.Snapshot{
-				Snapshot: []*book.Book{
-					{
-						Symbol:      "tETHEUR",
-						Count:       1,
-						Period:      0,
-						Price:       676.3,
-						Amount:      5,
-						Rate:        0,
-						PriceJsNum:  "676.3",
-						AmountJsNum: "5",
-						Side:        1,
-						Action:      0,
-					},
-				},
-			},
-		},
-		"book": {
-			pld: []byte(`[793767,[676.3,1,5]]`),
-			inf: map[int64]event.Info{
-				793767: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tETHEUR",
-						Precision: "P0",
-						Frequency: "F0",
-					},
-				},
-			},
-			expected: &book.Book{
-				Symbol:      "tETHEUR",
-				Count:       1,
-				Period:      0,
-				Price:       676.3,
-				Amount:      5,
-				Rate:        0,
-				PriceJsNum:  "676.3",
-				AmountJsNum: "5",
-				Side:        1,
-				Action:      0,
 			},
 		},
 		"derivatives status snapshot": {
