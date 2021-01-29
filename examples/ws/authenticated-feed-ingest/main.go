@@ -8,6 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/trades"
@@ -86,6 +87,8 @@ func main() {
 			case fundingloan.Update:
 				log.Printf("%T: %+v\n", v, v)
 			case fundingloan.Cancel:
+				log.Printf("%T: %+v\n", v, v)
+			case notification.Notification:
 				log.Printf("%T: %+v\n", v, v)
 			default:
 				log.Printf("raw/unhandled: %T: %+v\n", v, v)
