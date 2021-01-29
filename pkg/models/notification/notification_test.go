@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/stretchr/testify/assert"
@@ -164,6 +165,49 @@ func TestNotificationMapping(t *testing.T) {
 				Code:   0,
 				Status: "SUCCESS",
 				Text:   "Submitting update to limit sell order for 3 ETH.",
+			},
+			err: func(t *testing.T, err error) {
+				assert.NoError(t, err)
+			},
+		},
+		"fon-req": {
+			pld: []byte(`[
+				0,
+				"n",
+				[
+					1575282446099,"fon-req",null,null,
+					[
+						41238905,null,null,null,-1000,null,null,null,null,null,
+						null,null,null,null,0.002,2,null,null,null,null,null
+					],
+					null,"SUCCESS","Submitting funding bid of 1000.0 USD at 0.2000 for 2 days."
+				]
+			]`),
+			expected: &notification.Notification{
+				MTS:       1575282446099,
+				Type:      "fon-req",
+				MessageID: 0,
+				NotifyInfo: fundingoffer.New{
+					ID:         41238905,
+					Symbol:     "",
+					MTSCreated: 0,
+					MTSUpdated: 0,
+					Amount:     -1000,
+					AmountOrig: 0,
+					Type:       "",
+					Flags:      map[string]interface{}(nil),
+					Status:     "",
+					Rate:       0.002,
+					Period:     2,
+					Notify:     false,
+					Hidden:     false,
+					Insure:     false,
+					Renew:      false,
+					RateReal:   0,
+				},
+				Code:   0,
+				Status: "SUCCESS",
+				Text:   "Submitting funding bid of 1000.0 USD at 0.2000 for 2 days.",
 			},
 			err: func(t *testing.T, err error) {
 				assert.NoError(t, err)
