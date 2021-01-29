@@ -16,7 +16,7 @@ type Trade struct {
 	Price  float64
 }
 
-type TradeUpdate Trade
+type TradeExecutionUpdate Trade
 type TradeExecuted Trade
 
 type TradeSnapshot struct {
@@ -40,14 +40,14 @@ func TFromRaw(pair string, raw []interface{}) (t Trade, err error) {
 	return
 }
 
-// TUFromRaw maps raw data slice to instance of TradeUpdate
-func TUFromRaw(pair string, raw []interface{}) (TradeUpdate, error) {
+// TUFromRaw maps raw data slice to instance of TradeExecutionUpdate
+func TUFromRaw(pair string, raw []interface{}) (TradeExecutionUpdate, error) {
 	t, err := TFromRaw(pair, raw)
 	if err != nil {
-		return TradeUpdate{}, err
+		return TradeExecutionUpdate{}, err
 	}
 
-	return TradeUpdate(t), nil
+	return TradeExecutionUpdate(t), nil
 }
 
 // TEFromRaw maps raw data slice to instance of TradeExecuted

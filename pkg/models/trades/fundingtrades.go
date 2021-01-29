@@ -17,7 +17,7 @@ type FundingTrade struct {
 	Period int
 }
 
-type FundingTradeUpdate FundingTrade
+type FundingTradeExecutionUpdate FundingTrade
 type FundingTradeExecuted FundingTrade
 
 type FundingTradeSnapshot struct {
@@ -52,14 +52,14 @@ func FTEFromRaw(pair string, raw []interface{}) (FundingTradeExecuted, error) {
 	return FundingTradeExecuted(ft), nil
 }
 
-// FTUFromRaw maps raw data slice to instance of FundingTradeUpdate
-func FTUFromRaw(pair string, raw []interface{}) (FundingTradeUpdate, error) {
+// FTUFromRaw maps raw data slice to instance of FundingTradeExecutionUpdate
+func FTUFromRaw(pair string, raw []interface{}) (FundingTradeExecutionUpdate, error) {
 	ft, err := FTFromRaw(pair, raw)
 	if err != nil {
-		return FundingTradeUpdate{}, err
+		return FundingTradeExecutionUpdate{}, err
 	}
 
-	return FundingTradeUpdate(ft), nil
+	return FundingTradeExecutionUpdate(ft), nil
 }
 
 // FTSnapshotFromRaw maps raw data slice to funding trade data structures

@@ -69,8 +69,8 @@ func FromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 		return
 	}
 
+	// funding pair update
 	if strings.HasPrefix(symbol, "f") {
-		// funding pair update
 		if len(raw) >= 13 {
 			t = &Ticker{
 				Symbol:          symbol,
@@ -97,7 +97,7 @@ func FromRaw(symbol string, raw []interface{}) (t *Ticker, err error) {
 		return
 	}
 
-	err = fmt.Errorf("unrecognized data slice format for pair:%s, date:%#v", symbol, raw)
+	err = fmt.Errorf("unrecognized data slice format for pair:%s, data:%#v", symbol, raw)
 	return
 }
 
