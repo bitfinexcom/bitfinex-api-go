@@ -107,11 +107,11 @@ func main() {
 				log.Printf("%T: %+v\n", v, v)
 			case trades.FundingTradeSnapshot:
 				log.Printf("%T: %+v\n", v, v)
-			case trades.TradeUpdate:
+			case trades.TradeExecutionUpdate:
 				log.Printf("%T: %+v\n", v, v)
 			case trades.TradeExecuted:
 				log.Printf("%T: %+v\n", v, v)
-			case trades.FundingTradeUpdate:
+			case trades.FundingTradeExecutionUpdate:
 				log.Printf("%T: %+v\n", v, v)
 			case trades.FundingTradeExecuted:
 				log.Printf("%T: %+v\n", v, v)
