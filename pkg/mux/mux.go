@@ -28,6 +28,8 @@ type Mux struct {
 	apisec        string
 	subInfo       map[int64]event.Info
 	authenticated bool
+	publicURL     string
+	authURL       string
 }
 
 // New returns pointer to instance of mux
@@ -38,6 +40,8 @@ func New() *Mux {
 		publicClients: make(map[int]*client.Client),
 		mtx:           &sync.RWMutex{},
 		subInfo:       map[int64]event.Info{},
+		publicURL:     "wss://api-pub.bitfinex.com/ws/2",
+		authURL:       "wss://api.staging.bitfinex.com/ws/2",
 	}
 }
 
@@ -60,23 +64,31 @@ func (m *Mux) WithAPISEC(sec string) *Mux {
 	return m
 }
 
+// WithAuthURL accepts and persists auth url
+func (m *Mux) WithAuthURL(url string) *Mux {
+	m.authURL = url
+	return m
+}
+
 // Subscribe - given the details in form of event.Subscribe,
 // subscribes client to public channels
 func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-
 	if m.Err != nil {
 		return m
 	}
 
-	if alreadySubscribed := m.publicClients[m.cid].Subs.Added(sub); alreadySubscribed {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if subscribed := m.publicClients[m.cid].SubAdded(sub); subscribed {
 		return m
 	}
 
-	m.publicClients[m.cid].Subscribe(sub)
+	if m.Err = m.publicClients[m.cid].Subscribe(sub); m.Err != nil {
+		return m
+	}
 
-	if limitReached := m.publicClients[m.cid].Subs.LimitReached(); limitReached {
+	if limitReached := m.publicClients[m.cid].SubsLimitReached(); limitReached {
 		log.Printf("subs limit is reached on cid: %d, spawning new conn\n", m.cid)
 		m.addPublicClient()
 	}
@@ -85,10 +97,6 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 
 // Start creates initial clients for accepting connections
 func (m *Mux) Start() *Mux {
-	if m.Err != nil {
-		return m
-	}
-
 	if m.hasAPIKeys() && m.privateClient == nil {
 		m.addPrivateClient()
 	}
@@ -122,7 +130,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			}
 			// handle event type message
 			if ms.IsEvent() {
-				cb(m.handleEvent(ms.ProcessEvent()))
+				cb(m.recordEvent(ms.ProcessEvent()))
 				continue
 			}
 			// handle data type message
@@ -147,7 +155,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			}
 			// handle event type message
 			if ms.IsEvent() {
-				cb(m.handleEvent(ms.ProcessEvent()))
+				cb(m.recordEvent(ms.ProcessEvent()))
 				continue
 			}
 			// handle data type message
@@ -173,7 +181,7 @@ func (m *Mux) hasAPIKeys() bool {
 	return len(m.apikey) != 0 && len(m.apisec) != 0
 }
 
-func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
+func (m *Mux) recordEvent(i event.Info, err error) (event.Info, error) {
 	switch i.Event {
 	case "subscribed":
 		m.subInfo[i.ChanID] = i
@@ -189,7 +197,7 @@ func (m *Mux) handleEvent(i event.Info, err error) (event.Info, error) {
 
 func (m *Mux) resetPublicClient(cid int) {
 	// pull old client subscriptions
-	subs := m.publicClients[cid].Subs.GetAll()
+	subs := m.publicClients[cid].GetAllSubs()
 	// add fresh client
 	m.addPublicClient()
 	// resubscribe old events
@@ -202,6 +210,7 @@ func (m *Mux) resetPublicClient(cid int) {
 }
 
 func (m *Mux) resetPrivateClient() {
+	m.authenticated = false
 	m.privateClient = nil
 	m.addPrivateClient()
 }
@@ -210,9 +219,13 @@ func (m *Mux) addPublicClient() *Mux {
 	// adding new client so making sure we increment cid
 	m.cid++
 	// create new public client and pass error to mux if any
-	c := client.New(m.cid).Public()
-	if c.Err != nil {
-		m.Err = c.Err
+	c, err := client.
+		New().
+		WithID(m.cid).
+		WithSubsLimit(25).
+		Public(m.publicURL)
+	if err != nil {
+		m.Err = err
 		return m
 	}
 	// add new client to list for later reference
@@ -224,9 +237,9 @@ func (m *Mux) addPublicClient() *Mux {
 
 func (m *Mux) addPrivateClient() *Mux {
 	// create new private client and pass error to mux if any
-	c := client.New(0).Private(m.apikey, m.apisec)
-	if c.Err != nil {
-		m.Err = c.Err
+	c, err := client.New().Private(m.apikey, m.apisec, m.authURL)
+	if err != nil {
+		m.Err = err
 		return m
 	}
 
