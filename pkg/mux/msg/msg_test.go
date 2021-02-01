@@ -846,7 +846,6 @@ func TestProcessPrivateRaw(t *testing.T) {
 	cases := map[string]struct {
 		pld      []byte
 		expected interface{}
-		inf      map[int64]event.Info
 	}{
 		"info event": {
 			pld: []byte(`[0, "hb"]`),
