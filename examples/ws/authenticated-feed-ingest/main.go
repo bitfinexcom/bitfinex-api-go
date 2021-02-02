@@ -8,6 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -69,6 +70,8 @@ func main() {
 			case trades.AuthTradeExecution:
 				log.Printf("%T: %+v\n", v, v)
 			case trades.AuthTradeExecutionUpdate:
+				log.Printf("%T: %+v\n", v, v)
+			case fundingtrade.HistoricalSnapshot:
 				log.Printf("%T: %+v\n", v, v)
 			case *fundingcredit.Snapshot:
 				log.Printf("%T: %+v\n", v, v)
