@@ -14,6 +14,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -128,7 +129,7 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "ftu":
 			return trades.AFTUFromRaw(data)
 		case "mis":
-			// TODO
+			// DEPRECATED
 		case "miu":
 			// TODO
 		case "n":
@@ -158,9 +159,9 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "flc":
 			return fundingloan.CancelFromRaw(data)
 		case "hfts":
-			// TODO
+			return fundingtrade.HistoricalSnapshotFromRaw(data)
 		case "uac":
-			// TODO
+			// NO LONGER SUPPORTED
 		}
 	}
 
