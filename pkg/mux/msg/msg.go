@@ -15,6 +15,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingtrade"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
@@ -131,7 +132,7 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "mis":
 			// DEPRECATED
 		case "miu":
-			// TODO
+			return margin.FromRaw(data)
 		case "n":
 			return notification.FromRaw(data)
 		case "fos":
