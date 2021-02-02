@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"bytes"
 	"reflect"
 	"testing"
 )
@@ -16,45 +15,45 @@ func isZeroOfUnderlyingType(x interface{}) bool {
 	return x == reflect.Zero(reflect.TypeOf(x)).Interface()
 }
 
-func objEq(expected, actual interface{}) bool {
+// func objEq(expected, actual interface{}) bool {
 
-	if expected == nil || actual == nil {
-		return expected == actual
-	}
-	if exp, ok := expected.([]byte); ok {
-		act, ok := actual.([]byte)
-		if !ok {
-			return false
-		} else if exp == nil || act == nil {
-			return exp == nil && act == nil
-		}
-		return bytes.Equal(exp, act)
-	}
-	return reflect.DeepEqual(expected, actual)
+// 	if expected == nil || actual == nil {
+// 		return expected == actual
+// 	}
+// 	if exp, ok := expected.([]byte); ok {
+// 		act, ok := actual.([]byte)
+// 		if !ok {
+// 			return false
+// 		} else if exp == nil || act == nil {
+// 			return exp == nil && act == nil
+// 		}
+// 		return bytes.Equal(exp, act)
+// 	}
+// 	return reflect.DeepEqual(expected, actual)
 
-}
+// }
 
-func assertSlice(t *testing.T, expected, actual interface{}) {
-	if objEq(expected, actual) {
-		t.Logf("%s OK", reflect.TypeOf(actual))
-		return
-	}
+// func assertSlice(t *testing.T, expected, actual interface{}) {
+// 	if objEq(expected, actual) {
+// 		t.Logf("%s OK", reflect.TypeOf(actual))
+// 		return
+// 	}
 
-	actualType := reflect.TypeOf(actual)
-	if actualType == nil {
-		t.Fatal()
-	}
-	expectedValue := reflect.ValueOf(expected)
-	if expectedValue.IsValid() && expectedValue.Type().ConvertibleTo(actualType) {
-		// Attempt comparison after type conversion
-		if reflect.DeepEqual(expectedValue.Convert(actualType).Interface(), actual) {
-			t.Logf("%s OK", reflect.TypeOf(actual))
-			return
-		}
-	}
+// 	actualType := reflect.TypeOf(actual)
+// 	if actualType == nil {
+// 		t.Fatal()
+// 	}
+// 	expectedValue := reflect.ValueOf(expected)
+// 	if expectedValue.IsValid() && expectedValue.Type().ConvertibleTo(actualType) {
+// 		// Attempt comparison after type conversion
+// 		if reflect.DeepEqual(expectedValue.Convert(actualType).Interface(), actual) {
+// 			t.Logf("%s OK", reflect.TypeOf(actual))
+// 			return
+// 		}
+// 	}
 
-	t.Fatalf("FAIL %s: expected %#v, got %#v", reflect.TypeOf(expected), expected, actual)
-}
+// 	t.Fatalf("FAIL %s: expected %#v, got %#v", reflect.TypeOf(expected), expected, actual)
+// }
 
 func isPrimitive(exp interface{}) bool {
 	t := reflect.TypeOf(exp)

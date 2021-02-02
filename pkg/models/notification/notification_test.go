@@ -8,6 +8,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/notification"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNotificationMapping(t *testing.T) {
@@ -218,7 +219,8 @@ func TestNotificationMapping(t *testing.T) {
 	for k, v := range cases {
 		t.Run(k, func(t *testing.T) {
 			var raw []interface{}
-			json.Unmarshal(v.pld, &raw)
+			err := json.Unmarshal(v.pld, &raw)
+			require.Nil(t, err)
 			pldRaw := raw[len(raw)-1]
 			pld := pldRaw.([]interface{})
 
