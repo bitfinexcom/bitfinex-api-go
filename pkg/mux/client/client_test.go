@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
@@ -113,14 +114,28 @@ func TestRemoveSub(t *testing.T) {
 	}
 }
 
+type byEvent []event.Subscribe
+
+func (x byEvent) Len() int {
+	return len(x)
+}
+
+func (x byEvent) Less(i, j int) bool {
+	return x[i].Event < x[j].Event
+}
+
+func (x byEvent) Swap(i, j int) {
+	x[i], x[j] = x[j], x[i]
+}
+
 func TestGetAllSubs(t *testing.T) {
 	cases := map[string]struct {
 		expected []event.Subscribe
 		subs     []event.Subscribe
 	}{
 		"get all subs": {
-			expected: []event.Subscribe{{Event: "foo"}, {Event: "bar"}},
-			subs:     []event.Subscribe{{Event: "foo"}, {Event: "bar"}},
+			expected: []event.Subscribe{{Event: "bar"}, {Event: "foo"}},
+			subs:     []event.Subscribe{{Event: "bar"}, {Event: "foo"}},
 		},
 	}
 
@@ -132,6 +147,7 @@ func TestGetAllSubs(t *testing.T) {
 			}
 
 			got := c.GetAllSubs()
+			sort.Sort(byEvent(got))
 			assert.Equal(t, v.expected, got)
 		})
 	}
