@@ -31,7 +31,7 @@ func FromWSRaw(pair string, raw, data []interface{}) (interface{}, error) {
 
 		switch opType {
 		case "tu":
-			return TUFromRaw(pair, data)
+			return TEUFromRaw(pair, data)
 		case "te":
 			return TEFromRaw(pair, data)
 		case "fte":

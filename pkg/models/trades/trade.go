@@ -40,8 +40,8 @@ func TFromRaw(pair string, raw []interface{}) (t Trade, err error) {
 	return
 }
 
-// TUFromRaw maps raw data slice to instance of TradeExecutionUpdate
-func TUFromRaw(pair string, raw []interface{}) (TradeExecutionUpdate, error) {
+// TEUFromRaw maps raw data slice to instance of TradeExecutionUpdate
+func TEUFromRaw(pair string, raw []interface{}) (TradeExecutionUpdate, error) {
 	t, err := TFromRaw(pair, raw)
 	if err != nil {
 		return TradeExecutionUpdate{}, err
