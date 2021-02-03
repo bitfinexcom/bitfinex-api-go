@@ -1613,6 +1613,20 @@ func TestProcessPrivateRaw(t *testing.T) {
 				Sell:            895.0658432466332,
 			},
 		},
+		"margin info update base calc": {
+			pld: []byte(`[
+				0,
+				"miu",
+				["base",[-13.014640000000007,0,49331.70267297,49318.68803297,27]]
+			]`),
+			expected: &margin.InfoBase{
+				UserProfitLoss: -13.014640000000007,
+				UserSwaps:      0,
+				MarginBalance:  49331.70267297,
+				MarginNet:      49318.68803297,
+				MarginRequired: 27,
+			},
+		},
 	}
 
 	for k, v := range cases {
