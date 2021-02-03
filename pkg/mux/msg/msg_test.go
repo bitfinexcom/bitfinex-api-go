@@ -10,6 +10,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingcredit"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingloan"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/fundingoffer"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/margin"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/order"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/position"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/status"
@@ -1593,6 +1594,23 @@ func TestProcessPrivateRaw(t *testing.T) {
 				Period:        7,
 				MTSOpened:     1575298742000,
 				MTSLastPayout: 1575298742000,
+			},
+		},
+		"margin info update symbol calc": {
+			pld: []byte(`[
+				0,
+				"miu",
+				[
+					"sym","tETHUSD",
+					[149361.09689202666,149639.26293509,830.0182168075556,895.0658432466332,null,null,null,null]
+				]
+			]`),
+			expected: &margin.InfoUpdate{
+				Symbol:          "tETHUSD",
+				TradableBalance: 149361.09689202666,
+				GrossBalance:    149639.26293509,
+				Buy:             830.0182168075556,
+				Sell:            895.0658432466332,
 			},
 		},
 	}
