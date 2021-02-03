@@ -1675,6 +1675,53 @@ func TestProcessPrivateRaw(t *testing.T) {
 				Text:   "Submitting exchange limit buy order for 0.001 BTC.",
 			},
 		},
+		"order cancel notification": {
+			pld: []byte(`[
+				0,
+				"n",
+				[
+					1611922089,"oc-req",null,null,
+					[
+						1201469553,0,788,"tBTCUSD",1611922089073,1611922089073,0.001,0.001,"EXCHANGE LIMIT",
+						null,null,null,0,"ACTIVE",null,null,33,0,0,0,null,null,null,0,0,null,null,null,
+						"API>BFX",null,null,null
+					],
+					null,"SUCCESS","Submitting exchange limit buy order for 0.001 BTC."
+				]
+			]`),
+			expected: &notification.Notification{
+				MTS:       1611922089,
+				Type:      "oc-req",
+				MessageID: 0,
+				NotifyInfo: order.Cancel{
+					ID:            1201469553,
+					GID:           0,
+					CID:           788,
+					Symbol:        "tBTCUSD",
+					MTSCreated:    1611922089073,
+					MTSUpdated:    1611922089073,
+					Amount:        0.001,
+					AmountOrig:    0.001,
+					Type:          "EXCHANGE LIMIT",
+					TypePrev:      "",
+					MTSTif:        0,
+					Flags:         0,
+					Status:        "ACTIVE",
+					Price:         33,
+					PriceAvg:      0,
+					PriceTrailing: 0,
+					PriceAuxLimit: 0,
+					Notify:        false,
+					Hidden:        false,
+					PlacedID:      0,
+					Routing:       "API>BFX",
+					Meta:          nil,
+				},
+				Code:   0,
+				Status: "SUCCESS",
+				Text:   "Submitting exchange limit buy order for 0.001 BTC.",
+			},
+		},
 		"order udate notification": {
 			pld: []byte(`[
 				0,
