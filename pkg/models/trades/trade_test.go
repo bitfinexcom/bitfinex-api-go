@@ -43,3 +43,40 @@ func TestTradeFromRaw(t *testing.T) {
 		})
 	}
 }
+
+func TestTradeExecutionFromRaw(t *testing.T) {
+	cases := map[string]struct {
+		pld      []interface{}
+		expected trades.TradeExecuted
+		err      func(*testing.T, error)
+	}{
+		"invalid payload": {
+			pld:      []interface{}{401597395},
+			expected: trades.TradeExecuted{},
+			err: func(t *testing.T, err error) {
+				assert.Error(t, err)
+			},
+		},
+		"valid payload": {
+			pld: []interface{}{401597395, 1574694478808, 0.005, 7245.3},
+			expected: trades.TradeExecuted{
+				Pair:   "tBTCUSD",
+				ID:     401597395,
+				MTS:    1574694478808,
+				Amount: 0.005,
+				Price:  7245.3,
+			},
+			err: func(t *testing.T, err error) {
+				assert.NoError(t, err)
+			},
+		},
+	}
+
+	for k, v := range cases {
+		t.Run(k, func(t *testing.T) {
+			got, err := trades.TEFromRaw("tBTCUSD", v.pld)
+			v.err(t, err)
+			assert.Equal(t, v.expected, got)
+		})
+	}
+}
