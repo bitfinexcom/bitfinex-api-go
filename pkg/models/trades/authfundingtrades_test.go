@@ -86,3 +86,43 @@ func TestAuthFundingTradeUpdateFromRaw(t *testing.T) {
 		})
 	}
 }
+
+func TestAuthFundingTradeExecutionFromRaw(t *testing.T) {
+	cases := map[string]struct {
+		pld      []interface{}
+		expected trades.AuthFundingTradeExecuted
+		err      func(*testing.T, error)
+	}{
+		"invalid payload": {
+			pld:      []interface{}{636854},
+			expected: trades.AuthFundingTradeExecuted{},
+			err: func(t *testing.T, err error) {
+				assert.Error(t, err)
+			},
+		},
+		"valid payload": {
+			pld: []interface{}{636854, "fUSD", 1575282446000, 41238905, -1000, 0.002, 7, nil},
+			expected: trades.AuthFundingTradeExecuted{
+				ID:         636854,
+				Symbol:     "fUSD",
+				MTSCreated: 1575282446000,
+				OfferID:    41238905,
+				Amount:     -1000,
+				Rate:       0.002,
+				Period:     7,
+				Maker:      0,
+			},
+			err: func(t *testing.T, err error) {
+				assert.NoError(t, err)
+			},
+		},
+	}
+
+	for k, v := range cases {
+		t.Run(k, func(t *testing.T) {
+			got, err := trades.AFTEFromRaw(v.pld)
+			v.err(t, err)
+			assert.Equal(t, v.expected, got)
+		})
+	}
+}
