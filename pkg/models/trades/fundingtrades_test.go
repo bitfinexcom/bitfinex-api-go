@@ -82,3 +82,41 @@ func TestFundingTradeExecutionFromRaw(t *testing.T) {
 		})
 	}
 }
+
+func TestFundingTradeExecutionUpdateFromRaw(t *testing.T) {
+	cases := map[string]struct {
+		pld      []interface{}
+		expected trades.FundingTradeExecutionUpdate
+		err      func(*testing.T, error)
+	}{
+		"invalid payload": {
+			pld:      []interface{}{401597393},
+			expected: trades.FundingTradeExecutionUpdate{},
+			err: func(t *testing.T, err error) {
+				assert.Error(t, err)
+			},
+		},
+		"valid payload": {
+			pld: []interface{}{133323543, 1574694605000, -59.84, 0.00023647, 2},
+			expected: trades.FundingTradeExecutionUpdate{
+				Symbol: "fUSD",
+				ID:     133323543,
+				MTS:    1574694605000,
+				Amount: -59.84,
+				Rate:   0.00023647,
+				Period: 2,
+			},
+			err: func(t *testing.T, err error) {
+				assert.NoError(t, err)
+			},
+		},
+	}
+
+	for k, v := range cases {
+		t.Run(k, func(t *testing.T) {
+			got, err := trades.FTEUFromRaw("fUSD", v.pld)
+			v.err(t, err)
+			assert.Equal(t, v.expected, got)
+		})
+	}
+}
