@@ -37,7 +37,7 @@ func FromWSRaw(pair string, raw, data []interface{}) (interface{}, error) {
 		case "fte":
 			return FTEFromRaw(pair, data)
 		case "ftu":
-			return FTUFromRaw(pair, data)
+			return FTEUFromRaw(pair, data)
 		}
 	}
 

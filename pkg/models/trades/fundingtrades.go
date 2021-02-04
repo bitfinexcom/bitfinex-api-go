@@ -52,8 +52,8 @@ func FTEFromRaw(pair string, raw []interface{}) (FundingTradeExecuted, error) {
 	return FundingTradeExecuted(ft), nil
 }
 
-// FTUFromRaw maps raw data slice to instance of FundingTradeExecutionUpdate
-func FTUFromRaw(pair string, raw []interface{}) (FundingTradeExecutionUpdate, error) {
+// FTEUFromRaw maps raw data slice to instance of FundingTradeExecutionUpdate
+func FTEUFromRaw(pair string, raw []interface{}) (FundingTradeExecutionUpdate, error) {
 	ft, err := FTFromRaw(pair, raw)
 	if err != nil {
 		return FundingTradeExecutionUpdate{}, err
