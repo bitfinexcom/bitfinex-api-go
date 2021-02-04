@@ -66,19 +66,19 @@ func AFTEFromRaw(raw []interface{}) (AuthFundingTradeExecuted, error) {
 }
 
 // AFTSnapshotFromRaw maps raw data slice to authenticated funding trade data structures
-func AFTSnapshotFromRaw(raw [][]interface{}) (*AuthFundingTradeSnapshot, error) {
+func AFTSnapshotFromRaw(raw [][]interface{}) (AuthFundingTradeSnapshot, error) {
 	if len(raw) == 0 {
-		return nil, fmt.Errorf("data slice too short for funding trade snapshot: %#v", raw)
+		return AuthFundingTradeSnapshot{}, fmt.Errorf("data slice too short for funding trade snapshot: %#v", raw)
 	}
 
 	snap := make([]AuthFundingTrade, 0)
 	for _, r := range raw {
 		ft, err := AFTFromRaw(r)
 		if err != nil {
-			return nil, err
+			return AuthFundingTradeSnapshot{}, err
 		}
 		snap = append(snap, ft)
 	}
 
-	return &AuthFundingTradeSnapshot{Snapshot: snap}, nil
+	return AuthFundingTradeSnapshot{Snapshot: snap}, nil
 }
