@@ -135,7 +135,17 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			}
 			// handle data type message
 			if ms.IsRaw() {
-				cb(ms.ProcessRaw(m.subInfo))
+				raw, pld, chID, _, err := ms.PreprocessRaw()
+				if err != nil {
+					cb(nil, err)
+					continue
+				}
+
+				inf, ok := m.subInfo[chID]
+				if !ok {
+					cb(nil, fmt.Errorf("unrecognized chanId:%d", chID))
+				}
+				cb(ms.ProcessPublic(raw, pld, chID, inf))
 				continue
 			}
 			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
@@ -160,7 +170,12 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			}
 			// handle data type message
 			if ms.IsRaw() {
-				cb(ms.ProcessPrivateRaw())
+				raw, pld, chID, msgType, err := ms.PreprocessRaw()
+				if err != nil {
+					cb(nil, err)
+					continue
+				}
+				cb(ms.ProcessPrivate(raw, pld, chID, msgType))
 				continue
 			}
 			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
