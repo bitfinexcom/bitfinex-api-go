@@ -3,6 +3,7 @@ package msg
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"unicode"
 
@@ -42,21 +43,21 @@ func (m Msg) IsRaw() bool {
 	return bytes.HasPrefix(t, []byte("["))
 }
 
-func (m Msg) ProcessRaw(chanInfo map[int64]event.Info) (interface{}, error) {
-	var raw []interface{}
-	if err := json.Unmarshal(m.Data, &raw); err != nil {
-		return nil, fmt.Errorf("parsing msg: %s, err: %s", m.Data, err)
+// PreprocessRaw takes raw slice of bytes and splits it into:
+// 1. raw payload data - always last element of the slice
+// 2. chanID - always 1st element of the slice
+// 3. msg type - in 3 element msg slice, type is always at index 1
+func (m Msg) PreprocessRaw() (raw []interface{}, pld interface{}, chID int64, msgType string, err error) {
+	err = json.Unmarshal(m.Data, &raw)
+	pld = raw[len(raw)-1]
+	chID = convert.I64ValOrZero(raw[0])
+	if len(raw) == 3 {
+		msgType = convert.SValOrEmpty(raw[1])
 	}
-	// payload data is always last element of the slice
-	pld := raw[len(raw)-1]
-	// chanID is always 1st element of the slice
-	chID := convert.I64ValOrZero(raw[0])
-	// allocate channel name by id to know how to transform raw data
-	inf, ok := chanInfo[chID]
-	if !ok {
-		return nil, fmt.Errorf("unrecognized chanId:%d", chID)
-	}
+	return
+}
 
+func (m Msg) ProcessPublic(raw []interface{}, pld interface{}, chID int64, inf event.Info) (interface{}, error) {
 	switch data := pld.(type) {
 	case string:
 		return event.Info{
@@ -81,20 +82,11 @@ func (m Msg) ProcessRaw(chanInfo map[int64]event.Info) (interface{}, error) {
 	return raw, nil
 }
 
-func (m Msg) ProcessPrivateRaw() (interface{}, error) {
-	var raw []interface{}
-	if err := json.Unmarshal(m.Data, &raw); err != nil {
-		return nil, fmt.Errorf("parsing auth msg: %s, err: %s", m.Data, err)
-	}
-	// payload data is always last element of the slice
-	pld := raw[len(raw)-1]
-	// op name is 2nd element
-	op := convert.SValOrEmpty(raw[1])
-
+func (m Msg) ProcessPrivate(raw []interface{}, pld interface{}, chID int64, op string) (interface{}, error) {
 	switch data := pld.(type) {
 	case string:
 		return event.Info{
-			ChanID:    convert.I64ValOrZero(raw[0]),
+			ChanID:    chID,
 			Subscribe: event.Subscribe{Event: data},
 		}, nil
 	case []interface{}:
@@ -130,7 +122,7 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "ftu":
 			return trades.AFTUFromRaw(data)
 		case "mis":
-			// DEPRECATED
+			return nil, errors.New("mis msg type no longer supported")
 		case "miu":
 			return margin.FromRaw(data)
 		case "n":
@@ -162,7 +154,7 @@ func (m Msg) ProcessPrivateRaw() (interface{}, error) {
 		case "hfts":
 			return fundingtrade.HistoricalSnapshotFromRaw(data)
 		case "uac":
-			// NO LONGER SUPPORTED
+			return nil, errors.New("uac msg type no longer supported")
 		}
 	}
 
