@@ -20,6 +20,7 @@ import (
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/wallet"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/msg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsEvent(t *testing.T) {
@@ -102,15 +103,15 @@ func TestProcessEvent(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
-func TestProcessRaw(t *testing.T) {
+func TestProcessPublic(t *testing.T) {
 	cases := map[string]struct {
 		pld      []byte
 		expected interface{}
-		inf      map[int64]event.Info
+		inf      event.Info
 	}{
 		"info event": {
 			pld: []byte(`[123, "hb"]`),
-			inf: map[int64]event.Info{123: {}},
+			inf: event.Info{},
 			expected: event.Info{
 				ChanID:    123,
 				Subscribe: event.Subscribe{Event: "hb"},
@@ -124,12 +125,10 @@ func TestProcessRaw(t *testing.T) {
 					-550.8,-0.0674,7617.1,8314.71200815,8257.8,7500
 				]]
 			]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "ticker",
-						Symbol:  "tBTCUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "ticker",
+					Symbol:  "tBTCUST",
 				},
 			},
 			expected: &ticker.Snapshot{
@@ -158,12 +157,10 @@ func TestProcessRaw(t *testing.T) {
 					-550.9,-0.0674,7617,8318.92961981,8257.8,7500
 				]
 			]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "ticker",
-						Symbol:  "tBTCUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "ticker",
+					Symbol:  "tBTCUST",
 				},
 			},
 			expected: &ticker.Ticker{
@@ -192,12 +189,10 @@ func TestProcessRaw(t *testing.T) {
 					0.00027397,6.8e-7,null,null,3441851.73330503
 				]]
 			]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "ticker",
-						Symbol:  "fUSD",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "ticker",
+					Symbol:  "fUSD",
 				},
 			},
 			expected: &ticker.Snapshot{
@@ -231,12 +226,10 @@ func TestProcessRaw(t *testing.T) {
 					0.00027397,6.8e-7,null,null,3441851.73330503
 				]
 			]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "ticker",
-						Symbol:  "fUSD",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "ticker",
+					Symbol:  "fUSD",
 				},
 			},
 			expected: &ticker.Ticker{
@@ -259,12 +252,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"trades snapshot": {
 			pld: []byte(`[111,[[559273857,1609665708633,-0.0048,34113]]]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "trades",
-						Symbol:  "tBTCUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "trades",
+					Symbol:  "tBTCUST",
 				},
 			},
 			expected: trades.TradeSnapshot{
@@ -281,12 +272,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"trade": {
 			pld: []byte(`[111,[559273857,1609665708633,-0.0048,34113]]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "trades",
-						Symbol:  "tBTCUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "trades",
+					Symbol:  "tBTCUST",
 				},
 			},
 			expected: trades.Trade{
@@ -299,12 +288,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"trade execution": {
 			pld: []byte(`[17470,"te",[401597395,1574694478808,0.005,7245.3]]`),
-			inf: map[int64]event.Info{
-				17470: {
-					Subscribe: event.Subscribe{
-						Channel: "trades",
-						Symbol:  "tBTCUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "trades",
+					Symbol:  "tBTCUST",
 				},
 			},
 			expected: trades.TradeExecuted{
@@ -317,12 +304,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"trade execution update": {
 			pld: []byte(`[17470,"tu",[401597395,1574694478808,0.005,7245.3]]`),
-			inf: map[int64]event.Info{
-				17470: {
-					Subscribe: event.Subscribe{
-						Channel: "trades",
-						Symbol:  "tBTCUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "trades",
+					Symbol:  "tBTCUST",
 				},
 			},
 			expected: trades.TradeExecutionUpdate{
@@ -335,12 +320,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"funding trade execution": {
 			pld: []byte(`[337371,"fte",[133323543,1574694605000,-59.84,0.00023647,2]]`),
-			inf: map[int64]event.Info{
-				337371: {
-					Subscribe: event.Subscribe{
-						Channel: "trades",
-						Symbol:  "fUSD",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "trades",
+					Symbol:  "fUSD",
 				},
 			},
 			expected: trades.FundingTradeExecuted{
@@ -354,12 +337,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"funding trade execution update": {
 			pld: []byte(`[337371,"ftu",[133323543,1574694605000,-59.84,0.00023647,2]]`),
-			inf: map[int64]event.Info{
-				337371: {
-					Subscribe: event.Subscribe{
-						Channel: "trades",
-						Symbol:  "fUSD",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "trades",
+					Symbol:  "fUSD",
 				},
 			},
 			expected: trades.FundingTradeExecutionUpdate{
@@ -373,14 +354,12 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"book snapshot trading pair bid entry": {
 			pld: []byte(`[17082,[[7254.7,3,3.3]]]`),
-			inf: map[int64]event.Info{
-				17082: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tETHEUR",
-						Precision: "P0",
-						Frequency: "F0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tETHEUR",
+					Precision: "P0",
+					Frequency: "F0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -400,14 +379,12 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"book snapshot trading pair ask entry": {
 			pld: []byte(`[17082,[[7254.7,3,-3.3]]]`),
-			inf: map[int64]event.Info{
-				17082: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tETHEUR",
-						Precision: "P0",
-						Frequency: "F0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tETHEUR",
+					Precision: "P0",
+					Frequency: "F0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -427,14 +404,12 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"book snapshot trading pair exit": {
 			pld: []byte(`[17082,[[7254.7,0,3.3]]]`),
-			inf: map[int64]event.Info{
-				17082: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tETHEUR",
-						Precision: "P0",
-						Frequency: "F0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tETHEUR",
+					Precision: "P0",
+					Frequency: "F0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -454,14 +429,12 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"book snapshot funding pair": {
 			pld: []byte(`[431549,[[0.00023112,30,1,-15190.7005375]]]`),
-			inf: map[int64]event.Info{
-				431549: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "fUSD",
-						Precision: "P0",
-						Frequency: "F0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "fUSD",
+					Precision: "P0",
+					Frequency: "F0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -479,14 +452,12 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"book trading pair update": {
 			pld: []byte(`[17082,[7254.7,3,3.3]]`),
-			inf: map[int64]event.Info{
-				17082: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tETHEUR",
-						Precision: "P0",
-						Frequency: "F0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tETHEUR",
+					Precision: "P0",
+					Frequency: "F0",
 				},
 			},
 			expected: &book.Book{
@@ -502,14 +473,12 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"book funding pair update": {
 			pld: []byte(`[348748,[0.00023157,2,1,66.35007188]]`),
-			inf: map[int64]event.Info{
-				348748: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "fUSD",
-						Precision: "P0",
-						Frequency: "F0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "fUSD",
+					Precision: "P0",
+					Frequency: "F0",
 				},
 			},
 			expected: &book.Book{
@@ -523,13 +492,11 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"raw trading pair book snapshot bid entry": {
 			pld: []byte(`[869944,[[55804480297,33766,2]]]`),
-			inf: map[int64]event.Info{
-				869944: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tBTCUSD",
-						Precision: "R0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tBTCUSD",
+					Precision: "R0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -549,13 +516,11 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"raw trading pair book snapshot ask entry": {
 			pld: []byte(`[869944,[[55804480297,33766,-2]]]`),
-			inf: map[int64]event.Info{
-				869944: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tBTCUSD",
-						Precision: "R0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tBTCUSD",
+					Precision: "R0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -575,13 +540,11 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"raw trading pair book snapshot remove entry": {
 			pld: []byte(`[869944,[[55804480297,0,2]]]`),
-			inf: map[int64]event.Info{
-				869944: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tBTCUSD",
-						Precision: "R0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tBTCUSD",
+					Precision: "R0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -601,13 +564,11 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"raw funding pair book snapshot": {
 			pld: []byte(`[472778,[[658282397,30,0.000233,-530]]]`),
-			inf: map[int64]event.Info{
-				472778: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "fUSD",
-						Precision: "R0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "fUSD",
+					Precision: "R0",
 				},
 			},
 			expected: &book.Snapshot{
@@ -625,13 +586,11 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"raw trading pair book update": {
 			pld: []byte(`[433290,[34753006045,0,-1]]`),
-			inf: map[int64]event.Info{
-				433290: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "tBTCUSD",
-						Precision: "R0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "tBTCUSD",
+					Precision: "R0",
 				},
 			},
 			expected: &book.Book{
@@ -646,13 +605,11 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"raw funding pair book update": {
 			pld: []byte(`[472778,[658286906,2,0,1]]`),
-			inf: map[int64]event.Info{
-				472778: {
-					Subscribe: event.Subscribe{
-						Channel:   "book",
-						Symbol:    "fUSD",
-						Precision: "R0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel:   "book",
+					Symbol:    "fUSD",
+					Precision: "R0",
 				},
 			},
 			expected: &book.Book{
@@ -666,12 +623,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"candles snapshot": {
 			pld: []byte(`[111,[[1609668540000,828.01,827.67,828.42,827.67,2.32080241]]]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "candles",
-						Key:     "trade:1m:tETHUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "candles",
+					Key:     "trade:1m:tETHUST",
 				},
 			},
 			expected: &candle.Snapshot{
@@ -691,12 +646,10 @@ func TestProcessRaw(t *testing.T) {
 		},
 		"candle": {
 			pld: []byte(`[111,[1609668540000,828.01,827.67,828.42,827.67,2.32080241]]`),
-			inf: map[int64]event.Info{
-				111: {
-					Subscribe: event.Subscribe{
-						Channel: "candles",
-						Key:     "trade:1m:tETHUST",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "candles",
+					Key:     "trade:1m:tETHUST",
 				},
 			},
 			expected: &candle.Candle{
@@ -719,12 +672,10 @@ func TestProcessRaw(t *testing.T) {
 					null,null,11153.74635347,null,null,null,null,null
 				]]
 			]`),
-			inf: map[int64]event.Info{
-				799830: {
-					Subscribe: event.Subscribe{
-						Channel: "status",
-						Key:     "deriv:tBTCF0:USTF0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "status",
+					Key:     "deriv:tBTCF0:USTF0",
 				},
 			},
 			expected: &status.DerivativesSnapshot{
@@ -753,12 +704,10 @@ func TestProcessRaw(t *testing.T) {
 					null,null,11153.74635347,null,null,null,null,null
 				]
 			]`),
-			inf: map[int64]event.Info{
-				799830: {
-					Subscribe: event.Subscribe{
-						Channel: "status",
-						Key:     "deriv:tBTCF0:USTF0",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "status",
+					Key:     "deriv:tBTCF0:USTF0",
 				},
 			},
 			expected: &status.Derivative{
@@ -782,12 +731,10 @@ func TestProcessRaw(t *testing.T) {
 					0.12173,34618.82986269,null,1,1,null,34281
 				]]
 			]`),
-			inf: map[int64]event.Info{
-				521209: {
-					Subscribe: event.Subscribe{
-						Channel: "status",
-						Key:     "liq:global",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "status",
+					Key:     "liq:global",
 				},
 			},
 			expected: &status.LiquidationsSnapshot{
@@ -813,12 +760,10 @@ func TestProcessRaw(t *testing.T) {
 					0.12173,34618.82986269,null,1,1,null,34281
 				]
 			]`),
-			inf: map[int64]event.Info{
-				521209: {
-					Subscribe: event.Subscribe{
-						Channel: "status",
-						Key:     "liq:global",
-					},
+			inf: event.Info{
+				Subscribe: event.Subscribe{
+					Channel: "status",
+					Key:     "liq:global",
 				},
 			},
 			expected: &status.Liquidation{
@@ -837,14 +782,16 @@ func TestProcessRaw(t *testing.T) {
 	for k, v := range cases {
 		t.Run(k, func(t *testing.T) {
 			m := msg.Msg{Data: v.pld}
-			got, err := m.ProcessRaw(v.inf)
+			raw, pld, chID, _, err := m.PreprocessRaw()
+			require.NoError(t, err)
+			got, err := m.ProcessPublic(raw, pld, chID, v.inf)
 			assert.NoError(t, err)
 			assert.Equal(t, v.expected, got)
 		})
 	}
 }
 
-func TestProcessPrivateRaw(t *testing.T) {
+func TestProcessPrivate(t *testing.T) {
 	cases := map[string]struct {
 		pld      []byte
 		expected interface{}
@@ -1814,7 +1761,9 @@ func TestProcessPrivateRaw(t *testing.T) {
 	for k, v := range cases {
 		t.Run(k, func(t *testing.T) {
 			m := msg.Msg{Data: v.pld}
-			got, err := m.ProcessPrivateRaw()
+			raw, pld, chID, msgType, err := m.PreprocessRaw()
+			require.NoError(t, err)
+			got, err := m.ProcessPrivate(raw, pld, chID, msgType)
 			assert.NoError(t, err)
 			assert.Equal(t, v.expected, got)
 		})
