@@ -55,7 +55,7 @@ func (c *Client) Public(url string) (*Client, error) {
 }
 
 // Private creates and returns client to interact with private channels
-func (c *Client) Private(key, sec, url string) (*Client, error) {
+func (c *Client) Private(key, sec, url string, dms int) (*Client, error) {
 	nonce := c.nonceGen.GetNonce()
 	conn, _, _, err := ws.DefaultDialer.Dial(context.Background(), url)
 	if err != nil {
@@ -76,6 +76,7 @@ func (c *Client) Private(key, sec, url string) (*Client, error) {
 		AuthSig:     pldSign,
 		AuthPayload: payload,
 		AuthNonce:   nonce,
+		DMS:         dms,
 	}
 
 	if err := c.Subscribe(sub); err != nil {

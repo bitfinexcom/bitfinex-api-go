@@ -17,6 +17,7 @@ import (
 // in case of a failure
 type Mux struct {
 	cid           int
+	dms           int
 	publicChan    chan msg.Msg
 	publicClients map[int]*client.Client
 	privateChan   chan msg.Msg
@@ -55,6 +56,12 @@ func (m *Mux) TransformRaw() *Mux {
 // WithAPIKEY accepts and persists api key
 func (m *Mux) WithAPIKEY(key string) *Mux {
 	m.apikey = key
+	return m
+}
+
+// WithDeadManSwitch - when socket is closed, cancel all account orders
+func (m *Mux) WithDeadManSwitch() *Mux {
+	m.dms = 4
 	return m
 }
 
@@ -144,6 +151,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 				inf, ok := m.subInfo[chID]
 				if !ok {
 					cb(nil, fmt.Errorf("unrecognized chanId:%d", chID))
+					continue
 				}
 				cb(ms.ProcessPublic(raw, pld, chID, inf))
 				continue
@@ -252,7 +260,7 @@ func (m *Mux) addPublicClient() *Mux {
 
 func (m *Mux) addPrivateClient() *Mux {
 	// create new private client and pass error to mux if any
-	c, err := client.New().Private(m.apikey, m.apisec, m.authURL)
+	c, err := client.New().Private(m.apikey, m.apisec, m.authURL, m.dms)
 	if err != nil {
 		m.Err = err
 		return m
