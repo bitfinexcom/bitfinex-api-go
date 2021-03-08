@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	m := mux.New().
+	m := mux.
+		New().
 		TransformRaw().
 		WithAPIKEY("YOUR_API_KEY").
 		WithAPISEC("YOUR_API_SECRET").
