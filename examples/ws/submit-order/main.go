@@ -21,6 +21,7 @@ func main() {
 	auth := make(chan bool)
 
 	go func() {
+		// if listener will fail, program will exit by passing error to crash channel
 		crash <- m.Listen(func(msg interface{}, err error) {
 			if err != nil {
 				log.Printf("error received: %s\n", err)
@@ -33,11 +34,7 @@ func main() {
 				}
 			case order.New:
 				log.Printf("%T: %+v\n", v, v)
-			case *order.Snapshot:
-				log.Printf("%T: %+v\n", v, v)
-				for _, ss := range v.Snapshot {
-					log.Printf("%T item: %+v\n", ss, ss)
-				}
+				close(crash)
 			}
 		})
 	}()

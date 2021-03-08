@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-	m := mux.New().
+	m := mux.
+		New().
 		TransformRaw().
 		Start()
 
@@ -95,6 +96,7 @@ func main() {
 	crash := make(chan error)
 
 	go func() {
+		// if listener will fail, program will exit by passing error to crash channel
 		crash <- m.Listen(func(msg interface{}, err error) {
 			if err != nil {
 				log.Printf("non crucial error received: %s\n", err)
