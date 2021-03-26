@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
@@ -65,45 +64,30 @@ func IsRawBook(precision string) bool {
 // to interpret the side (baked into Count versus Amount)
 // raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
 func FromRaw(symbol, precision string, raw []interface{}, rawNumbers interface{}) (b *Book, err error) {
-	isRaw := IsRawBook(precision)
-	isFunding := strings.HasPrefix(symbol, "f")
-	isTrading := strings.HasPrefix(symbol, "t")
-
-	if len(raw) < 3 && isTrading {
-		err = fmt.Errorf("raw slice too short for trading pair book, got len %d: %#v", len(raw), raw)
-		return
+	if len(raw) < 3 {
+		return b, fmt.Errorf("raw slice too short for book, expected %d got %d: %#v", 3, len(raw), raw)
 	}
 
-	if len(raw) < 4 && isFunding {
-		err = fmt.Errorf("raw slice too short for funding pair book, got len %d: %#v", len(raw), raw)
-		return
-	}
+	rawBook := IsRawBook(precision)
 
-	if isTrading && isRaw {
+	if len(raw) == 3 && rawBook {
 		b = rawTradingPairsBook(raw, rawNumbers)
-		b.Symbol = symbol
-		return
 	}
 
-	if isTrading && !isRaw {
+	if len(raw) == 3 && !rawBook {
 		b = tradingPairsBook(raw, rawNumbers)
-		b.Symbol = symbol
-		return
 	}
 
-	if isFunding && isRaw {
+	if len(raw) >= 4 && rawBook {
 		b = rawFundingPairsBook(raw, rawNumbers)
-		b.Symbol = symbol
-		return
 	}
 
-	if isFunding && !isRaw {
+	if len(raw) >= 4 && !rawBook {
 		b = fundingPairsBook(raw, rawNumbers)
-		b.Symbol = symbol
-		return
 	}
 
-	err = fmt.Errorf("unrecognized data slice: %#v", raw)
+	b.Symbol = symbol
+
 	return
 }
 
