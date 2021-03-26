@@ -38,7 +38,7 @@ func main() {
 			log.Errorf("channel closed: %s", obj)
 			return
 		case *trade.Trade:
-			log.Infof("New trade: %s", obj)
+			log.Infof("New trade: %+v\n", obj)
 		case *websocket.InfoEvent:
 			// Info event confirms connection to the bfx websocket
 			log.Info("Subscribing to tBTCUSD")
