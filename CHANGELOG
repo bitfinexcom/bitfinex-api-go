@@ -1,3 +1,12 @@
+3.0.3
+- Features
+    - new websocket manager. Please refer to `/examples/ws` for usage examples.
+    - updating models to accept and be able to map additional fields from api payload
+
+3.0.2
+- Fixes
+    - fixed cross lib nonce generation issue
+
 3.0.1
 - New rest v2 functions
     - Pulse.AddComment
