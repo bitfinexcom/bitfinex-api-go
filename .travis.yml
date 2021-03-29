@@ -9,4 +9,4 @@ install:
 
 script:
   - golangci-lint run --skip-dirs v1
-  - go test ./... -timeout 60s
+  - go test ./... -timeout 120s
