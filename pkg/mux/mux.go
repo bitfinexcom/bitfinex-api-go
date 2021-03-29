@@ -42,7 +42,7 @@ func New() *Mux {
 		mtx:           &sync.RWMutex{},
 		subInfo:       map[int64]event.Info{},
 		publicURL:     "wss://api-pub.bitfinex.com/ws/2",
-		authURL:       "wss://api.staging.bitfinex.com/ws/2",
+		authURL:       "wss://api.bitfinex.com/ws/2",
 	}
 }
 
