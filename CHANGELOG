@@ -5,7 +5,7 @@
 
 3.0.2
 - Fixes
-    - fixed cross lib nonce generation issue
+    - nonce issue to be compatible with other libraries
 
 3.0.1
 - New rest v2 functions
