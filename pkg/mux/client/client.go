@@ -106,6 +106,11 @@ func (c *Client) Send(pld interface{}) error {
 	return wsutil.WriteClientBinary(c.conn, b)
 }
 
+// Close closes the socket connection
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
 // Read starts consuming data stream
 func (c *Client) Read(ch chan<- msg.Msg) {
 	defer c.conn.Close()
