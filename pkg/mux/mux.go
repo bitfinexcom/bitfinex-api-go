@@ -21,6 +21,7 @@ type Mux struct {
 	publicChan    chan msg.Msg
 	publicClients map[int]*client.Client
 	privateChan   chan msg.Msg
+	closeChan     chan bool
 	privateClient *client.Client
 	mtx           *sync.RWMutex
 	Err           error
@@ -31,6 +32,7 @@ type Mux struct {
 	authenticated bool
 	publicURL     string
 	authURL       string
+	online        bool
 }
 
 // New returns pointer to instance of mux
@@ -38,6 +40,7 @@ func New() *Mux {
 	return &Mux{
 		publicChan:    make(chan msg.Msg),
 		privateChan:   make(chan msg.Msg),
+		closeChan:     make(chan bool),
 		publicClients: make(map[int]*client.Client),
 		mtx:           &sync.RWMutex{},
 		subInfo:       map[int64]event.Info{},
@@ -71,10 +74,25 @@ func (m *Mux) WithAPISEC(sec string) *Mux {
 	return m
 }
 
-// WithAuthURL accepts and persists auth url
+// WithPublicURL accepts and persists public api url
+func (m *Mux) WithPublicURL(url string) *Mux {
+	m.publicURL = url
+	return m
+}
+
+// WithAuthURL accepts and persists auth api url
 func (m *Mux) WithAuthURL(url string) *Mux {
 	m.authURL = url
 	return m
+}
+
+func (m *Mux) IsConnected() bool {
+	return m.online
+}
+
+func (m *Mux) Close() bool {
+	m.closeChan <- true
+	return true
 }
 
 // Subscribe - given the details in form of event.Subscribe,
@@ -118,6 +136,8 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 	if m.Err != nil {
 		return m.Err
 	}
+
+	m.online = true
 
 	for {
 		select {
@@ -187,6 +207,27 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 				continue
 			}
 			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
+		case <-m.closeChan:
+			m.mtx.Lock()
+			defer m.mtx.Unlock()
+
+			for _, v := range m.publicClients {
+				if v == nil {
+					continue
+				}
+				if err := v.Close(); err != nil {
+					log.Printf("failed closing public client: %s\n", err)
+				}
+			}
+
+			if m.privateClient != nil {
+				if err := m.privateClient.Close(); err != nil {
+					log.Printf("failed closing private client: %s\n", err)
+				}
+			}
+
+			m.online = false
+			return nil
 		}
 	}
 }
@@ -245,7 +286,7 @@ func (m *Mux) addPublicClient() *Mux {
 	c, err := client.
 		New().
 		WithID(m.cid).
-		WithSubsLimit(25).
+		WithSubsLimit(20).
 		Public(m.publicURL)
 	if err != nil {
 		m.Err = err
