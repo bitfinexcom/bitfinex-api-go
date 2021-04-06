@@ -99,7 +99,7 @@ func TestFromRaw(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 
-	t.Run("funding pair spanshot ticker", func(t *testing.T) {
+	t.Run("funding pair snapshot ticker", func(t *testing.T) {
 		payload := []interface{}{
 			0.0003447013698630137,
 			0.000316,
