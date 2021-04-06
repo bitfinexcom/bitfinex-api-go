@@ -275,7 +275,6 @@ func TestSnapshotFromRaw(t *testing.T) {
 						BasePrice: 167.01,
 						MtsCreate: 1579552390000,
 						MtsUpdate: 1579552390000,
-						Type:      "ps",
 					},
 					{
 						Id:        142661143,
@@ -285,7 +284,6 @@ func TestSnapshotFromRaw(t *testing.T) {
 						BasePrice: 167.01,
 						MtsCreate: 1579552390000,
 						MtsUpdate: 1579552390000,
-						Type:      "ps",
 					},
 				},
 			},
@@ -316,7 +314,6 @@ func TestSnapshotFromRaw(t *testing.T) {
 						Status:    "ACTIVE",
 						Amount:    0.2,
 						BasePrice: 153.71,
-						Type:      "ps",
 						Meta: map[string]interface{}{
 							"reason":        "TRADE",
 							"order_id":      34934099168,
