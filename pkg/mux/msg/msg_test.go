@@ -835,7 +835,6 @@ func TestProcessPrivate(t *testing.T) {
 						Status:    "ACTIVE",
 						Amount:    0.2,
 						BasePrice: 153.71,
-						Type:      "ps",
 						Meta: map[string]interface{}{
 							"liq_stage":     nil,
 							"order_id":      3.4934099168e+10,
