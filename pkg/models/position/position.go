@@ -105,7 +105,6 @@ func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
 				p, err := FromRaw(l)
-				p.Type = "ps"
 				if err != nil {
 					return s, err
 				}
