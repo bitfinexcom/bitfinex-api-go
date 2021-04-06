@@ -84,7 +84,7 @@ func FromRaw(raw []interface{}) (o *Order, err error) {
 	return
 }
 
-// NewFromRaw reds "on" type message from data sream and
+// NewFromRaw reds "on" type message from data stream and
 // maps it to order.New data structure
 func NewFromRaw(raw []interface{}) (New, error) {
 	o, err := FromRaw(raw)
@@ -94,7 +94,7 @@ func NewFromRaw(raw []interface{}) (New, error) {
 	return New(*o), nil
 }
 
-// UpdateFromRaw reds "ou" type message from data sream and
+// UpdateFromRaw reds "ou" type message from data stream and
 // maps it to order.Update data structure
 func UpdateFromRaw(raw []interface{}) (Update, error) {
 	o, err := FromRaw(raw)
@@ -104,7 +104,7 @@ func UpdateFromRaw(raw []interface{}) (Update, error) {
 	return Update(*o), nil
 }
 
-// CancelFromRaw reds "oc" type message from data sream and
+// CancelFromRaw reds "oc" type message from data stream and
 // maps it to order.Cancel data structure
 func CancelFromRaw(raw []interface{}) (Cancel, error) {
 	o, err := FromRaw(raw)
