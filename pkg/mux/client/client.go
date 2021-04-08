@@ -88,6 +88,7 @@ func (c *Client) Private(key, sec, url string, dms int) (*Client, error) {
 // Subscribe takes subscription payload as per docs and subscribes client to it.
 // We keep track of subscriptions so that when client failes, we can resubscribe.
 func (c *Client) Subscribe(sub event.Subscribe) error {
+	sub.Event = "subscribe"
 	if err := c.Send(sub); err != nil {
 		return err
 	}

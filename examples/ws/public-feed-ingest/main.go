@@ -32,32 +32,27 @@ func main() {
 
 	for _, pair := range pairs {
 		tradePld := event.Subscribe{
-			Event:   "subscribe",
 			Channel: "trades",
 			Symbol:  "t" + pair,
 		}
 
 		tickPld := event.Subscribe{
-			Event:   "subscribe",
 			Channel: "ticker",
 			Symbol:  "t" + pair,
 		}
 
 		candlesPld := event.Subscribe{
-			Event:   "subscribe",
 			Channel: "candles",
 			Key:     "trade:1m:t" + pair,
 		}
 
 		rawBookPld := event.Subscribe{
-			Event:     "subscribe",
 			Channel:   "book",
 			Precision: "R0",
 			Symbol:    "t" + pair,
 		}
 
 		bookPld := event.Subscribe{
-			Event:     "subscribe",
 			Channel:   "book",
 			Precision: "P0",
 			Frequency: "F0",
@@ -72,19 +67,16 @@ func main() {
 	}
 
 	derivStatusPld := event.Subscribe{
-		Event:   "subscribe",
 		Channel: "status",
 		Key:     "deriv:tBTCF0:USTF0",
 	}
 
 	liqStatusPld := event.Subscribe{
-		Event:   "subscribe",
 		Channel: "status",
 		Key:     "liq:global",
 	}
 
 	fundingPairTrade := event.Subscribe{
-		Event:   "subscribe",
 		Channel: "trades",
 		Symbol:  "fUSD",
 	}
