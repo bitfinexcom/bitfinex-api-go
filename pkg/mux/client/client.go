@@ -155,7 +155,7 @@ func (c *Client) AddSub(sub event.Subscribe) {
 	c.subs[sub] = true
 }
 
-// RemoveSub adds new subscription to the list
+// RemoveSub removes new subscription to the list
 func (c *Client) RemoveSub(sub event.Subscribe) {
 	delete(c.subs, sub)
 }
