@@ -96,6 +96,23 @@ func (c *Client) Subscribe(sub event.Subscribe) error {
 	return nil
 }
 
+// Unsubscribe takes channel id and unsubscribes client from it.
+func (c *Client) Unsubscribe(chanID int64) error {
+	pld := struct {
+		Event  string `json:"event"`
+		ChanID int64  `json:"chanId"`
+	}{
+		Event:  "unsubscribe",
+		ChanID: chanID,
+	}
+
+	if err := c.Send(pld); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Send takes payload in form of interface and sends it to api
 func (c *Client) Send(pld interface{}) error {
 	b, err := json.Marshal(pld)
