@@ -122,33 +122,33 @@ func (l *listener) nextBalanceUpdate() (*balanceinfo.Update, error) {
 	}
 }
 
-func (l *listener) nextWalletSnapshot() (*wallet.Snapshot, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.walletSnapshot:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for WalletSnapshot")
-	}
-}
+// func (l *listener) nextWalletSnapshot() (*wallet.Snapshot, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.walletSnapshot:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for WalletSnapshot")
+// 	}
+// }
 
-func (l *listener) nextPositionSnapshot() (*position.Snapshot, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.positionSnapshot:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for PositionSnapshot")
-	}
-}
+// func (l *listener) nextPositionSnapshot() (*position.Snapshot, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.positionSnapshot:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for PositionSnapshot")
+// 	}
+// }
 
 func (l *listener) nextSubscriptionEvent() (*websocket.SubscribeEvent, error) {
 	timeout := make(chan bool)
@@ -192,145 +192,145 @@ func (l *listener) nextTick() (*ticker.Ticker, error) {
 	}
 }
 
-func (l *listener) nextNotification() (*notification.Notification, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.notifications:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for Notification")
-	}
-}
+// func (l *listener) nextNotification() (*notification.Notification, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.notifications:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for Notification")
+// 	}
+// }
 
-func (l *listener) nextTradeExecution() (*tradeexecution.TradeExecution, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.tradeExecutions:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for TradeExecution")
-	}
-}
+// func (l *listener) nextTradeExecution() (*tradeexecution.TradeExecution, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.tradeExecutions:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for TradeExecution")
+// 	}
+// }
 
-func (l *listener) nextPositionUpdate() (*position.Update, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.positions:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for PositionUpdate")
-	}
-}
+// func (l *listener) nextPositionUpdate() (*position.Update, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.positions:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for PositionUpdate")
+// 	}
+// }
 
-func (l *listener) nextTradeUpdate() (*tradeexecutionupdate.TradeExecutionUpdate, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.tradeUpdates:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for TradeUpdate")
-	}
-}
+// func (l *listener) nextTradeUpdate() (*tradeexecutionupdate.TradeExecutionUpdate, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.tradeUpdates:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for TradeUpdate")
+// 	}
+// }
 
-func (l *listener) nextOrderCancel() (*order.Cancel, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.cancels:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for OrderCancel")
-	}
-}
+// func (l *listener) nextOrderCancel() (*order.Cancel, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.cancels:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for OrderCancel")
+// 	}
+// }
 
-func (l *listener) nextMarginInfoBase() (*margin.InfoBase, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.marginBase:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for MarginInfoBase")
-	}
-}
+// func (l *listener) nextMarginInfoBase() (*margin.InfoBase, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.marginBase:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for MarginInfoBase")
+// 	}
+// }
 
-func (l *listener) nextMarginInfoUpdate() (*margin.InfoUpdate, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.marginUpdate:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for MarginInfoUpdate")
-	}
-}
+// func (l *listener) nextMarginInfoUpdate() (*margin.InfoUpdate, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.marginUpdate:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for MarginInfoUpdate")
+// 	}
+// }
 
-func (l *listener) nextFundingInfo() (*fundinginfo.FundingInfo, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.funding:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for FundingInfo")
-	}
-}
+// func (l *listener) nextFundingInfo() (*fundinginfo.FundingInfo, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.funding:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for FundingInfo")
+// 	}
+// }
 
-func (l *listener) nextOrderNew() (*order.New, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.orderNew:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for OrderNew")
-	}
-}
+// func (l *listener) nextOrderNew() (*order.New, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.orderNew:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for OrderNew")
+// 	}
+// }
 
-func (l *listener) nextOrderUpdate() (*order.Update, error) {
-	timeout := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * 2)
-		close(timeout)
-	}()
-	select {
-	case ev := <-l.orderUpdate:
-		return ev, nil
-	case <-timeout:
-		return nil, errors.New("timed out waiting for OrderUpdate")
-	}
-}
+// func (l *listener) nextOrderUpdate() (*order.Update, error) {
+// 	timeout := make(chan bool)
+// 	go func() {
+// 		time.Sleep(time.Second * 2)
+// 		close(timeout)
+// 	}()
+// 	select {
+// 	case ev := <-l.orderUpdate:
+// 		return ev, nil
+// 	case <-timeout:
+// 		return nil, errors.New("timed out waiting for OrderUpdate")
+// 	}
+// }
 
 // strongly types messages and places them into a channel
 func (l *listener) run(ch <-chan interface{}) {

@@ -40,10 +40,10 @@ func main() {
 	for obj := range c.Listen() {
 		switch obj.(type) {
 		case error:
-			log.Printf("channel closed: %s", obj)
+			log.Printf("channel closed: %+v\n", obj)
 		default:
 		}
-		log.Printf("MSG RECV: %#v", obj)
+		log.Printf("MSG RECV: %+v\n", obj)
 
 		// Load the latest orderbook
 		ob, _ := c.GetOrderbook(common.TradingPrefix + bitfinex.BTCUSD)

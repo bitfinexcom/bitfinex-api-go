@@ -26,7 +26,7 @@ func (s *WalletService) Wallet() (*wallet.Snapshot, error) {
 		return nil, err
 	}
 
-	os, err := wallet.SnapshotFromRaw(raw, wallet.FromRaw)
+	os, err := wallet.SnapshotFromRaw(raw)
 	if err != nil {
 		return nil, err
 	}

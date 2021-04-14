@@ -47,55 +47,28 @@ func FromRaw(raw []interface{}) (n *Notification, err error) {
 	case "on-req":
 		// will be a set of orders if created via rest
 		// this is to accommodate OCO orders
-		if _, ok := nraw[0].([]interface{}); ok {
+		if _, isSnapshot := nraw[0].([]interface{}); isSnapshot {
 			n.NotifyInfo, err = order.SnapshotFromRaw(nraw)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			on, err := order.FromRaw(nraw)
-			if err != nil {
-				return nil, err
-			}
-			oNew := order.New(*on)
-			n.NotifyInfo = &oNew
+			return
 		}
+
+		n.NotifyInfo, err = order.NewFromRaw(nraw)
+		return
 	case "ou-req", "ou":
-		on, err := order.FromRaw(nraw)
-		if err != nil {
-			return nil, err
-		}
-		ou := order.Update(*on)
-		n.NotifyInfo = &ou
+		n.NotifyInfo, err = order.UpdateFromRaw(nraw)
+		return
 	case "oc-req":
-		// if list of list then parse to order snapshot
-		on, err := order.FromRaw(nraw)
-		if err != nil {
-			return n, err
-		}
-		oc := order.Cancel(*on)
-		n.NotifyInfo = &oc
+		n.NotifyInfo, err = order.CancelFromRaw(nraw)
+		return
 	case "fon-req":
-		fon, err := fundingoffer.FromRaw(nraw)
-		if err != nil {
-			return n, err
-		}
-		fundingOffer := fundingoffer.New(*fon)
-		n.NotifyInfo = &fundingOffer
+		n.NotifyInfo, err = fundingoffer.NewFromRaw(nraw)
+		return
 	case "foc-req":
-		foc, err := fundingoffer.FromRaw(nraw)
-		if err != nil {
-			return n, err
-		}
-		fundingOffer := fundingoffer.Cancel(*foc)
-		n.NotifyInfo = &fundingOffer
+		n.NotifyInfo, err = fundingoffer.CancelFromRaw(nraw)
+		return
 	case "pm-req", "pc":
-		p, err := position.FromRaw(nraw)
-		if err != nil {
-			return n, err
-		}
-		cp := position.Cancel(*p)
-		n.NotifyInfo = &cp
+		n.NotifyInfo, err = position.CancelFromRaw(nraw)
+		return
 	default:
 		n.NotifyInfo = raw[4]
 	}

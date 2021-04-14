@@ -27,6 +27,7 @@ type Order struct {
 	Notify        bool
 	Hidden        bool
 	PlacedID      int64
+	Routing       string
 	Meta          map[string]interface{}
 }
 
@@ -48,22 +49,7 @@ type Cancel Order
 // FromRaw takes the raw list of values as returned from the websocket
 // service and tries to convert it into an Order.
 func FromRaw(raw []interface{}) (o *Order, err error) {
-	if len(raw) == 12 {
-		o = &Order{
-			ID:         convert.I64ValOrZero(raw[0]),
-			Symbol:     convert.SValOrEmpty(raw[1]),
-			Amount:     convert.F64ValOrZero(raw[2]),
-			AmountOrig: convert.F64ValOrZero(raw[3]),
-			Type:       convert.SValOrEmpty(raw[4]),
-			Status:     convert.SValOrEmpty(raw[5]),
-			Price:      convert.F64ValOrZero(raw[6]),
-			PriceAvg:   convert.F64ValOrZero(raw[7]),
-			MTSUpdated: convert.I64ValOrZero(raw[8]),
-		}
-		return
-	}
-
-	if len(raw) < 26 {
+	if len(raw) < 32 {
 		return o, fmt.Errorf("data slice too short for order: %#v", raw)
 	}
 
@@ -88,13 +74,44 @@ func FromRaw(raw []interface{}) (o *Order, err error) {
 		Notify:        convert.BValOrFalse(raw[23]),
 		Hidden:        convert.BValOrFalse(raw[24]),
 		PlacedID:      convert.I64ValOrZero(raw[25]),
+		Routing:       convert.SValOrEmpty(raw[28]),
 	}
 
-	if len(raw) >= 31 {
-		o.Meta = convert.SiMapOrEmpty(raw[31])
+	if meta, ok := raw[31].(map[string]interface{}); ok {
+		o.Meta = meta
 	}
 
 	return
+}
+
+// NewFromRaw reds "on" type message from data stream and
+// maps it to order.New data structure
+func NewFromRaw(raw []interface{}) (New, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return New{}, err
+	}
+	return New(*o), nil
+}
+
+// UpdateFromRaw reds "ou" type message from data stream and
+// maps it to order.Update data structure
+func UpdateFromRaw(raw []interface{}) (Update, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return Update{}, err
+	}
+	return Update(*o), nil
+}
+
+// CancelFromRaw reds "oc" type message from data stream and
+// maps it to order.Cancel data structure
+func CancelFromRaw(raw []interface{}) (Cancel, error) {
+	o, err := FromRaw(raw)
+	if err != nil {
+		return Cancel{}, err
+	}
+	return Cancel(*o), nil
 }
 
 // SnapshotFromRaw takes a raw list of values as returned from the websocket

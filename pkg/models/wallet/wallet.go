@@ -12,6 +12,8 @@ type Wallet struct {
 	Balance           float64
 	UnsettledInterest float64
 	BalanceAvailable  float64
+	LastChange        string
+	TradeDetails      map[string]interface{}
 }
 
 type Update Wallet
@@ -20,26 +22,8 @@ type Snapshot struct {
 	Snapshot []*Wallet
 }
 
-type transformerFn func(raw []interface{}) (w *Wallet, err error)
-
 func FromRaw(raw []interface{}) (w *Wallet, err error) {
-	if len(raw) < 4 {
-		err = fmt.Errorf("data slice too short for wallet: %#v", raw)
-		return
-	}
-
-	w = &Wallet{
-		Type:              convert.SValOrEmpty(raw[0]),
-		Currency:          convert.SValOrEmpty(raw[1]),
-		Balance:           convert.F64ValOrZero(raw[2]),
-		UnsettledInterest: convert.F64ValOrZero(raw[3]),
-	}
-
-	return
-}
-
-func FromWsRaw(raw []interface{}) (w *Wallet, err error) {
-	if len(raw) < 5 {
+	if len(raw) < 7 {
 		err = fmt.Errorf("data slice too short for wallet: %#v", raw)
 		return
 	}
@@ -50,12 +34,28 @@ func FromWsRaw(raw []interface{}) (w *Wallet, err error) {
 		Balance:           convert.F64ValOrZero(raw[2]),
 		UnsettledInterest: convert.F64ValOrZero(raw[3]),
 		BalanceAvailable:  convert.F64ValOrZero(raw[4]),
+		LastChange:        convert.SValOrEmpty(raw[5]),
+	}
+
+	if meta, ok := raw[6].(map[string]interface{}); ok {
+		w.TradeDetails = meta
 	}
 
 	return
 }
 
-func SnapshotFromRaw(raw []interface{}, transformer transformerFn) (s *Snapshot, err error) {
+// UpdateFromRaw reds "wu" type message from authenticated data
+// sream and maps it to wallet.Update data structure
+func UpdateFromRaw(raw []interface{}) (Update, error) {
+	w, err := FromRaw(raw)
+	if err != nil {
+		return Update{}, err
+	}
+
+	return Update(*w), nil
+}
+
+func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 	if len(raw) == 0 {
 		return s, fmt.Errorf("data slice too short for wallet: %#v", raw)
 	}
@@ -65,7 +65,7 @@ func SnapshotFromRaw(raw []interface{}, transformer transformerFn) (s *Snapshot,
 	case []interface{}:
 		for _, v := range raw {
 			if l, ok := v.([]interface{}); ok {
-				w, err := transformer(l)
+				w, err := FromRaw(l)
 				if err != nil {
 					return s, err
 				}

@@ -36,13 +36,7 @@ func TestNewMarginFromRaw(t *testing.T) {
 	t.Run("valid 'base' type payload", func(t *testing.T) {
 		payload := []interface{}{
 			"base",
-			[]interface{}{
-				-13.014640000000007,
-				0,
-				49331.70267297,
-				49318.68803297,
-				27,
-			},
+			[]interface{}{-13.014640000000007, 0, 49331.70267297, 49318.68803297, 27},
 		}
 
 		got, err := margin.FromRaw(payload)
@@ -53,6 +47,7 @@ func TestNewMarginFromRaw(t *testing.T) {
 			UserSwaps:      0,
 			MarginBalance:  49331.70267297,
 			MarginNet:      49318.68803297,
+			MarginRequired: 27,
 		}
 
 		assert.Equal(t, expected, got)
@@ -79,14 +74,8 @@ func TestNewMarginFromRaw(t *testing.T) {
 			"sym",
 			"tETHUSD",
 			[]interface{}{
-				149361.09689202666,
-				149639.26293509,
-				830.0182168075556,
-				895.0658432466332,
-				nil,
-				nil,
-				nil,
-				nil,
+				149361.09689202666, 149639.26293509, 830.0182168075556,
+				895.0658432466332, nil, nil, nil, nil,
 			},
 		}
 
@@ -96,6 +85,9 @@ func TestNewMarginFromRaw(t *testing.T) {
 		expected := &margin.InfoUpdate{
 			Symbol:          "tETHUSD",
 			TradableBalance: 149361.09689202666,
+			GrossBalance:    149639.26293509,
+			Buy:             830.0182168075556,
+			Sell:            895.0658432466332,
 		}
 
 		assert.Equal(t, expected, got)

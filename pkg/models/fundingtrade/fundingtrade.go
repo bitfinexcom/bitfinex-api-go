@@ -69,3 +69,12 @@ func SnapshotFromRaw(raw []interface{}) (snap *Snapshot, err error) {
 
 	return
 }
+
+func HistoricalSnapshotFromRaw(raw []interface{}) (HistoricalSnapshot, error) {
+	s, err := SnapshotFromRaw(raw)
+	if err != nil {
+		return HistoricalSnapshot{}, err
+	}
+
+	return HistoricalSnapshot(*s), nil
+}

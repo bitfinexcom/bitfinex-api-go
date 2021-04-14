@@ -253,13 +253,13 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		pc := position.Cancel(*o)
 		return &pc
 	case "ws":
-		o, err := wallet.SnapshotFromRaw(raw, wallet.FromWsRaw)
+		o, err := wallet.SnapshotFromRaw(raw)
 		if err != nil {
 			return err
 		}
 		return o
 	case "wu":
-		o, err := wallet.FromWsRaw(raw)
+		o, err := wallet.FromRaw(raw)
 		if err != nil {
 			return err
 		}

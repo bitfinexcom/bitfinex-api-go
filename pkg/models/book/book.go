@@ -2,6 +2,7 @@ package book
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
@@ -64,7 +65,7 @@ func IsRawBook(precision string) bool {
 // raw book updates [ID, price, qty], aggregated book updates [price, amount, count]
 func FromRaw(symbol, precision string, raw []interface{}, rawNumbers interface{}) (b *Book, err error) {
 	if len(raw) < 3 {
-		return b, fmt.Errorf("raw slice too short for book update, expected %d got %d: %#v", 3, len(raw), raw)
+		return b, fmt.Errorf("raw slice too short for book, expected %d got %d: %#v", 3, len(raw), raw)
 	}
 
 	rawBook := IsRawBook(precision)
@@ -90,6 +91,20 @@ func FromRaw(symbol, precision string, raw []interface{}, rawNumbers interface{}
 	return
 }
 
+// FromWSRaw - based on condition will return snapshot of books or single book
+func FromWSRaw(symbol, precision string, data []interface{}) (interface{}, error) {
+	if len(data) == 0 {
+		return nil, errors.New("empty data slice")
+	}
+
+	_, isSnapshot := data[0].([]interface{})
+	if isSnapshot {
+		return SnapshotFromRaw(symbol, precision, convert.ToInterfaceArray(data), data)
+	}
+
+	return FromRaw(symbol, precision, data, data)
+}
+
 func rawTradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 	// [ ORDER_ID, PRICE, AMOUNT ] - raw trading pairs signature
 	var (
@@ -98,8 +113,8 @@ func rawTradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 	)
 
 	rawNumSlice := rawNumbers.([]interface{})
-	amount := convert.F64ValOrZero(raw[2])
 	price := convert.F64ValOrZero(raw[1])
+	amount := convert.F64ValOrZero(raw[2])
 
 	if amount > 0 {
 		side = common.Bid
@@ -127,11 +142,11 @@ func rawTradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 func tradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 	// [ PRICE, COUNT, AMOUNT ] - trading pairs signature
 	var (
-		price, actionCtrl float64
-		count             int64
-		priceNum          json.Number
-		side              common.OrderSide
-		action            BookAction
+		price    float64
+		count    int64
+		priceNum json.Number
+		side     common.OrderSide
+		action   BookAction
 	)
 
 	rawNumSlice := rawNumbers.([]interface{})
@@ -141,7 +156,6 @@ func tradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 	price = convert.F64ValOrZero(raw[0])
 	priceNum = convert.FloatToJsonNumber(rawNumSlice[0])
 	count = convert.I64ValOrZero(raw[1])
-	actionCtrl = float64(count)
 
 	if amount > 0 {
 		side = common.Bid
@@ -149,7 +163,7 @@ func tradingPairsBook(raw []interface{}, rawNumbers interface{}) *Book {
 		side = common.Ask
 	}
 
-	if actionCtrl <= 0 {
+	if count <= 0 {
 		action = BookRemoveEntry
 	} else {
 		action = BookEntry

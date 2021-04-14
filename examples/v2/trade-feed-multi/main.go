@@ -25,7 +25,7 @@ func main() {
 			log.Printf("channel closed: %s", obj)
 			return
 		case *trade.Trade:
-			log.Printf("New trade: %s", obj)
+			log.Printf("New trade: %+v\n", obj)
 		case *websocket.InfoEvent:
 			// Info event confirms connection to the bfx websocket
 			for _, ticker := range tickers {

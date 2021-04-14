@@ -25,3 +25,13 @@ func FromRaw(raw []interface{}) (o *BalanceInfo, err error) {
 
 	return
 }
+
+func UpdateFromRaw(raw []interface{}) (Update, error) {
+	bi, err := FromRaw(raw)
+	if err != nil {
+		return Update{}, err
+	}
+
+	u := Update(*bi)
+	return u, nil
+}
