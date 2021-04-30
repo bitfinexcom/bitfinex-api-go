@@ -34,23 +34,24 @@ type Client struct {
 	nonce     utils.NonceGenerator
 
 	// service providers
-	Candles     CandleService
-	Orders      OrderService
-	Positions   PositionService
-	Trades      TradeService
-	Tickers     TickerService
-	Currencies  CurrenciesService
-	Platform    PlatformService
-	Book        BookService
-	Wallet      WalletService
-	Ledgers     LedgerService
-	Stats       StatsService
-	Status      StatusService
-	Derivatives DerivativesService
-	Funding     FundingService
-	Pulse       PulseService
-	Invoice     InvoiceService
-	Market      MarketService
+	Candles        CandleService
+	Orders         OrderService
+	Positions      PositionService
+	Trades         TradeService
+	Tickers        TickerService
+	TickersHistory TickerHistoryService
+	Currencies     CurrenciesService
+	Platform       PlatformService
+	Book           BookService
+	Wallet         WalletService
+	Ledgers        LedgerService
+	Stats          StatsService
+	Status         StatusService
+	Derivatives    DerivativesService
+	Funding        FundingService
+	Pulse          PulseService
+	Invoice        InvoiceService
+	Market         MarketService
 
 	Synchronous
 }
@@ -113,6 +114,7 @@ func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.
 	c.Candles = CandleService{Synchronous: c}
 	c.Trades = TradeService{Synchronous: c, requestFactory: c}
 	c.Tickers = TickerService{Synchronous: c, requestFactory: c}
+	c.TickersHistory = TickerHistoryService{Synchronous: c, requestFactory: c}
 	c.Currencies = CurrenciesService{Synchronous: c, requestFactory: c}
 	c.Platform = PlatformService{Synchronous: c}
 	c.Positions = PositionService{Synchronous: c, requestFactory: c}
