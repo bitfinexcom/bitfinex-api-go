@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/msg"
+)
+
+const (
+	rateLimit          = 60 * 1000 / 20 // 20 connections per minute
+	pubClientSubsLimit = 30
 )
 
 // Mux will manage all connections and subscriptions. Will check if subscriptions
@@ -104,6 +110,9 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
+
+	// make sure we don't hit the rate limit
+	time.Sleep(rateLimit * time.Millisecond)
 
 	if subscribed := m.publicClients[m.cid].SubAdded(sub); subscribed {
 		return m
@@ -286,7 +295,7 @@ func (m *Mux) addPublicClient() *Mux {
 	c, err := client.
 		New().
 		WithID(m.cid).
-		WithSubsLimit(20).
+		WithSubsLimit(pubClientSubsLimit).
 		Public(m.publicURL)
 	if err != nil {
 		m.Err = err
