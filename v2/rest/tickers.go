@@ -35,7 +35,7 @@ func (s *TickerService) getTickers(symbols []string) ([]*ticker.Ticker, error) {
 }
 
 // Get - retrieves the ticker for the given symbol
-// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
+// see https://docs.bitfinex.com/reference#rest-public-tickers for more info
 func (s *TickerService) Get(symbol string) (*ticker.Ticker, error) {
 	t, err := s.getTickers([]string{symbol})
 	if err != nil {
@@ -46,13 +46,13 @@ func (s *TickerService) Get(symbol string) (*ticker.Ticker, error) {
 }
 
 // GetMulti - retrieves the tickers for the given symbols
-// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
+// see https://docs.bitfinex.com/reference#rest-public-tickers for more info
 func (s *TickerService) GetMulti(symbols []string) ([]*ticker.Ticker, error) {
 	return s.getTickers(symbols)
 }
 
 // All - retrieves all tickers for all symbols
-// see https://docs.bitfinex.com/reference#rest-public-ticker for more info
+// see https://docs.bitfinex.com/reference#rest-public-tickers for more info
 func (s *TickerService) All() ([]*ticker.Ticker, error) {
 	return s.getTickers([]string{"ALL"})
 }

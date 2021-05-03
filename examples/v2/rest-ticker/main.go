@@ -10,30 +10,30 @@ import (
 func main() {
 	c := rest.NewClient()
 
-	get(c)
+	getSingle(c)
 	getMulti(c)
 	all(c)
 }
 
-func get(c *rest.Client) {
+func getSingle(c *rest.Client) {
 	t, err := c.Tickers.Get("tBTCUSD")
 
 	if err != nil {
-		log.Fatalf("get: %s", err)
+		log.Fatalf("getSingle: %s", err)
 	}
 
-	spew.Dump(t)
+	spew.Dump("getSingle:> ", t)
 }
 
 func getMulti(c *rest.Client) {
-	symbols := []string{"tBTCUSD", "tEOSBTC"}
+	symbols := []string{"tBTCUSD", "fUSD"}
 	tm, err := c.Tickers.GetMulti(symbols)
 
 	if err != nil {
 		log.Fatalf("getMulti: %s", err)
 	}
 
-	spew.Dump(tm)
+	spew.Dump("getMulti:> ", tm)
 }
 
 func all(c *rest.Client) {
@@ -43,5 +43,5 @@ func all(c *rest.Client) {
 		log.Fatalf("all: %s", err)
 	}
 
-	spew.Dump(t)
+	spew.Dump("all:> ", t)
 }
