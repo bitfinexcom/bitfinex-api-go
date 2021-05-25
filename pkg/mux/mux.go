@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/event"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/mux/client"
@@ -33,7 +34,14 @@ type Mux struct {
 	publicURL     string
 	authURL       string
 	online        bool
+	subsRateLimit int
 }
+
+// api rate limit is 20 calls per minute. 1x3s, 20x1min
+const (
+	rateLimitDuration  = 3 * time.Second
+	rateLimitQueueSize = 20
+)
 
 // New returns pointer to instance of mux
 func New() *Mux {
@@ -96,20 +104,26 @@ func (m *Mux) Close() bool {
 }
 
 // Subscribe - given the details in form of event.Subscribe,
-// subscribes client to public channels
+// queues the subscriptions for eventual submission
 func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 	if m.Err != nil {
 		return m
 	}
 
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+	// if limit is reached, wait 1 second and recuresively
+	// call Subscribe again with same subscription details
+	if m.subsRateLimit == rateLimitQueueSize {
+		time.Sleep(1 * time.Second)
+		return m.Subscribe(sub)
+	}
 
-	if subscribed := m.publicClients[m.cid].SubAdded(sub); subscribed {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+	if m.publicClients[m.cid].SubAdded(sub) {
 		return m
 	}
 
-	if m.Err = m.publicClients[m.cid].Subscribe(sub); m.Err != nil {
+	if err := m.publicClients[m.cid].Subscribe(sub); err != nil {
 		return m
 	}
 
@@ -117,6 +131,8 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 		log.Printf("subs limit is reached on cid: %d, spawning new conn\n", m.cid)
 		m.addPublicClient()
 	}
+
+	m.subsRateLimit++
 	return m
 }
 
@@ -126,6 +142,7 @@ func (m *Mux) Start() *Mux {
 		m.addPrivateClient()
 	}
 
+	m.watchRateLimit()
 	return m.addPublicClient()
 }
 
@@ -138,7 +155,6 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 	}
 
 	m.online = true
-
 	for {
 		select {
 		case ms, ok := <-m.publicChan:
@@ -286,7 +302,7 @@ func (m *Mux) addPublicClient() *Mux {
 	c, err := client.
 		New().
 		WithID(m.cid).
-		WithSubsLimit(20).
+		WithSubsLimit(30).
 		Public(m.publicURL)
 	if err != nil {
 		m.Err = err
@@ -310,4 +326,18 @@ func (m *Mux) addPrivateClient() *Mux {
 	m.privateClient = c
 	go c.Read(m.privateChan)
 	return m
+}
+
+// watchRateLimit will run once every rateLimitDuration
+// and free up the queue
+func (m *Mux) watchRateLimit() {
+	go func() {
+		for {
+			if m.subsRateLimit > 0 {
+				m.subsRateLimit--
+			}
+
+			time.Sleep(rateLimitDuration)
+		}
+	}()
 }
