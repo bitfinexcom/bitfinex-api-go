@@ -103,8 +103,8 @@ func (m *Mux) Close() bool {
 	return true
 }
 
-// Subscribe - given the details in form of event.Subscribe,
-// queues the subscriptions for eventual submission
+// Subscribe - given the details in form of event.Subscribe, subscribes client to public
+// channels. If rate limit is reached, calls itself recursively after 1s with same params
 func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 	if m.Err != nil {
 		return m
@@ -123,7 +123,7 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 		return m
 	}
 
-	if err := m.publicClients[m.cid].Subscribe(sub); err != nil {
+	if m.Err = m.publicClients[m.cid].Subscribe(sub); m.Err != nil {
 		return m
 	}
 
