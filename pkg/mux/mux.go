@@ -76,7 +76,7 @@ func (m *Mux) WithDeadManSwitch() *Mux {
 	return m
 }
 
-// WithAPISEC accepts and persists api sec
+// WithAPISEC accepts and persists api secret
 func (m *Mux) WithAPISEC(sec string) *Mux {
 	m.apisec = sec
 	return m
@@ -143,7 +143,8 @@ func (m *Mux) Start() *Mux {
 	}
 
 	m.watchRateLimit()
-	return m.addPublicClient()
+	m.addPublicClient()
+	return m
 }
 
 // Listen accepts a callback func that will get called each time mux
@@ -159,7 +160,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 		select {
 		case ms, ok := <-m.publicChan:
 			if !ok {
-				return errors.New("channel has closed unexpectedly")
+				return errors.New("public channel has closed unexpectedly")
 			}
 			if ms.Err != nil {
 				cb(nil, fmt.Errorf("conn:%d has failed | err:%s | reconnecting", ms.CID, ms.Err))
@@ -195,7 +196,7 @@ func (m *Mux) Listen(cb func(interface{}, error)) error {
 			cb(nil, fmt.Errorf("unrecognized msg signature: %s", ms.Data))
 		case ms, ok := <-m.privateChan:
 			if !ok {
-				return errors.New("channel has closed unexpectedly")
+				return errors.New("private channel has closed unexpectedly")
 			}
 			if ms.Err != nil {
 				cb(nil, fmt.Errorf("err: %s | reconnecting", ms.Err))
