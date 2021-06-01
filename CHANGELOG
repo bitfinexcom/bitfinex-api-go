@@ -1,3 +1,6 @@
+3.0.5
+- Adds rate limit to avoid 429 HTTP status codes
+
 3.0.4
 - Adds new rest v2 functions
     - tickers/hist
