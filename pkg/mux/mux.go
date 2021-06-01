@@ -17,30 +17,30 @@ import (
 // to all incomming client messages and reconnect client with all its subscriptions
 // in case of a failure
 type Mux struct {
-	cid           int
-	dms           int
-	publicChan    chan msg.Msg
-	publicClients map[int]*client.Client
-	privateChan   chan msg.Msg
-	closeChan     chan bool
-	privateClient *client.Client
-	mtx           *sync.RWMutex
-	Err           error
-	transform     bool
-	apikey        string
-	apisec        string
-	subInfo       map[int64]event.Info
-	authenticated bool
-	publicURL     string
-	authURL       string
-	online        bool
-	subsRateLimit int
+	cid                int
+	dms                int
+	publicChan         chan msg.Msg
+	publicClients      map[int]*client.Client
+	privateChan        chan msg.Msg
+	closeChan          chan bool
+	privateClient      *client.Client
+	mtx                *sync.RWMutex
+	Err                error
+	transform          bool
+	apikey             string
+	apisec             string
+	subInfo            map[int64]event.Info
+	authenticated      bool
+	publicURL          string
+	authURL            string
+	online             bool
+	rateLimitQueueSize int
 }
 
 // api rate limit is 20 calls per minute. 1x3s, 20x1min
 const (
-	rateLimitDuration  = 3 * time.Second
-	rateLimitQueueSize = 20
+	rateLimitDuration     = 3 * time.Second
+	maxRateLimitQueueSize = 20
 )
 
 // New returns pointer to instance of mux
@@ -112,7 +112,7 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 
 	// if limit is reached, wait 1 second and recuresively
 	// call Subscribe again with same subscription details
-	if m.subsRateLimit == rateLimitQueueSize {
+	if m.rateLimitQueueSize == maxRateLimitQueueSize {
 		time.Sleep(1 * time.Second)
 		return m.Subscribe(sub)
 	}
@@ -132,7 +132,7 @@ func (m *Mux) Subscribe(sub event.Subscribe) *Mux {
 		m.addPublicClient()
 	}
 
-	m.subsRateLimit++
+	m.rateLimitQueueSize++
 	return m
 }
 
@@ -334,8 +334,8 @@ func (m *Mux) addPrivateClient() *Mux {
 func (m *Mux) watchRateLimit() {
 	go func() {
 		for {
-			if m.subsRateLimit > 0 {
-				m.subsRateLimit--
+			if m.rateLimitQueueSize > 0 {
+				m.rateLimitQueueSize--
 			}
 
 			time.Sleep(rateLimitDuration)
