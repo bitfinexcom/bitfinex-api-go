@@ -5,11 +5,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/op/go-logging"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/op/go-logging"
 
 	"github.com/gorilla/websocket"
 )
@@ -17,9 +18,11 @@ import (
 // size of channel that the websocket writer
 // routine pulls from
 const WS_WRITE_CAPACITY = 5000
+
 // size of channel that the websocket reader
 // routine pushes websocket updates into
 const WS_READ_CAPACITY = 10
+
 // seconds to wait in between re-sending
 // the keep alive ping
 const KEEP_ALIVE_TIMEOUT = 10
@@ -107,16 +110,18 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	}
 
 	select {
-	case <- ctx.Done():
-		return ctx.Err()
-	case <- w.kill: // ws closed
+	case <-w.kill: // ws closed
 		return fmt.Errorf("websocket connection closed")
 	default:
 	}
-	w.log.Debug("ws->srv: %s", string(bs))
 	// push request into writer channel
-	w.writeChan <- bs
-	return nil
+	w.log.Debug("ws->srv: %s", string(bs))
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case w.writeChan <- bs:
+		return nil
+	}
 }
 
 func (w *ws) Done() <-chan error {
