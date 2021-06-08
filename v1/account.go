@@ -73,10 +73,10 @@ type SummaryProfit struct {
 	Volume   string `json:"amount"`
 }
 type Summary struct {
-	TradeVolume   SummaryVolume `json:"trade_vol_30d"`
-	FundingProfit SummaryProfit `json:"funding_profit_30d"`
-	MakerFee      string        `json:"maker_fee"`
-	TakerFee      string        `json:"taker_fee"`
+	TradeVolume   []SummaryVolume `json:"trade_vol_30d"`
+	FundingProfit []SummaryProfit `json:"funding_profit_30d"`
+	MakerFee      float64         `json:"maker_fee"`
+	TakerFee      float64         `json:"taker_fee"`
 }
 
 func (a *AccountService) Summary() (Summary, error) {
