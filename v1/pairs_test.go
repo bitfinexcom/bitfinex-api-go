@@ -8,7 +8,7 @@ import (
 )
 
 func TestPairsGetAll(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `["btcusd","ltcusd","ltcbtc","ethusd","ethbtc"]`
 		resp := http.Response{
 			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
@@ -37,7 +37,7 @@ func TestPairsGetAll(t *testing.T) {
 }
 
 func TestPairsAllDetailed(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
             "pair":"btcusd",
             "price_precision":5,

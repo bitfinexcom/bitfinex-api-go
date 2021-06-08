@@ -9,7 +9,7 @@ import (
 )
 
 func TestTradesServiceGet(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
            "timestamp":1444266681,
            "tid":11988919,
