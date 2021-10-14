@@ -52,6 +52,7 @@ type Client struct {
 	History        *HistoryService
 	WebSocket      *WebSocketService
 	Wallet         *WalletService
+	Symbols        *SymbolsService
 	SymbolsDetails *SymbolsDetailsService
 }
 
@@ -77,6 +78,7 @@ func NewClient() *Client {
 	c.Trades = &TradesService{client: c}
 	c.Positions = &PositionsService{client: c}
 	c.Wallet = &WalletService{client: c}
+	c.Symbols = &SymbolsService{client: c}
 	c.SymbolsDetails = &SymbolsDetailsService{client: c}
 	c.WebSocket = NewWebSocketService(c)
 	c.WebSocketTLSSkipVerify = false
