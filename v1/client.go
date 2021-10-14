@@ -34,24 +34,25 @@ type Client struct {
 	APISecret string
 
 	// Services
-	Pairs         *PairsService
-	Stats         *StatsService
-	Ticker        *TickerService
-	Account       *AccountService
-	Balances      *BalancesService
-	Offers        *OffersService
-	Credits       *CreditsService
-	Deposit       *DepositService
-	Lendbook      *LendbookService
-	MarginInfo    *MarginInfoService
-	MarginFunding *MarginFundingService
-	OrderBook     *OrderBookService
-	Orders        *OrderService
-	Trades        *TradesService
-	Positions     *PositionsService
-	History       *HistoryService
-	WebSocket     *WebSocketService
-	Wallet        *WalletService
+	Pairs          *PairsService
+	Stats          *StatsService
+	Ticker         *TickerService
+	Account        *AccountService
+	Balances       *BalancesService
+	Offers         *OffersService
+	Credits        *CreditsService
+	Deposit        *DepositService
+	Lendbook       *LendbookService
+	MarginInfo     *MarginInfoService
+	MarginFunding  *MarginFundingService
+	OrderBook      *OrderBookService
+	Orders         *OrderService
+	Trades         *TradesService
+	Positions      *PositionsService
+	History        *HistoryService
+	WebSocket      *WebSocketService
+	Wallet         *WalletService
+	SymbolsDetails *SymbolsDetailsService
 }
 
 // NewClient creates new Bitfinex.com API client.
@@ -76,6 +77,7 @@ func NewClient() *Client {
 	c.Trades = &TradesService{client: c}
 	c.Positions = &PositionsService{client: c}
 	c.Wallet = &WalletService{client: c}
+	c.SymbolsDetails = &SymbolsDetailsService{client: c}
 	c.WebSocket = NewWebSocketService(c)
 	c.WebSocketTLSSkipVerify = false
 
