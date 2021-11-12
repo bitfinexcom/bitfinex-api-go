@@ -22,7 +22,7 @@ import (
 )
 
 type Heartbeat struct {
-	//ChannelIDs []int64
+	// ChannelIDs []int64
 }
 
 func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
@@ -165,7 +165,13 @@ func (c *Client) handlePrivateChannel(raw []interface{}) error {
 		// authenticated snapshots?
 		if len(raw) > 2 {
 			if arr, ok := raw[2].([]interface{}); ok {
-				obj, err := c.handlePrivateDataMessage(raw[1].(string), arr)
+				term, ok := raw[1].(string)
+				if !ok {
+					c.log.Warningf("extract term err, raw: %v", raw)
+					return nil
+				}
+
+				obj, err := c.handlePrivateDataMessage(term, arr)
 				if err != nil {
 					return err
 				}
@@ -425,7 +431,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		flc := fundingloan.Cancel(*o)
 		return &flc
-	//case "uac":
+	// case "uac":
 	case "hb":
 		return &Heartbeat{}
 	case "ats":
