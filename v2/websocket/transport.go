@@ -5,11 +5,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/op/go-logging"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/op/go-logging"
 
 	"github.com/gorilla/websocket"
 )
@@ -17,9 +18,11 @@ import (
 // size of channel that the websocket writer
 // routine pulls from
 const WS_WRITE_CAPACITY = 5000
+
 // size of channel that the websocket reader
 // routine pushes websocket updates into
 const WS_READ_CAPACITY = 10
+
 // seconds to wait in between re-sending
 // the keep alive ping
 const KEEP_ALIVE_TIMEOUT = 10
@@ -50,7 +53,7 @@ type ws struct {
 	writeChan     chan []byte
 
 	kill chan interface{} // signal to routines to kill
-	quit chan error    	  // signal to parent with error, if applicable
+	quit chan error       // signal to parent with error, if applicable
 }
 
 func (w *ws) Connect() error {
@@ -58,10 +61,10 @@ func (w *ws) Connect() error {
 		return nil // no op
 	}
 	var d = websocket.Dialer{
-		Subprotocols:    []string{"p1", "p2"},
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		Proxy:           http.ProxyFromEnvironment,
+		Subprotocols:     []string{"p1", "p2"},
+		ReadBufferSize:   1024,
+		WriteBufferSize:  1024,
+		Proxy:            http.ProxyFromEnvironment,
 		HandshakeTimeout: time.Second * 10,
 	}
 
@@ -107,9 +110,9 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	}
 
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		return ctx.Err()
-	case <- w.kill: // ws closed
+	case <-w.kill: // ws closed
 		return fmt.Errorf("websocket connection closed")
 	default:
 	}
@@ -126,10 +129,14 @@ func (w *ws) Done() <-chan error {
 // listen for write requests and perform them
 func (w *ws) listenWriteChannel() {
 	for {
+		if w.ws == nil {
+			return
+		}
+
 		select {
 		case <-w.kill: // ws closed
 			return
-		case message := <- w.writeChan:
+		case message := <-w.writeChan:
 			wsWriter, err := w.ws.NextWriter(websocket.TextMessage)
 			if err != nil {
 				w.log.Error("Unable to provision ws connection writer: ", err)
