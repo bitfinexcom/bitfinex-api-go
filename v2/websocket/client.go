@@ -3,6 +3,9 @@ package websocket
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"sync"
@@ -14,10 +17,6 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
-
-	"crypto/hmac"
-	"crypto/sha512"
-	"encoding/hex"
 )
 
 var productionBaseURL = "wss://api-pub.bitfinex.com/ws/2"
@@ -357,7 +356,7 @@ func (c *Client) reconnect(socket *Socket, err error) error {
 func (c *Client) dumpParams() {
 	c.log.Debug("----Bitfinex Client Parameters----")
 	c.log.Debugf("AutoReconnect=%t", c.parameters.AutoReconnect)
-	c.log.Debugf("CapacityPerConnection=%t", c.parameters.CapacityPerConnection)
+	c.log.Debugf("CapacityPerConnection=%v", c.parameters.CapacityPerConnection)
 	c.log.Debugf("ReconnectInterval=%s", c.parameters.ReconnectInterval)
 	c.log.Debugf("ReconnectAttempts=%d", c.parameters.ReconnectAttempts)
 	c.log.Debugf("ShutdownTimeout=%s", c.parameters.ShutdownTimeout)
