@@ -44,6 +44,13 @@ func (ob *Orderbook) Bids() []book.Book {
 	return ob.copySide(ob.bids)
 }
 
+func (ob *Orderbook) BidsAndAsks() ([]book.Book, []book.Book) {
+	ob.lock.RLock()
+	defer ob.lock.RUnlock()
+
+	return ob.copySide(ob.bids), ob.copySide(ob.asks)
+}
+
 func (ob *Orderbook) SetWithSnapshot(bs *book.Snapshot) {
 	ob.lock.Lock()
 	defer ob.lock.Unlock()
