@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"fmt"
 	"hash/crc32"
 	"sort"
 	"strings"
@@ -96,6 +97,14 @@ func (ob *Orderbook) UpdateWith(b *book.Book) {
 			*side = append((*side)[:index], (*side)[index+1:]...)
 		}
 	}
+
+	// price may not match at previous step
+	if b.Count <= 0 {
+		fmt.Printf("bitfinex matched price level %v not found at local cache, id: %v, symbol: %v",
+			b.Price, b.ID, b.Symbol)
+		return
+	}
+
 	*side = append(*side, b)
 	// add to the orderbook and sort lowest to highest
 	sort.Slice(*side, func(i, j int) bool {
