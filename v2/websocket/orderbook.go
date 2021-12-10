@@ -100,7 +100,7 @@ func (ob *Orderbook) UpdateWith(b *book.Book) {
 
 	// price may not match at previous step
 	if b.Count <= 0 {
-		fmt.Printf("bitfinex matched price level %v not found at local cache, id: %v, symbol: %v",
+		fmt.Printf("bitfinex matched price level %v not found at local cache, id: %v, symbol: %v.\n",
 			b.Price, b.ID, b.Symbol)
 		return
 	}

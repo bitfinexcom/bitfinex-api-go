@@ -92,23 +92,14 @@ func (c *Client) handleChecksumChannel(sub *subscription, checksum int) error {
 		if bChecksum == oChecksum {
 			c.log.Debugf("Orderbook '%s' checksum verification successful.", symbol)
 		} else {
-			c.log.Warningf("Orderbook '%s' checksum is invalid got %d bot got %d. Data Out of sync, reconnecting.",
+			c.log.Warningf("Orderbook '%s' checksum is invalid, want %d, but got %d. Data Out of sync, resubscribing.",
 				symbol, bChecksum, oChecksum)
 			err := c.sendUnsubscribeMessage(context.Background(), sub)
 			if err != nil {
 				return err
 			}
-			newSub := &SubscriptionRequest{
-				SubID:   c.nonce.GetNonce(), // generate new subID
-				Event:   sub.Request.Event,
-				Channel: sub.Request.Channel,
-				Symbol:  sub.Request.Symbol,
-			}
-			_, err_sub := c.Subscribe(context.Background(), newSub)
-			if err_sub != nil {
-				c.log.Warningf("could not resubscribe: %s", err_sub.Error())
-				return err_sub
-			}
+
+			// NOTE: do not resubscribe here, since we need to wait unsubscribe success first to avoid dup err("msg":"subscribe: dup","code":10301)
 		}
 	}
 	return nil
