@@ -50,6 +50,11 @@ func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
 		return err
 	}
 	c.subscriptions.heartbeat(chanID)
+
+	if sub.Pending() {
+		return fmt.Errorf("subscription is pending, may be unsubscribed by invalid checksum, channel id: %v, sub p: %p, sub: %+v", chanID, sub, sub)
+	}
+
 	if sub.Public {
 		switch data := raw[1].(type) {
 		case string:
@@ -90,10 +95,13 @@ func (c *Client) handleChecksumChannel(sub *subscription, checksum int) error {
 		oChecksum := orderbook.Checksum()
 		// compare bitfinex checksum with local checksum
 		if bChecksum == oChecksum {
-			c.log.Debugf("Orderbook '%s' checksum verification successful.", symbol)
+			c.log.Debugf("Orderbook '%s' checksum verification successful, sub: %p.", symbol, sub)
 		} else {
-			c.log.Warningf("Orderbook '%s' checksum is invalid, want %d, but got %d. Data Out of sync, resubscribing.",
-				symbol, bChecksum, oChecksum)
+			c.log.Warningf("Orderbook '%s' checksum is invalid, sub: %p, want %d, but got %d. Data Out of sync, resubscribing.",
+				sub, symbol, bChecksum, oChecksum)
+
+			// TODO visibility of sub.pending may have issue
+			sub.pending = true
 			err := c.sendUnsubscribeMessage(context.Background(), sub)
 			if err != nil {
 				return err
