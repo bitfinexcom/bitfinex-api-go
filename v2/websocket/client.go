@@ -78,6 +78,13 @@ type Socket struct {
 	IsAuthenticated    bool
 }
 
+func (s *Socket) IsClosed() bool {
+	if v, ok := s.Asynchronous.(*ws); ok {
+		return v.IsClosed()
+	}
+	return false
+}
+
 // AsynchronousFactory provides an interface to re-create asynchronous transports during reconnect events.
 type AsynchronousFactory interface {
 	Create() Asynchronous

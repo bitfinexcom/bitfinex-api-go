@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/op/go-logging"
@@ -38,6 +39,7 @@ func newWs(baseURL string, logTransport bool, log *logging.Logger) *ws {
 		lock:         &sync.RWMutex{},
 		createTime:   time.Now(),
 		writeChan:    make(chan []byte, WS_WRITE_CAPACITY),
+		isClosed:     0,
 	}
 }
 
@@ -54,6 +56,8 @@ type ws struct {
 
 	kill chan interface{} // signal to routines to kill
 	quit chan error       // signal to parent with error, if applicable
+
+	isClosed uint32
 }
 
 func (w *ws) Connect() error {
@@ -137,20 +141,9 @@ func (w *ws) listenWriteChannel() {
 		case <-w.kill: // ws closed
 			return
 		case message := <-w.writeChan:
-			wsWriter, err := w.ws.NextWriter(websocket.TextMessage)
-			if err != nil {
-				w.log.Error("Unable to provision ws connection writer: ", err)
-				w.stop(err)
-				return
-			}
-			_, err = wsWriter.Write(message)
+			err := w.ws.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
 				w.log.Error("Unable to write to ws: ", err)
-				w.stop(err)
-				return
-			}
-			if err := wsWriter.Close(); err != nil {
-				w.log.Error("Unable to close ws connection writer: ", err)
 				w.stop(err)
 				return
 			}
@@ -170,9 +163,7 @@ func (w *ws) listenWs() {
 		default:
 			_, msg, err := w.ws.ReadMessage()
 			if err != nil {
-				if cl, ok := err.(*websocket.CloseError); ok {
-					w.log.Errorf("close error code: %d", cl.Code)
-				}
+				w.log.Errorf("ws read err: %s", err.Error())
 				// a read during normal shutdown results in an OpError: op on closed connection
 				if _, ok := err.(*net.OpError); ok {
 					// general read error on a closed network connection, OK
@@ -202,6 +193,8 @@ func (w *ws) stop(err error) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	if w.ws != nil {
+		atomic.StoreUint32(&w.isClosed, 1)
+
 		close(w.kill)
 		w.quit <- err // pass error back
 		close(w.quit) // signal to parent listeners
@@ -217,4 +210,8 @@ func (w *ws) stop(err error) {
 // Close the websocket connection
 func (w *ws) Close() {
 	w.stop(fmt.Errorf("transport connection Close called"))
+}
+
+func (w *ws) IsClosed() bool {
+	return atomic.LoadUint32(&w.isClosed) == 1
 }
