@@ -95,10 +95,10 @@ func (c *Client) handleChecksumChannel(sub *subscription, checksum int) error {
 		oChecksum := orderbook.Checksum()
 		// compare bitfinex checksum with local checksum
 		if bChecksum == oChecksum {
-			c.log.Debugf("Orderbook '%s' checksum verification successful, sub: %p.", symbol, sub)
+			c.log.Debugf("Orderbook '%s' checksum verification successful, chan_id: %v, sub: %p.", symbol, sub.ChanID, sub)
 		} else {
-			c.log.Warningf("Orderbook '%s' checksum is invalid, sub: %p, want %d, but got %d. Data Out of sync, resubscribing.",
-				sub, symbol, bChecksum, oChecksum)
+			c.log.Warningf("Orderbook '%s' checksum is invalid, sub: %p, chan_id: %v, want %d, but got %d. Data Out of sync, resubscribing.",
+				symbol, sub, sub.ChanID, bChecksum, oChecksum)
 
 			// TODO visibility of sub.pending may have issue
 			sub.pending = true
