@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
@@ -105,4 +107,30 @@ func (ws *WalletService) Withdraw(wallet, method string, amount float64, address
 		return nil, err
 	}
 	return notification.FromRaw(raw)
+}
+
+// Movements view your past deposits/withdrawals. Currency can be specified to retrieve movements specific to that currency.
+// See https://docs.bitfinex.com/reference#rest-auth-movements for more info
+func (ws *WalletService) Movements(ctx context.Context, currency string, start, end int64, limit int) (*wallet.MovementSnapshot, error) {
+	body := map[string]interface{}{}
+	if start != 0 {
+		body["start"] = start
+	}
+	if end != 0 {
+		body["end"] = end
+	}
+	if limit != 0 {
+		body["limit"] = limit
+	}
+
+	req, err := ws.requestFactory.NewAuthenticatedRequestWithData(common.PermissionRead, fmt.Sprintf("movements/%s/hist", currency), body)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := ws.Request(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return wallet.MovementSnapshotFromRaw(raw)
 }

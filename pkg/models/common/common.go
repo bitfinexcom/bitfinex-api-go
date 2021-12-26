@@ -64,6 +64,9 @@ const (
 	FrequencyTwoPerSecond BookFrequency = "F1"
 	// PriceLevelDefault provides a constant default price level for book subscriptions.
 	PriceLevelDefault int = 25
+
+	Withdraw MovementType = "WITHDRAW"
+	Deposit  MovementType = "DEPOSIT"
 )
 
 var (
@@ -95,6 +98,8 @@ type StatKey string
 type StatusType string
 
 type OrderType string
+
+type MovementType string
 
 func CandleResolutionFromString(str string) (CandleResolution, error) {
 	switch str {
