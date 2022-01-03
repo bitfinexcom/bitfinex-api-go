@@ -194,12 +194,14 @@ func (s *subscriptions) sweep(exp time.Time) {
 		return
 	}
 	disconnects := make([]HeartbeatDisconnect, 0)
-	for _, sub := range s.subsByChanID {
+	// use subsBySubID instead of subsByChanID to avoid ineffective heartbeat when re sub err on reconnect
+	// since subsByChanID is empty when subscription err
+	for _, sub := range s.subsBySubID {
 		if exp.After(sub.hbDeadline) {
 			s.hbActive = false
 			hbErr := HeartbeatDisconnect{
 				Subscription: sub,
-				Error:        fmt.Errorf("heartbeat disconnect on channel %d expired at %s (%s timeout)", sub.ChanID, sub.hbDeadline, s.hbTimeout),
+				Error:        fmt.Errorf("sub %v heartbeat disconnect on channel %d expired at %s (%s timeout)", sub.SubID(), sub.ChanID, sub.hbDeadline, s.hbTimeout),
 			}
 			disconnects = append(disconnects, hbErr)
 		}

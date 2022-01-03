@@ -58,6 +58,8 @@ type ws struct {
 	quit chan error       // signal to parent with error, if applicable
 
 	isClosed uint32
+
+	connStr string
 }
 
 func (w *ws) Connect() error {
@@ -89,6 +91,8 @@ func (w *ws) Connect() error {
 	// so we need to keep sending a message down the channel to stop
 	// tcp killing the connection
 	go w.keepAlivePinger()
+
+	w.connStr = w.getConnStr()
 	return nil
 }
 
@@ -120,7 +124,7 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 		return fmt.Errorf("websocket connection closed")
 	default:
 	}
-	w.log.Debug("ws->srv: %s", string(bs))
+	w.log.Debug("%s ws->srv: %s", w.connStr, string(bs))
 	// push request into writer channel
 	w.writeChan <- bs
 	return nil
@@ -143,7 +147,7 @@ func (w *ws) listenWriteChannel() {
 		case message := <-w.writeChan:
 			err := w.ws.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
-				w.log.Error("Unable to write to ws: ", err)
+				w.log.Error("%s Unable to write to ws: ", w.connStr, err)
 				w.stop(err)
 				return
 			}
@@ -163,7 +167,7 @@ func (w *ws) listenWs() {
 		default:
 			_, msg, err := w.ws.ReadMessage()
 			if err != nil {
-				w.log.Errorf("ws read err: %s", err.Error())
+				w.log.Errorf("%s ws read err: %s", w.connStr, err.Error())
 				// a read during normal shutdown results in an OpError: op on closed connection
 				if _, ok := err.(*net.OpError); ok {
 					// general read error on a closed network connection, OK
@@ -173,7 +177,7 @@ func (w *ws) listenWs() {
 				w.stop(err)
 				return
 			}
-			w.log.Debugf("srv->ws: %s", string(msg))
+			w.log.Debugf("%s srv->ws: %s", w.connStr, string(msg))
 			w.lock.RLock()
 			if w.downstream == nil {
 				w.lock.RUnlock()
@@ -214,4 +218,8 @@ func (w *ws) Close() {
 
 func (w *ws) IsClosed() bool {
 	return atomic.LoadUint32(&w.isClosed) == 1
+}
+
+func (w *ws) getConnStr() string {
+	return fmt.Sprintf("%s->%s", w.ws.LocalAddr().String(), w.ws.RemoteAddr().String())
 }
