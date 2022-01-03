@@ -124,7 +124,7 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 		return fmt.Errorf("websocket connection closed")
 	default:
 	}
-	w.log.Debug("%s ws->srv: %s", w.connStr, string(bs))
+	w.log.Debugf("%s ws->srv: %s", w.connStr, string(bs))
 	// push request into writer channel
 	w.writeChan <- bs
 	return nil
@@ -147,7 +147,7 @@ func (w *ws) listenWriteChannel() {
 		case message := <-w.writeChan:
 			err := w.ws.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
-				w.log.Error("%s Unable to write to ws: ", w.connStr, err)
+				w.log.Errorf("%s Unable to write to ws: ", w.connStr, err)
 				w.stop(err)
 				return
 			}
