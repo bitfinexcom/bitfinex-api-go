@@ -121,6 +121,7 @@ func (w *ws) Send(ctx context.Context, msg interface{}) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-w.kill: // ws closed
+		w.log.Debugf("%s want write to closed ws: %s", w.connStr, string(bs))
 		return fmt.Errorf("websocket connection closed")
 	default:
 	}
@@ -143,11 +144,18 @@ func (w *ws) listenWriteChannel() {
 
 		select {
 		case <-w.kill: // ws closed
+			unWriteNum := len(w.writeChan)
+			if unWriteNum > 0 {
+				for i := 0; i < unWriteNum; i++ {
+					m := <-w.writeChan
+					w.log.Errorf("%s ws killed with unwritten msg: %v", w.connStr, string(m))
+				}
+			}
 			return
 		case message := <-w.writeChan:
 			err := w.ws.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
-				w.log.Errorf("%s Unable to write to ws: ", w.connStr, err)
+				w.log.Errorf("%s Unable to write to ws: %v", w.connStr, err)
 				w.stop(err)
 				return
 			}
