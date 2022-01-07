@@ -74,9 +74,9 @@ func (s *OrderService) AllHistory() (*order.Snapshot, error) {
 
 // Retrieves all past orders with the given symbol
 // See https://docs.bitfinex.com/reference#orders-history for more info
-func (s *OrderService) GetHistoryBySymbol(symbol string) (*order.Snapshot, error) {
+func (s *OrderService) GetHistoryBySymbol(symbol string, startMs, endMs int64, limit int) (*order.Snapshot, error) {
 	// use no symbol, this will get all orders
-	return s.getHistoricalOrders(symbol, 0, 0, 0)
+	return s.getHistoricalOrders(symbol, startMs, endMs, limit)
 }
 
 // Retrieve a single order in history with the given id
