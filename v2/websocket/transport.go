@@ -144,22 +144,28 @@ func (w *ws) listenWriteChannel() {
 
 		select {
 		case <-w.kill: // ws closed
-			unWriteNum := len(w.writeChan)
-			if unWriteNum > 0 {
-				for i := 0; i < unWriteNum; i++ {
-					m := <-w.writeChan
-					w.log.Errorf("%s ws killed with unwritten msg: %v", w.connStr, string(m))
-				}
-			}
+			w.printUnWrittenMsg()
 			return
 		case message := <-w.writeChan:
 			err := w.ws.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
 				w.log.Errorf("%s Unable to write to ws: %v", w.connStr, err)
 				w.stop(err)
+				w.printUnWrittenMsg()
 				return
 			}
 		}
+	}
+}
+
+func (w *ws) printUnWrittenMsg() {
+	unWriteNum := len(w.writeChan)
+	if unWriteNum == 0 {
+		return
+	}
+	for i := 0; i < unWriteNum; i++ {
+		m := <-w.writeChan
+		w.log.Errorf("%s ws killed with %d of %d unwritten msg: %v", w.connStr, i, unWriteNum, string(m))
 	}
 }
 
