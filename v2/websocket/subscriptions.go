@@ -194,6 +194,8 @@ func (s *subscriptions) sweep(exp time.Time) {
 		return
 	}
 
+	s.log.Debugf("begin to sweep, subs len: %v", len(s.subsBySubID))
+
 	disconnects := make([]HeartbeatDisconnect, 0)
 	// use subsBySubID instead of subsByChanID to avoid ineffective heartbeat when re sub err on reconnect
 	// since subsByChanID is empty when subscription err
@@ -269,6 +271,7 @@ func (s *subscriptions) add(socketId SocketId, sub *SubscriptionRequest) *subscr
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	subscription := newSubscription(socketId, sub)
+	subscription.hbDeadline = time.Now().Add(s.hbTimeout)
 	s.subsBySubID[sub.SubID] = subscription
 	if _, ok := s.subsBySocketId[socketId]; !ok {
 		s.subsBySocketId[socketId] = make(SubscriptionSet, 0)
