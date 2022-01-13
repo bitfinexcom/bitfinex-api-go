@@ -193,12 +193,14 @@ func (s *subscriptions) sweep(exp time.Time) {
 		s.lock.RUnlock()
 		return
 	}
+
 	disconnects := make([]HeartbeatDisconnect, 0)
 	// use subsBySubID instead of subsByChanID to avoid ineffective heartbeat when re sub err on reconnect
 	// since subsByChanID is empty when subscription err
 	for _, sub := range s.subsBySubID {
 		if exp.After(sub.hbDeadline) {
-			s.hbActive = false
+			// 22-01-13, do not change hbActive to false on heartbeat timeout, so we always heartbeat after first successful conn
+			// s.hbActive = false
 			hbErr := HeartbeatDisconnect{
 				Subscription: sub,
 				Error:        fmt.Errorf("sub %v heartbeat disconnect on channel %d expired at %s (%s timeout)", sub.SubID(), sub.ChanID, sub.hbDeadline, s.hbTimeout),

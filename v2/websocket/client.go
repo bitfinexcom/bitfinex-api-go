@@ -493,24 +493,29 @@ func (c *Client) checkResubscription(socketId SocketId) {
 	if c.parameters.ManageOrderbook {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		_, err_flag := c.EnableFlag(ctx, common.Checksum)
-		if err_flag != nil {
-			c.log.Errorf("could not enable checksum flag %s ", err_flag)
+		req := &FlagRequest{
+			Event: "conf",
+			Flags: common.Checksum,
+		}
+		if err := socket.Asynchronous.Send(ctx, req); err != nil {
+			c.log.Errorf("socket(%d) could not enable checksum flag %s ", socket.Id, err)
 		}
 	}
+
 	if c.parameters.ResubscribeOnReconnect && socket.ResetSubscriptions != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
 		for _, sub := range socket.ResetSubscriptions {
 			if sub.Request.Event == "auth" {
 				continue
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			defer cancel()
 			sub.Request.SubID = c.nonce.GetNonce() // new nonce
 			c.log.Infof("socket (id=%d) resubscribing to %s with nonce %s", socket.Id, sub.Request.String(), sub.Request.SubID)
 			_, err := c.subscribeBySocket(ctx, socket, sub.Request)
 			if err != nil {
 				c.log.Errorf("could not resubscribe: %s", err.Error())
 			}
+			time.Sleep(50 * time.Millisecond)
 		}
 		socket.ResetSubscriptions = nil
 	}

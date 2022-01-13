@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -182,16 +181,11 @@ func (w *ws) listenWs() {
 			_, msg, err := w.ws.ReadMessage()
 			if err != nil {
 				w.log.Errorf("%s ws read err: %s", w.connStr, err.Error())
-				// a read during normal shutdown results in an OpError: op on closed connection
-				if _, ok := err.(*net.OpError); ok {
-					// general read error on a closed network connection, OK
-					return
-				}
-
 				w.stop(err)
 				return
 			}
 			w.log.Debugf("%s srv->ws: %s", w.connStr, string(msg))
+
 			w.lock.RLock()
 			if w.downstream == nil {
 				w.lock.RUnlock()
