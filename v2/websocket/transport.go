@@ -84,6 +84,8 @@ func (w *ws) Connect() error {
 		return err
 	}
 	w.ws = ws
+	w.connStr = w.getConnStr()
+
 	go w.listenWriteChannel()
 	go w.listenWs()
 	// Gorilla/go dont natively support keep alive pinging
@@ -91,7 +93,6 @@ func (w *ws) Connect() error {
 	// tcp killing the connection
 	go w.keepAlivePinger()
 
-	w.connStr = w.getConnStr()
 	return nil
 }
 
