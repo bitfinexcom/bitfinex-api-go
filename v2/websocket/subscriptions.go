@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/op/go-logging"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
 )
 
 type SubscriptionRequest struct {
@@ -113,7 +115,7 @@ func newSubscriptions(heartbeatTimeout time.Duration, log *logging.Logger) *subs
 		log:            log,
 		lock:           &sync.RWMutex{},
 	}
-	go subs.control()
+	utils.GoWithRecover(subs.control)
 	return subs
 }
 

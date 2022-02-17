@@ -223,7 +223,7 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 func (c *Client) Connect() error {
 	c.dumpParams()
 	c.terminal = false
-	go c.listenDisconnect()
+	utils.GoWithRecover(c.listenDisconnect)
 	return c.connectSocket(SocketId(len(c.sockets)))
 }
 
@@ -257,10 +257,12 @@ func (c *Client) Close() {
 			if socket.IsConnected {
 				wg.Add(1)
 				socket.IsConnected = false
-				go func(s *Socket) {
-					c.closeAsyncAndWait(s, c.parameters.ShutdownTimeout)
-					wg.Done()
-				}(socket)
+				utils.GoWithRecover(func() {
+					func(s *Socket) {
+						c.closeAsyncAndWait(s, c.parameters.ShutdownTimeout)
+						wg.Done()
+					}(socket)
+				})
 			}
 		}
 		wg.Wait()
@@ -292,14 +294,14 @@ func (c *Client) listenDisconnect() {
 					c.log.Infof("restarting socket (id=%d) connection", socket.Id)
 					socket.IsConnected = false
 					// reconnect to the socket
-					go func() {
+					utils.GoWithRecover(func() {
 						c.closeAsyncAndWait(socket, c.parameters.ShutdownTimeout)
 						err := c.reconnect(socket, hbErr.Error)
 						if err != nil {
 							c.log.Warningf("socket disconnect: %s", err.Error())
 							return
 						}
-					}()
+					})
 				}
 			}
 			c.mtx.Unlock()
@@ -400,7 +402,9 @@ func (c *Client) connectSocket(socketId SocketId) error {
 		return err
 	}
 	socket.IsConnected = true
-	go c.listenUpstream(socket)
+	utils.GoWithRecover(func() {
+		c.listenUpstream(socket)
+	})
 	return nil
 }
 

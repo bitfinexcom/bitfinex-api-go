@@ -13,6 +13,8 @@ import (
 	"github.com/op/go-logging"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
 )
 
 // size of channel that the websocket writer
@@ -86,12 +88,12 @@ func (w *ws) Connect() error {
 	w.ws = ws
 	w.connStr = w.getConnStr()
 
-	go w.listenWriteChannel()
-	go w.listenWs()
+	utils.GoWithRecover(w.listenWriteChannel)
+	utils.GoWithRecover(w.listenWs)
 	// Gorilla/go dont natively support keep alive pinging
 	// so we need to keep sending a message down the channel to stop
 	// tcp killing the connection
-	go w.keepAlivePinger()
+	utils.GoWithRecover(w.keepAlivePinger)
 
 	return nil
 }
@@ -137,6 +139,7 @@ func (w *ws) Done() <-chan error {
 
 // listen for write requests and perform them
 func (w *ws) listenWriteChannel() {
+
 	for {
 		if w.ws == nil {
 			return
