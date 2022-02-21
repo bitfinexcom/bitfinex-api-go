@@ -128,12 +128,22 @@ func parseExchangeMap(config map[string]Conf, raw []interface{}) {
 		if val, ok := config[base]; ok {
 			val.Pairs = append(val.Pairs, symbol)
 			config[base] = val
+		} else {
+			config[base] = Conf{
+				Currency: base,
+				Pairs:    []string{symbol},
+			}
 		}
 
 		// append if quote exists in configs
 		if val, ok := config[quote]; ok {
 			val.Pairs = append(val.Pairs, symbol)
 			config[quote] = val
+		} else {
+			config[quote] = Conf{
+				Currency: quote,
+				Pairs:    []string{symbol},
+			}
 		}
 	}
 }

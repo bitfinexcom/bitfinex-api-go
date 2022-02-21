@@ -40,7 +40,7 @@ func (cs *CurrenciesService) Conf(label, symbol, unit, explorer, pairs bool) ([]
 	}
 
 	// add mapping to raw data
-	parsedRaw := make([]currency.RawConf, len(raw))
+	parsedRaw := make([]currency.RawConf, 0, len(raw))
 	for index, d := range raw {
 		parsedRaw = append(parsedRaw, currency.RawConf{Mapping: segments[index], Data: d})
 	}
