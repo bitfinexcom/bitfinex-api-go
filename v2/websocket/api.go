@@ -28,29 +28,6 @@ func (c *Client) Send(ctx context.Context, msg interface{}) error {
 	return socket.Asynchronous.Send(ctx, msg)
 }
 
-// Submit a request to enable the given flag
-func (c *Client) EnableFlag(ctx context.Context, flag int) (string, error) {
-	req := &FlagRequest{
-		Event: "conf",
-		Flags: flag,
-	}
-	// TODO enable flag on reconnect?
-	// create sublist to stop concurrent map read
-	socks := make([]*Socket, len(c.sockets))
-	c.mtx.RLock()
-	for i, socket := range c.sockets {
-		socks[i] = socket
-	}
-	c.mtx.RUnlock()
-	for _, socket := range socks {
-		err := socket.Asynchronous.Send(ctx, req)
-		if err != nil {
-			return "", err
-		}
-	}
-	return "", nil
-}
-
 // Gen the count of currently active websocket connections
 func (c *Client) ConnectionCount() int {
 	c.mtx.RLock()

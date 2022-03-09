@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/convert"
+	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 )
 
 type Wallet struct {
@@ -77,5 +78,114 @@ func SnapshotFromRaw(raw []interface{}) (s *Snapshot, err error) {
 	}
 	s = &Snapshot{Snapshot: ws}
 
+	return
+}
+
+type Movement struct {
+	ID int64
+	common.MovementType
+	Currency                string
+	CurrencyName            string
+	StartedAt               int64
+	LastUpdatedAt           int64
+	Status                  string
+	Amount                  float64
+	Fee                     float64
+	DestinationAddress      string
+	AddrTag                 string
+	TransactionId           string
+	WithdrawTransactionNote string
+}
+
+type MovementSnapshot struct {
+	Snapshot []*Movement
+}
+
+// MovementFromRaw ...
+// [
+//    ID,
+//    CURRENCY,
+//    CURRENCY_NAME,
+//    null,
+//    null,
+//    MTS_STARTED,
+//    MTS_UPDATED,
+//    null,
+//    null,
+//    STATUS,
+//    null,
+//    null,
+//    AMOUNT,
+//    FEES,
+//    null,
+//    null,
+//    DESTINATION_ADDRESS,
+//    null,
+//    null,
+//    null,
+//    TRANSACTION_ID,
+//    WITHDRAW_TRANSACTION_NOTE
+//  ]
+//
+func MovementFromRaw(raw []interface{}) (w *Movement, err error) {
+	defer func() {
+		if err1 := recover(); err1 != nil {
+			err = fmt.Errorf("parse movement err: %v", err1)
+		}
+	}()
+
+	if len(raw) < 22 {
+		err = fmt.Errorf("data slice too short for movement: %#v", raw)
+		return
+	}
+
+	w = &Movement{
+		ID:                      convert.I64ValOrZero(raw[0]),
+		Currency:                convert.SValOrEmpty(raw[1]),
+		CurrencyName:            convert.SValOrEmpty(raw[2]),
+		StartedAt:               convert.I64ValOrZero(raw[5]),
+		LastUpdatedAt:           convert.I64ValOrZero(raw[6]),
+		Status:                  convert.SValOrEmpty(raw[9]),
+		Fee:                     -convert.F64ValOrZero(raw[13]),
+		DestinationAddress:      convert.SValOrEmpty(raw[16]),
+		AddrTag:                 convert.SValOrEmpty(raw[17]),
+		TransactionId:           convert.SValOrEmpty(raw[20]),
+		WithdrawTransactionNote: convert.SValOrEmpty(raw[21]),
+	}
+
+	amount := convert.F64ValOrZero(raw[12])
+	if amount > 0 {
+		w.MovementType = common.Deposit
+		w.Amount = amount
+	} else {
+		w.MovementType = common.Withdraw
+		w.Amount = -amount
+	}
+
+	return
+}
+
+func MovementSnapshotFromRaw(raw []interface{}) (s *MovementSnapshot, err error) {
+	if len(raw) == 0 {
+		return s, fmt.Errorf("data slice too short for movements: %#v", raw)
+	}
+
+	movements := make([]*Movement, 0)
+	switch raw[0].(type) {
+	case []interface{}:
+		for _, v := range raw {
+			if l, ok := v.([]interface{}); ok {
+				w, err := MovementFromRaw(l)
+				if err != nil {
+					return s, err
+				}
+				movements = append(movements, w)
+			}
+		}
+	default:
+		return s, fmt.Errorf("not an movements snapshot")
+	}
+
+	s = &MovementSnapshot{Snapshot: movements}
 	return
 }

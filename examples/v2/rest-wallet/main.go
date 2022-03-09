@@ -4,8 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 	"github.com/davecgh/go-spew/spew"
+
+	"github.com/bitfinexcom/bitfinex-api-go/v2/rest"
 )
 
 // Set BFX_API_KEY and BFX_API_SECRET as :
@@ -65,7 +66,7 @@ func createDepositAddress(c *rest.Client) {
 }
 
 func withdraw(c *rest.Client) {
-	notfication, err := c.Wallet.Withdraw("exchange", "ethereum", 0.1, "0x5B4Dbe55dE0B565db6C63405D942886140083cE8")
+	notfication, err := c.Wallet.Withdraw("exchange", "ethereum", 0.1, "0x5B4Dbe55dE0B565db6C63405D942886140083cE8", "")
 	if err != nil {
 		log.Fatalf("withdraw %s", err)
 	}

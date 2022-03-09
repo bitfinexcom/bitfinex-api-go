@@ -22,7 +22,7 @@ import (
 )
 
 type Heartbeat struct {
-	//ChannelIDs []int64
+	// ChannelIDs []int64
 }
 
 func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
@@ -50,6 +50,11 @@ func (c *Client) handleChannel(socketId SocketId, msg []byte) error {
 		return err
 	}
 	c.subscriptions.heartbeat(chanID)
+
+	if sub.Pending() {
+		return fmt.Errorf("subscription is pending, may be unsubscribed by invalid checksum, channel id: %v, sub p: %p, sub: %+v", chanID, sub, sub)
+	}
+
 	if sub.Public {
 		switch data := raw[1].(type) {
 		case string:
@@ -90,25 +95,23 @@ func (c *Client) handleChecksumChannel(sub *subscription, checksum int) error {
 		oChecksum := orderbook.Checksum()
 		// compare bitfinex checksum with local checksum
 		if bChecksum == oChecksum {
-			c.log.Debugf("Orderbook '%s' checksum verification successful.", symbol)
+			c.log.Debugf("Orderbook '%s' checksum verification successful, chan_id: %v, sub: %p.", symbol, sub.ChanID, sub)
+			bids, asks := orderbook.BidsAndAsks()
+			if len(bids) > 0 && len(asks) > 0 && bids[0].Price >= asks[0].Price {
+				c.log.Errorf("Orderbook '%s' checksum verification successful with dirty data, chan_id: %v, sub: %p.", symbol, sub.ChanID, sub)
+			}
 		} else {
-			c.log.Warningf("Orderbook '%s' checksum is invalid got %d bot got %d. Data Out of sync, reconnecting.",
-				symbol, bChecksum, oChecksum)
+			c.log.Warningf("Orderbook '%s' checksum is invalid, sub: %p, chan_id: %v, want %d, but got %d. Data Out of sync, resubscribing.",
+				symbol, sub, sub.ChanID, bChecksum, oChecksum)
+
+			// TODO visibility of sub.pending may have issue
+			sub.pending = true
 			err := c.sendUnsubscribeMessage(context.Background(), sub)
 			if err != nil {
 				return err
 			}
-			newSub := &SubscriptionRequest{
-				SubID:   c.nonce.GetNonce(), // generate new subID
-				Event:   sub.Request.Event,
-				Channel: sub.Request.Channel,
-				Symbol:  sub.Request.Symbol,
-			}
-			_, err_sub := c.Subscribe(context.Background(), newSub)
-			if err_sub != nil {
-				c.log.Warningf("could not resubscribe: %s", err_sub.Error())
-				return err_sub
-			}
+
+			// NOTE: do not resubscribe here, since we need to wait unsubscribe success first to avoid dup err("msg":"subscribe: dup","code":10301)
 		}
 	}
 	return nil
@@ -165,7 +168,13 @@ func (c *Client) handlePrivateChannel(raw []interface{}) error {
 		// authenticated snapshots?
 		if len(raw) > 2 {
 			if arr, ok := raw[2].([]interface{}); ok {
-				obj, err := c.handlePrivateDataMessage(raw[1].(string), arr)
+				term, ok := raw[1].(string)
+				if !ok {
+					c.log.Warningf("extract term err, raw: %v", raw)
+					return nil
+				}
+
+				obj, err := c.handlePrivateDataMessage(term, arr)
 				if err != nil {
 					return err
 				}
@@ -425,7 +434,7 @@ func (c *Client) convertRaw(term string, raw []interface{}) interface{} {
 		}
 		flc := fundingloan.Cancel(*o)
 		return &flc
-	//case "uac":
+	// case "uac":
 	case "hb":
 		return &Heartbeat{}
 	case "ats":

@@ -3,6 +3,9 @@ package websocket
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"sync"
@@ -14,10 +17,6 @@ import (
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/models/common"
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
-
-	"crypto/hmac"
-	"crypto/sha512"
-	"encoding/hex"
 )
 
 var productionBaseURL = "wss://api-pub.bitfinex.com/ws/2"
@@ -77,6 +76,13 @@ type Socket struct {
 	IsConnected        bool
 	ResetSubscriptions []*subscription
 	IsAuthenticated    bool
+}
+
+func (s *Socket) IsClosed() bool {
+	if v, ok := s.Asynchronous.(*ws); ok {
+		return v.IsClosed()
+	}
+	return false
 }
 
 // AsynchronousFactory provides an interface to re-create asynchronous transports during reconnect events.
@@ -217,7 +223,7 @@ func NewWithParamsAsyncFactoryNonce(params *Parameters, async AsynchronousFactor
 func (c *Client) Connect() error {
 	c.dumpParams()
 	c.terminal = false
-	go c.listenDisconnect()
+	utils.GoWithRecover(c.listenDisconnect)
 	return c.connectSocket(SocketId(len(c.sockets)))
 }
 
@@ -251,10 +257,12 @@ func (c *Client) Close() {
 			if socket.IsConnected {
 				wg.Add(1)
 				socket.IsConnected = false
-				go func(s *Socket) {
-					c.closeAsyncAndWait(s, c.parameters.ShutdownTimeout)
-					wg.Done()
-				}(socket)
+				utils.GoWithRecover(func() {
+					func(s *Socket) {
+						c.closeAsyncAndWait(s, c.parameters.ShutdownTimeout)
+						wg.Done()
+					}(socket)
+				})
 			}
 		}
 		wg.Wait()
@@ -286,14 +294,14 @@ func (c *Client) listenDisconnect() {
 					c.log.Infof("restarting socket (id=%d) connection", socket.Id)
 					socket.IsConnected = false
 					// reconnect to the socket
-					go func() {
+					utils.GoWithRecover(func() {
 						c.closeAsyncAndWait(socket, c.parameters.ShutdownTimeout)
 						err := c.reconnect(socket, hbErr.Error)
 						if err != nil {
 							c.log.Warningf("socket disconnect: %s", err.Error())
 							return
 						}
-					}()
+					})
 				}
 			}
 			c.mtx.Unlock()
@@ -357,7 +365,7 @@ func (c *Client) reconnect(socket *Socket, err error) error {
 func (c *Client) dumpParams() {
 	c.log.Debug("----Bitfinex Client Parameters----")
 	c.log.Debugf("AutoReconnect=%t", c.parameters.AutoReconnect)
-	c.log.Debugf("CapacityPerConnection=%t", c.parameters.CapacityPerConnection)
+	c.log.Debugf("CapacityPerConnection=%v", c.parameters.CapacityPerConnection)
 	c.log.Debugf("ReconnectInterval=%s", c.parameters.ReconnectInterval)
 	c.log.Debugf("ReconnectAttempts=%d", c.parameters.ReconnectAttempts)
 	c.log.Debugf("ShutdownTimeout=%s", c.parameters.ShutdownTimeout)
@@ -365,6 +373,7 @@ func (c *Client) dumpParams() {
 	c.log.Debugf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
 	c.log.Debugf("URL=%s", c.parameters.URL)
 	c.log.Debugf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
+	c.log.Debugf("ChannelFilter=%t", c.parameters.ChannelFilter)
 }
 
 func (c *Client) connectSocket(socketId SocketId) error {
@@ -394,7 +403,9 @@ func (c *Client) connectSocket(socketId SocketId) error {
 		return err
 	}
 	socket.IsConnected = true
-	go c.listenUpstream(socket)
+	utils.GoWithRecover(func() {
+		c.listenUpstream(socket)
+	})
 	return nil
 }
 
@@ -487,24 +498,29 @@ func (c *Client) checkResubscription(socketId SocketId) {
 	if c.parameters.ManageOrderbook {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
-		_, err_flag := c.EnableFlag(ctx, common.Checksum)
-		if err_flag != nil {
-			c.log.Errorf("could not enable checksum flag %s ", err_flag)
+		req := &FlagRequest{
+			Event: "conf",
+			Flags: common.Checksum,
+		}
+		if err := socket.Asynchronous.Send(ctx, req); err != nil {
+			c.log.Errorf("socket(%d) could not enable checksum flag %s ", socket.Id, err)
 		}
 	}
+
 	if c.parameters.ResubscribeOnReconnect && socket.ResetSubscriptions != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
 		for _, sub := range socket.ResetSubscriptions {
 			if sub.Request.Event == "auth" {
 				continue
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			defer cancel()
 			sub.Request.SubID = c.nonce.GetNonce() // new nonce
 			c.log.Infof("socket (id=%d) resubscribing to %s with nonce %s", socket.Id, sub.Request.String(), sub.Request.SubID)
 			_, err := c.subscribeBySocket(ctx, socket, sub.Request)
 			if err != nil {
 				c.log.Errorf("could not resubscribe: %s", err.Error())
 			}
+			time.Sleep(50 * time.Millisecond)
 		}
 		socket.ResetSubscriptions = nil
 	}
@@ -561,7 +577,7 @@ func (c *Client) hasCredentials() bool {
 // Authenticate creates the payload for the authentication request and sends it
 // to the API. The filters will be applied to the authenticated channel, i.e.
 // only subscribe to the filtered messages.
-func (c *Client) authenticate(ctx context.Context, socketId SocketId, filter ...string) error {
+func (c *Client) authenticate(ctx context.Context, socketId SocketId) error {
 	nonce := c.nonce.GetNonce()
 	payload := "AUTH" + nonce
 	sig, err := c.sign(payload)
@@ -574,7 +590,7 @@ func (c *Client) authenticate(ctx context.Context, socketId SocketId, filter ...
 		AuthSig:     sig,
 		AuthPayload: payload,
 		AuthNonce:   nonce,
-		Filter:      filter,
+		Filter:      c.parameters.ChannelFilter,
 		SubID:       nonce,
 	}
 	if c.cancelOnDisconnect {

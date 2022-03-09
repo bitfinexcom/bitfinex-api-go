@@ -51,14 +51,15 @@ func (s *OrderService) GetBySymbol(symbol string) (*order.Snapshot, error) {
 
 // Retrieve an active order by the given ID
 // See https://docs.bitfinex.com/reference#rest-auth-orders for more info
-func (s *OrderService) GetByOrderId(orderID int64) (o *order.Order, err error) {
-	os, err := s.All()
+func (s *OrderService) GetByOrderId(symbol string, orderID int64) (o *order.Order, err error) {
+	os, err := s.getActiveOrders(symbol, orderID)
 	if err != nil {
 		return nil, err
 	}
-	for _, order := range os.Snapshot {
-		if order.ID == orderID {
-			return order, nil
+
+	for _, od := range os.Snapshot {
+		if od.ID == orderID {
+			return od, nil
 		}
 	}
 	return nil, common.ErrNotFound
@@ -68,26 +69,26 @@ func (s *OrderService) GetByOrderId(orderID int64) (o *order.Order, err error) {
 // See https://docs.bitfinex.com/reference#orders-history for more info
 func (s *OrderService) AllHistory() (*order.Snapshot, error) {
 	// use no symbol, this will get all orders
-	return s.getHistoricalOrders("")
+	return s.getHistoricalOrders("", 0, 0, 0)
 }
 
 // Retrieves all past orders with the given symbol
 // See https://docs.bitfinex.com/reference#orders-history for more info
-func (s *OrderService) GetHistoryBySymbol(symbol string) (*order.Snapshot, error) {
+func (s *OrderService) GetHistoryBySymbol(symbol string, startMs, endMs int64, limit int) (*order.Snapshot, error) {
 	// use no symbol, this will get all orders
-	return s.getHistoricalOrders(symbol)
+	return s.getHistoricalOrders(symbol, startMs, endMs, limit)
 }
 
 // Retrieve a single order in history with the given id
 // See https://docs.bitfinex.com/reference#orders-history for more info
-func (s *OrderService) GetHistoryByOrderId(orderID int64) (o *order.Order, err error) {
-	os, err := s.AllHistory()
+func (s *OrderService) GetHistoryByOrderId(symbol string, orderID int64) (o *order.Order, err error) {
+	os, err := s.getHistoricalOrders(symbol, 0, 0, 0, orderID)
 	if err != nil {
 		return nil, err
 	}
-	for _, order := range os.Snapshot {
-		if order.ID == orderID {
-			return order, nil
+	for _, od := range os.Snapshot {
+		if od.ID == orderID {
+			return od, nil
 		}
 	}
 	return nil, common.ErrNotFound
@@ -108,8 +109,18 @@ func (s *OrderService) OrderTrades(symbol string, orderID int64) (*tradeexecutio
 	return tradeexecutionupdate.SnapshotFromRaw(raw)
 }
 
-func (s *OrderService) getActiveOrders(symbol string) (*order.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("orders", symbol))
+func (s *OrderService) getActiveOrders(symbol string, ids ...int64) (*order.Snapshot, error) {
+	var req Request
+	var err error
+	if len(ids) > 0 {
+		data := map[string]interface{}{
+			"id": ids,
+		}
+		req, err = s.requestFactory.NewAuthenticatedRequestWithData(common.PermissionRead, path.Join("orders", symbol), data)
+	} else {
+		req, err = s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("orders", symbol))
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +138,28 @@ func (s *OrderService) getActiveOrders(symbol string) (*order.Snapshot, error) {
 	return os, nil
 }
 
-func (s *OrderService) getHistoricalOrders(symbol string) (*order.Snapshot, error) {
-	req, err := s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("orders", symbol, "hist"))
+func (s *OrderService) getHistoricalOrders(symbol string, start, end int64, limit int, ids ...int64) (*order.Snapshot, error) {
+	data := map[string]interface{}{}
+	if start != 0 {
+		data["start"] = start
+	}
+	if end != 0 {
+		data["end"] = end
+	}
+	if limit != 0 {
+		data["limit"] = limit
+	}
+	if len(ids) > 0 {
+		data["id"] = ids
+	}
+
+	var req Request
+	var err error
+	if len(data) > 0 {
+		req, err = s.requestFactory.NewAuthenticatedRequestWithData(common.PermissionRead, path.Join("orders", symbol, "hist"), data)
+	} else {
+		req, err = s.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("orders", symbol, "hist"))
+	}
 	if err != nil {
 		return nil, err
 	}

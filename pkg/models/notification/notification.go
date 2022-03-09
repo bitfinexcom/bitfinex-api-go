@@ -38,9 +38,16 @@ func FromRaw(raw []interface{}) (n *Notification, err error) {
 		return
 	}
 
-	nraw := raw[4].([]interface{})
-	if len(nraw) == 0 {
-		return
+	nraw, ok := raw[4].([]interface{})
+	if !ok {
+		//  raw[4] type of deposit_new message is object
+		if n.Type != "deposit_new" {
+			return nil, fmt.Errorf("raw[4] of %v message is not array, raw message: %v", n.Type, raw)
+		}
+	} else {
+		if len(nraw) == 0 {
+			return
+		}
 	}
 
 	switch n.Type {
