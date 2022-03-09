@@ -373,6 +373,7 @@ func (c *Client) dumpParams() {
 	c.log.Debugf("HeartbeatTimeout=%s", c.parameters.HeartbeatTimeout)
 	c.log.Debugf("URL=%s", c.parameters.URL)
 	c.log.Debugf("ManageOrderbook=%t", c.parameters.ManageOrderbook)
+	c.log.Debugf("ChannelFilter=%t", c.parameters.ChannelFilter)
 }
 
 func (c *Client) connectSocket(socketId SocketId) error {
@@ -576,7 +577,7 @@ func (c *Client) hasCredentials() bool {
 // Authenticate creates the payload for the authentication request and sends it
 // to the API. The filters will be applied to the authenticated channel, i.e.
 // only subscribe to the filtered messages.
-func (c *Client) authenticate(ctx context.Context, socketId SocketId, filter ...string) error {
+func (c *Client) authenticate(ctx context.Context, socketId SocketId) error {
 	nonce := c.nonce.GetNonce()
 	payload := "AUTH" + nonce
 	sig, err := c.sign(payload)
@@ -589,7 +590,7 @@ func (c *Client) authenticate(ctx context.Context, socketId SocketId, filter ...
 		AuthSig:     sig,
 		AuthPayload: payload,
 		AuthNonce:   nonce,
-		Filter:      filter,
+		Filter:      c.parameters.ChannelFilter,
 		SubID:       nonce,
 	}
 	if c.cancelOnDisconnect {
