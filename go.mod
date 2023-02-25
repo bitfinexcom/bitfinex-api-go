@@ -10,5 +10,5 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/sys v0.0.0-20201201145000-ef89a241ccb3 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 )
