@@ -52,7 +52,6 @@ type Client struct {
 	Pulse          PulseService
 	Invoice        InvoiceService
 	Market         MarketService
-
 	Synchronous
 }
 
@@ -100,11 +99,11 @@ func NewClientWithURL(url string) *Client {
 
 // Create a new Rest client with a synchronous HTTP handler and a custom nonce generaotr
 func NewClientWithSynchronousNonce(sync Synchronous, nonce utils.NonceGenerator) *Client {
-	return NewClientWithSynchronousURLNonce(sync, productionBaseURL, nonce)
+	return NewClientWithSynchronousURLNonce(sync, nonce)
 }
 
 // Create a new Rest client with a synchronous HTTP handler and a custom base url and nonce generator
-func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.NonceGenerator) *Client {
+func NewClientWithSynchronousURLNonce(sync Synchronous, nonce utils.NonceGenerator) *Client {
 	c := &Client{
 		Synchronous: sync,
 		nonce:       nonce,
