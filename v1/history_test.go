@@ -9,7 +9,7 @@ import (
 )
 
 func TestHistoryBalance(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
             "currency":"USD",
             "amount":"-246.94",
@@ -38,7 +38,7 @@ func TestHistoryBalance(t *testing.T) {
 }
 
 func TestHistoryMovements(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
             "id":581183,
             "currency":"BTC",
@@ -70,7 +70,7 @@ func TestHistoryMovements(t *testing.T) {
 }
 
 func TestHistoryTrades(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
             "price":"246.94",
             "amount":"1.0",

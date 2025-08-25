@@ -8,7 +8,7 @@ import (
 )
 
 func TestLendbookGet(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `{
             "bids":[{
                 "rate":"9.1287",
@@ -51,7 +51,7 @@ func TestLendbookGet(t *testing.T) {
 }
 
 func TestLendbookLends(t *testing.T) {
-	httpDo = func(req *http.Request) (*http.Response, error) {
+	httpDo = func(_ *http.Client, req *http.Request) (*http.Response, error) {
 		msg := `[{
             "rate":"9.8998",
             "amount_lent":"22528933.77950878",
