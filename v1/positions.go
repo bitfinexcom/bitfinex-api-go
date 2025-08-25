@@ -71,3 +71,27 @@ func (b *PositionsService) Claim(positionId int, amount string) (Position, error
 
 	return *position, nil
 }
+
+// Closes a position with a market order
+func (b *PositionsService) Claim(positionId int) (Position, error) {
+
+	request := map[string]interface{}{
+		"position_id": positionId,
+	}
+
+	req, err := b.client.newAuthenticatedRequest("POST", "position/close", request)
+
+	if err != nil {
+		return Position{}, err
+	}
+
+	var position = &Position{}
+
+	_, err = b.client.do(req, position)
+
+	if err != nil {
+		return Position{}, err
+	}
+
+	return *position, nil
+}
