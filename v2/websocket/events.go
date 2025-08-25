@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 )
 
@@ -107,7 +108,7 @@ func (c *Client) handleEvent(socketId SocketId, msg []byte) error {
 	if err != nil {
 		return err
 	}
-	//var e interface{}
+	// var e interface{}
 	switch event.Event {
 	case "info":
 		i := InfoEvent{}
@@ -154,10 +155,34 @@ func (c *Client) handleEvent(socketId SocketId, msg []byte) error {
 		if err != nil {
 			return err
 		}
-		err_rem := c.subscriptions.removeByChannelID(s.ChanID)
-		if err_rem != nil {
-			return err_rem
+
+		sub, errRem := c.subscriptions.removeByChannelID(s.ChanID)
+		if errRem != nil {
+			c.log.Warningf("remove local sub, chan_id: %v, err: %v", s.ChanID, errRem)
+			return errRem
 		}
+
+		c.log.Infof("remove local sub success, chan_id: %v, sub_id: %v, sub: %+v", s.ChanID, sub.SubID(), sub)
+
+		if sub.Request.Channel == ChanBook {
+			newSubReq := &SubscriptionRequest{
+				SubID:     c.nonce.GetNonce(), // generate new subID
+				Event:     sub.Request.Event,
+				Channel:   sub.Request.Channel,
+				Symbol:    sub.Request.Symbol,
+				Precision: sub.Request.Precision,
+				Len:       sub.Request.Len,
+				Frequency: sub.Request.Frequency,
+			}
+
+			c.log.Infof("resubscribing, original chan_id: %v, sub_id: %v, new sub_id: %v, sub_req: %v", s.ChanID, sub.SubID(), newSubReq.SubID, newSubReq)
+			_, errSub := c.Subscribe(context.Background(), newSubReq)
+			if errSub != nil {
+				c.log.Warningf("could not resubscribe, new sub_id: %v, err: %s", newSubReq.SubID, errSub.Error())
+				return errSub
+			}
+		}
+
 		c.listener <- &s
 	case "error":
 		er := ErrorEvent{}
@@ -177,8 +202,8 @@ func (c *Client) handleEvent(socketId SocketId, msg []byte) error {
 		c.log.Warningf("unknown event: %s", msg)
 	}
 
-	//err = json.Unmarshal(msg, &e)
-	//TODO raw message isn't ever published
+	// err = json.Unmarshal(msg, &e)
+	// TODO raw message isn't ever published
 
 	return err
 }
