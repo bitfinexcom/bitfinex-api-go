@@ -22,6 +22,7 @@ type NewRequest struct {
 	PriceOcoStop  float64                `json:"price_oco_stop,string,omitempty"`
 	Hidden        bool                   `json:"hidden,omitempty"`
 	PostOnly      bool                   `json:"postonly,omitempty"`
+	ReduceOnly    bool                   `json:"reduceonly,omitempty"`
 	Close         bool                   `json:"close,omitempty"`
 	OcoOrder      bool                   `json:"oco_order,omitempty"`
 	TimeInForce   string                 `json:"tif,omitempty"`
@@ -75,6 +76,10 @@ func (nr *NewRequest) EnrichedPayload() interface{} {
 
 	if nr.PostOnly {
 		pld.Flags = pld.Flags + common.OrderFlagPostOnly
+	}
+
+	if nr.ReduceOnly {
+		pld.Flags = pld.Flags + common.OrderFlagReduceOnly
 	}
 
 	if nr.OcoOrder {

@@ -8,6 +8,7 @@ import (
 const (
 	OrderFlagHidden               int              = 64
 	OrderFlagClose                int              = 512
+	OrderFlagReduceOnly           int              = 1024
 	OrderFlagPostOnly             int              = 4096
 	OrderFlagOCO                  int              = 16384
 	Checksum                      int              = 131072
