@@ -25,7 +25,7 @@ type MarginLimit struct {
 }
 
 // GET /margin_infos
-func (s *MarginInfoService) All() ([]MarginInfo, error) {
+func (s *MarginInfoService) V1All() ([]MarginInfo, error) {
 	req, err := s.client.newAuthenticatedRequest("GET", "margin_infos", nil)
 	if err != nil {
 		return nil, err

@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -20,13 +20,13 @@ func TestTradesServiceGet(t *testing.T) {
        }]`
 
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	trades, err := NewClient().Trades.All("ethusd", time.Time{}, 0)
+	trades, err := NewClient().Trades.V1All("ethusd", time.Time{}, 0)
 
 	if err != nil {
 		t.Error(err)

@@ -17,7 +17,7 @@ type AccountInfo struct {
 }
 
 // GET account_infos
-func (a *AccountService) Info() (AccountInfo, error) {
+func (a *AccountService) V1Info() (AccountInfo, error) {
 	req, err := a.client.newAuthenticatedRequest("GET", "account_infos", nil)
 
 	if err != nil {
@@ -49,7 +49,7 @@ type Permissions struct {
 	Withdraw  KeyPerm
 }
 
-func (a *AccountService) KeyPermission() (Permissions, error) {
+func (a *AccountService) V1KeyPermission() (Permissions, error) {
 	req, err := a.client.newAuthenticatedRequest("GET", "key_info", nil)
 
 	if err != nil {
@@ -79,7 +79,7 @@ type Summary struct {
 	TakerFee      string        `json:"taker_fee"`
 }
 
-func (a *AccountService) Summary() (Summary, error) {
+func (a *AccountService) V1Summary() (Summary, error) {
 	req, err := a.client.newAuthenticatedRequest("GET", "summary", nil)
 
 	if err != nil {

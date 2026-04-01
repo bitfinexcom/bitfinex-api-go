@@ -11,5 +11,11 @@ func (p *PlatformService) Status() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return len(raw) > 0 && raw[0].(float64) == 1, nil
+	if len(raw) == 0 {
+		return false, nil
+	}
+	if val, ok := raw[0].(float64); ok && int(val) == 1 {
+		return true, nil
+	}
+	return false, nil
 }

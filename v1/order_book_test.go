@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -27,13 +27,13 @@ func TestOrderBookGet(t *testing.T) {
        }`
 
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	orderBook, err := NewClient().OrderBook.Get("btcusd", 0, 0, false)
+	orderBook, err := NewClient().OrderBook.V1Get("btcusd", 0, 0, false)
 
 	if err != nil {
 		t.Error(err)

@@ -20,7 +20,7 @@ func (s *WalletService) SetCollateral(symbol string, amount float64) (bool, erro
 		"symbol":     symbol,
 		"collateral": amount,
 	}
-	req, err := s.requestFactory.NewAuthenticatedRequestWithData(common.PermissionRead, urlPath, data)
+	req, err := s.requestFactory.NewAuthenticatedRequestWithData(common.PermissionWrite, urlPath, data)
 	if err != nil {
 		return false, err
 	}
@@ -32,10 +32,30 @@ func (s *WalletService) SetCollateral(symbol string, amount float64) (bool, erro
 	if len(raw) <= 0 {
 		return false, nil
 	}
-	item := raw[0].([]interface{})
-	// [1] == success, [] || [0] == false
-	if len(item) > 0 && item[0].(int) == 1 {
+	item, ok := raw[0].([]interface{})
+	if !ok || len(item) == 0 {
+		return false, nil
+	}
+	// [1] == success, [0] == false
+	if val, ok := item[0].(float64); ok && int(val) == 1 {
 		return true, nil
 	}
 	return false, nil
+}
+
+// CollateralLimits - get collateral limits for a derivative position
+// see https://docs.bitfinex.com/reference#rest-auth-deriv-pos-collateral-limits
+func (s *DerivativesService) CollateralLimits(symbol string) ([]interface{}, error) {
+	data := map[string]interface{}{
+		"symbol": symbol,
+	}
+	req, err := s.requestFactory.NewAuthenticatedRequestWithData(common.PermissionRead, path.Join("calc", "deriv", "collateral", "limits"), data)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := s.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
 }

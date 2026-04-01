@@ -7,10 +7,18 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/bitfinexcom/bitfinex-api-go/pkg/utils"
 
 	"github.com/gorilla/websocket"
+)
+
+const (
+	// wsReadTimeout is the maximum time to wait for a message from the server.
+	wsReadTimeout = 90 * time.Second
+	// wsWriteTimeout is the maximum time to wait for a write to complete.
+	wsWriteTimeout = 10 * time.Second
 )
 
 // Pairs available
@@ -110,7 +118,9 @@ func (w *WebSocketService) Connect() error {
 
 // Close web socket connection
 func (w *WebSocketService) Close() {
-	w.ws.Close()
+	if w.ws != nil {
+		w.ws.Close()
+	}
 }
 
 func (w *WebSocketService) AddSubscribe(channel string, pair string, c chan []float64) {
@@ -128,13 +138,17 @@ func (w *WebSocketService) ClearSubscriptions() {
 
 func (w *WebSocketService) sendSubscribeMessages() error {
 	for _, s := range w.subscribes {
-		msg, _ := json.Marshal(subscribeMsg{
+		msg, err := json.Marshal(subscribeMsg{
 			Event:   "subscribe",
 			Channel: s.Channel,
 			Pair:    s.Pair,
 		})
+		if err != nil {
+			return err
+		}
 
-		err := w.ws.WriteMessage(websocket.TextMessage, msg)
+		w.ws.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
+		err = w.ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			return err
 		}
@@ -151,6 +165,7 @@ func (w *WebSocketService) Subscribe() error {
 	}
 
 	for {
+		w.ws.SetReadDeadline(time.Now().Add(wsReadTimeout))
 		_, p, err := w.ws.ReadMessage()
 		if err != nil {
 			return err
@@ -185,11 +200,14 @@ func (w *WebSocketService) handleDataMessage(msg []byte) {
 	// Received payload or data update
 	var dataUpdate []float64
 	err := json.Unmarshal(msg, &dataUpdate)
-	if err == nil {
+	if err == nil && len(dataUpdate) > 1 {
 		chanID := dataUpdate[0]
 		// Remove chanID from data update
 		// and send message to internal chan
-		w.chanMap[chanID] <- dataUpdate[1:]
+		if ch, ok := w.chanMap[chanID]; ok {
+			ch <- dataUpdate[1:]
+		}
+		return
 	}
 
 	// Payload received
@@ -199,14 +217,24 @@ func (w *WebSocketService) handleDataMessage(msg []byte) {
 	if err != nil {
 		log.Println("Error decoding fullPayload", err)
 	} else {
+		if len(fullPayload) < 2 {
+			return
+		}
+		chanID, ok := fullPayload[0].(float64)
+		if !ok {
+			return
+		}
+		ch, ok := w.chanMap[chanID]
+		if !ok {
+			return
+		}
 		if len(fullPayload) > 3 {
 			itemsSlice := fullPayload[3:]
 			i, _ := json.Marshal(itemsSlice)
 			var item []float64
 			err = json.Unmarshal(i, &item)
 			if err == nil {
-				chanID := fullPayload[0].(float64)
-				w.chanMap[chanID] <- item
+				ch <- item
 			}
 		} else {
 			itemsSlice := fullPayload[1]
@@ -214,9 +242,8 @@ func (w *WebSocketService) handleDataMessage(msg []byte) {
 			var items [][]float64
 			err = json.Unmarshal(i, &items)
 			if err == nil {
-				chanID := fullPayload[0].(float64)
 				for _, v := range items {
-					w.chanMap[chanID] <- v
+					ch <- v
 				}
 			}
 		}
@@ -282,16 +309,28 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 	payload := "AUTH" + nonce
 	sig, err_sig := w.client.signPayload(payload)
 	if err_sig != nil {
+		ch <- TermData{
+			Error: err_sig.Error(),
+		}
+		ws.Close()
 		return
 	}
-	connectMsg, _ := json.Marshal(&privateConnect{
+	connectMsg, err := json.Marshal(&privateConnect{
 		Event:       "auth",
 		APIKey:      w.client.APIKey,
 		AuthSig:     sig,
 		AuthPayload: payload,
 	})
+	if err != nil {
+		ch <- TermData{
+			Error: err.Error(),
+		}
+		ws.Close()
+		return
+	}
 
 	// Send auth message
+	ws.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
 	err = ws.WriteMessage(websocket.TextMessage, connectMsg)
 	if err != nil {
 		ch <- TermData{
@@ -302,6 +341,7 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 	}
 
 	for {
+		ws.SetReadDeadline(time.Now().Add(wsReadTimeout))
 		_, p, err := ws.ReadMessage()
 		if err != nil {
 			ch <- TermData{
@@ -320,12 +360,23 @@ func (w *WebSocketService) ConnectPrivate(ch chan TermData) {
 			if err == nil {
 				if len(data) == 2 { // Heartbeat
 					// XXX: Consider adding a switch to enable/disable passing these along.
-					ch <- TermData{Term: data[1].(string)}
-					return
+					if term, ok := data[1].(string); ok {
+						ch <- TermData{Term: term}
+					}
+					continue
 				}
 
-				dataTerm := data[1].(string)
-				dataList := data[2].([]interface{})
+				if len(data) < 3 {
+					continue
+				}
+				dataTerm, ok := data[1].(string)
+				if !ok {
+					continue
+				}
+				dataList, ok := data[2].([]interface{})
+				if !ok {
+					continue
+				}
 
 				// check for empty data
 				if len(dataList) > 0 {

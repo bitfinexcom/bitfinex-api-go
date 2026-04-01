@@ -32,7 +32,7 @@ func (p *Position) ParseTime() (*time.Time, error) {
 }
 
 // All - gets all positions
-func (b *PositionsService) All() ([]Position, error) {
+func (b *PositionsService) V1All() ([]Position, error) {
 	req, err := b.client.newAuthenticatedRequest("POST", "positions", nil)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (b *PositionsService) All() ([]Position, error) {
 }
 
 // Claim a position
-func (b *PositionsService) Claim(positionId int, amount string) (Position, error) {
+func (b *PositionsService) V1Claim(positionId int, amount string) (Position, error) {
 
 	request := map[string]interface{}{
 		"position_id": positionId,

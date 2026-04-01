@@ -22,9 +22,13 @@ func (s *TickerService) getTickers(symbols []string) ([]*ticker.Ticker, error) {
 		return nil, err
 	}
 
-	tickers := make([]*ticker.Ticker, 0)
+	tickers := make([]*ticker.Ticker, 0, len(raw))
 	for _, traw := range raw {
-		t, err := ticker.FromRestRaw(traw.([]interface{}))
+		item, ok := traw.([]interface{})
+		if !ok {
+			continue
+		}
+		t, err := ticker.FromRestRaw(item)
 		if err != nil {
 			return nil, err
 		}

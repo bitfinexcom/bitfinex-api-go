@@ -3,7 +3,7 @@ package rest
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +24,7 @@ func TestOrdersAll(t *testing.T) {
 					[33961681944,"1227",1337,"tBTCUSD",1573482478000,1573485373000,0.001,0.001,"EXCHANGE LIMIT",null,null,null,"0","CANCELED",null,null,15,0,0,0,null,null,null,0,0,null,null,null,"API>BFX",null,null,null]
 				]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
@@ -50,7 +50,7 @@ func TestOrdersHistory(t *testing.T) {
 					[33961681944,"1227",1337,"tBTCUSD",1573482478000,1573485373000,0.001,0.001,"EXCHANGE LIMIT",null,null,null,"0","CANCELED",null,null,15,0,0,0,null,null,null,0,0,null,null,null,"API>BFX",null,null,null]
 				]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil

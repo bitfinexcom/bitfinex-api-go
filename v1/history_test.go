@@ -2,13 +2,13 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
 )
 
-func TestHistoryBalance(t *testing.T) {
+func TestHistoryV1Balance(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `[{
             "currency":"USD",
@@ -18,13 +18,13 @@ func TestHistoryBalance(t *testing.T) {
             "timestamp":"1444277602.0"
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	balance, err := NewClient().History.Balance("BTC", "", time.Time{}, time.Time{}, 0)
+	balance, err := NewClient().History.V1Balance("BTC", "", time.Time{}, time.Time{}, 0)
 
 	if err != nil {
 		t.Error(err)
@@ -37,7 +37,7 @@ func TestHistoryBalance(t *testing.T) {
 
 }
 
-func TestHistoryMovements(t *testing.T) {
+func TestHistoryV1Movements(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `[{
             "id":581183,
@@ -50,13 +50,13 @@ func TestHistoryMovements(t *testing.T) {
             "timestamp":"1443833327.0"
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	movements, err := NewClient().History.Movements("BTC", "", time.Time{}, time.Time{}, 0)
+	movements, err := NewClient().History.V1Movements("BTC", "", time.Time{}, time.Time{}, 0)
 
 	if err != nil {
 		t.Error(err)
@@ -83,13 +83,13 @@ func TestHistoryTrades(t *testing.T) {
             "order_id":446913929
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	trades, err := NewClient().History.Trades("BTC", time.Time{}, time.Time{}, 0, false)
+	trades, err := NewClient().History.V1Trades("BTC", time.Time{}, time.Time{}, 0, false)
 
 	if err != nil {
 		t.Error(err)

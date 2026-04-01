@@ -15,7 +15,7 @@ type Stats struct {
 }
 
 // All(pair) - Volume stats for specified pair
-func (s *StatsService) All(pair string, period, volume string) ([]Stats, error) {
+func (s *StatsService) V1All(pair string, period, volume string) ([]Stats, error) {
 	pair = strings.ToUpper(pair)
 
 	params := url.Values{}

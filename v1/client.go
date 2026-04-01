@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -196,7 +196,7 @@ type Response struct {
 
 // newResponse creates new wrapper.
 func newResponse(r *http.Response) *Response {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		body = []byte(`Error reading body:` + err.Error())
 	}

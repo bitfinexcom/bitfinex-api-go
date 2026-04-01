@@ -34,7 +34,7 @@ type Lendbook struct {
 }
 
 // GET /lendbook/:currency
-func (s *LendbookService) Get(currency string, limitBids, limitAsks int) (Lendbook, error) {
+func (s *LendbookService) V1Get(currency string, limitBids, limitAsks int) (Lendbook, error) {
 	currency = strings.ToUpper(currency)
 
 	params := url.Values{}
@@ -72,7 +72,7 @@ func (el *Lends) Time() *time.Time {
 }
 
 // GET /lends/:currency
-func (s *LendbookService) Lends(currency string) ([]Lends, error) {
+func (s *LendbookService) V1Lends(currency string) ([]Lends, error) {
 	currency = strings.ToUpper(currency)
 	req, err := s.client.newRequest("GET", "lends/"+currency, nil)
 	if err != nil {

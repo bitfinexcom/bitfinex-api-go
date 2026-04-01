@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -11,13 +11,13 @@ func TestPairsGetAll(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `["btcusd","ltcusd","ltcbtc","ethusd","ethbtc"]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	pairs, err := NewClient().Pairs.All()
+	pairs, err := NewClient().Pairs.V1All()
 
 	numPairs := len(pairs)
 
@@ -36,7 +36,7 @@ func TestPairsGetAll(t *testing.T) {
 	}
 }
 
-func TestPairsAllDetailed(t *testing.T) {
+func TestPairV1AllDetailed(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `[{
             "pair":"btcusd",
@@ -58,13 +58,13 @@ func TestPairsAllDetailed(t *testing.T) {
             "margin":false
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	pairs, err := NewClient().Pairs.AllDetailed()
+	pairs, err := NewClient().Pairs.V1AllDetailed()
 
 	if err != nil {
 		t.Error(err)

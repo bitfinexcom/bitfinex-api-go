@@ -18,7 +18,7 @@ type TransferStatus struct {
 }
 
 // Transfer funds between wallets
-func (c *WalletService) Transfer(amount float64, currency, from, to string) ([]TransferStatus, error) {
+func (c *WalletService) V1Transfer(amount float64, currency, from, to string) ([]TransferStatus, error) {
 
 	payload := map[string]interface{}{
 		"amount":     strconv.FormatFloat(amount, 'f', -1, 32),
@@ -47,7 +47,7 @@ type WithdrawStatus struct {
 }
 
 // Withdraw a cryptocurrency to a digital wallet
-func (c *WalletService) WithdrawCrypto(amount float64, currency, wallet, destinationAddress string) ([]WithdrawStatus, error) {
+func (c *WalletService) V1WithdrawCrypto(amount float64, currency, wallet, destinationAddress string) ([]WithdrawStatus, error) {
 
 	payload := map[string]interface{}{
 		"amount":         strconv.FormatFloat(amount, 'f', -1, 32),
@@ -80,7 +80,7 @@ type BankAccount struct {
 	SwiftCode     string // SWIFT Code
 }
 
-func (c *WalletService) WithdrawWire(amount float64, expressWire bool, wallet string, beneficiaryBank, intermediaryBank BankAccount, message string) ([]WithdrawStatus, error) {
+func (c *WalletService) V1WithdrawWire(amount float64, expressWire bool, wallet string, beneficiaryBank, intermediaryBank BankAccount, message string) ([]WithdrawStatus, error) {
 
 	var express int
 	if expressWire {

@@ -5,7 +5,7 @@ type PairsService struct {
 }
 
 // Get all Pair names as array of strings
-func (p *PairsService) All() ([]string, error) {
+func (p *PairsService) V1All() ([]string, error) {
 	req, err := p.client.newRequest("GET", "symbols", nil)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ type Pair struct {
 }
 
 // Return a list of detailed pairs
-func (p *PairsService) AllDetailed() ([]Pair, error) {
+func (p *PairsService) V1AllDetailed() ([]Pair, error) {
 	req, err := p.client.newRequest("GET", "symbols_details", nil)
 	if err != nil {
 		return nil, err

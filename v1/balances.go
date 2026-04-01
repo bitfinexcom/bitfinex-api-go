@@ -12,7 +12,7 @@ type WalletBalance struct {
 }
 
 // GET balances
-func (b *BalancesService) All() ([]WalletBalance, error) {
+func (b *BalancesService) V1All() ([]WalletBalance, error) {
 	req, err := b.client.newAuthenticatedRequest("GET", "balances", nil)
 	if err != nil {
 		return nil, err

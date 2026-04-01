@@ -18,7 +18,7 @@ func main() {
 	key := os.Getenv("BFX_API_KEY")
 	secret := os.Getenv("BFX_API_SECRET")
 	client := bitfinex.NewClient().Auth(key, secret)
-	info, err := client.Account.Info()
+	info, err := client.Account.V1Info()
 
 	if err != nil {
 		fmt.Println(err)

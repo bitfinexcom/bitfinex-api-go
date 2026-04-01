@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -14,13 +14,13 @@ func TestWalletTransfer(t *testing.T) {
           "message":"1.0 USD transfered from Exchange to Deposit"
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	response, err := NewClient().Wallet.Transfer(10.0, "BTC", "1WalletA", "1WalletB")
+	response, err := NewClient().Wallet.V1Transfer(10.0, "BTC", "1WalletA", "1WalletB")
 
 	if err != nil {
 		t.Error(err)
@@ -32,7 +32,7 @@ func TestWalletTransfer(t *testing.T) {
 	}
 }
 
-func TestWithdrawCrypto(t *testing.T) {
+func TestV1WithdrawCrypto(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `[{
           "status":"success",
@@ -40,13 +40,13 @@ func TestWithdrawCrypto(t *testing.T) {
           "withdrawal_id":586829
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	response, err := NewClient().Wallet.WithdrawCrypto(10.0, "bitcoin", WALLET_DEPOSIT, "1WalletABC")
+	response, err := NewClient().Wallet.V1WithdrawCrypto(10.0, "bitcoin", WALLET_DEPOSIT, "1WalletABC")
 
 	if err != nil {
 		t.Error(err)
@@ -63,7 +63,7 @@ func TestWithdrawCrypto(t *testing.T) {
 
 }
 
-func TestWithdrawWire(t *testing.T) {
+func TestV1WithdrawWire(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `[{
           "status":"success",
@@ -71,7 +71,7 @@ func TestWithdrawWire(t *testing.T) {
           "withdrawal_id":586829
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
@@ -95,7 +95,7 @@ func TestWithdrawWire(t *testing.T) {
 		BankCountry:   "Bank Country",
 		SwiftCode:     "SWIFT",
 	}
-	response, err := NewClient().Wallet.WithdrawWire(10.0, true, WALLET_DEPOSIT, beneficiaryBank, intermediaryBank, "Wire MESSAGE")
+	response, err := NewClient().Wallet.V1WithdrawWire(10.0, true, WALLET_DEPOSIT, beneficiaryBank, intermediaryBank, "Wire MESSAGE")
 
 	if err != nil {
 		t.Error(err)

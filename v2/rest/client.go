@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -51,6 +50,12 @@ type Client struct {
 	Funding        FundingService
 	Invoice        InvoiceService
 	Market         MarketService
+	Account        AccountService
+	Movements      MovementsService
+	Alerts         AlertService
+	Settings       SettingsService
+	Liquidations   LiquidationsService
+	Rankings       RankingsService
 
 	Synchronous
 }
@@ -125,6 +130,12 @@ func NewClientWithSynchronousURLNonce(sync Synchronous, url string, nonce utils.
 	c.Funding = FundingService{Synchronous: c, requestFactory: c}
 	c.Invoice = InvoiceService{Synchronous: c, requestFactory: c}
 	c.Market = MarketService{Synchronous: c, requestFactory: c}
+	c.Account = AccountService{Synchronous: c, requestFactory: c}
+	c.Movements = MovementsService{Synchronous: c, requestFactory: c}
+	c.Alerts = AlertService{Synchronous: c, requestFactory: c}
+	c.Settings = SettingsService{Synchronous: c, requestFactory: c}
+	c.Liquidations = LiquidationsService{Synchronous: c, requestFactory: c}
+	c.Rankings = RankingsService{Synchronous: c, requestFactory: c}
 	return c
 }
 
@@ -154,7 +165,7 @@ func (c *Client) sign(msg string) (string, error) {
 	sig := hmac.New(sha512.New384, []byte(c.apiSecret))
 	_, err := sig.Write([]byte(msg))
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("sign payload: %w", err)
 	}
 	return hex.EncodeToString(sig.Sum(nil)), nil
 }
@@ -192,7 +203,7 @@ func (c *Client) NewAuthenticatedRequestWithBytes(permissionType common.Permissi
 func (c *Client) NewAuthenticatedRequestWithData(permissionType common.PermissionType, refURL string, data map[string]interface{}) (Request, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
-		return Request{}, err
+		return Request{}, fmt.Errorf("marshal request data for %s: %w", refURL, err)
 	}
 	return c.NewAuthenticatedRequestWithBytes(permissionType, refURL, b)
 }
@@ -236,7 +247,7 @@ func newResponse(r *http.Response) *Response {
 	// Use a LimitReader of arbitrary size (here ~8.39MB) to prevent us from
 	// reading overly large response bodies.
 	lr := io.LimitReader(r.Body, 8388608)
-	body, err := ioutil.ReadAll(lr)
+	body, err := io.ReadAll(lr)
 	if err != nil {
 		body = []byte(`Error reading body:` + err.Error())
 	}

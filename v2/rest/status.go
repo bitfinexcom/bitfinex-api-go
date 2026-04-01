@@ -27,9 +27,11 @@ func (ss *StatusService) get(sType string, key string) (*derivatives.Snapshot, e
 	if err != nil {
 		return nil, err
 	}
-	trueRaw := make([][]interface{}, len(raw))
-	for i, r := range raw {
-		trueRaw[i] = r.([]interface{})
+	trueRaw := make([][]interface{}, 0, len(raw))
+	for _, r := range raw {
+		if item, ok := r.([]interface{}); ok {
+			trueRaw = append(trueRaw, item)
+		}
 	}
 	s, err := derivatives.SnapshotFromRaw(trueRaw)
 	if err != nil {
@@ -70,4 +72,15 @@ func (ss *StatusService) DerivativeStatusAll() ([]*derivatives.DerivativeStatus,
 		return nil, err
 	}
 	return data.Snapshot, err
+}
+
+// DerivativeStatusHistory - Get derivative status history for a given key
+// see https://docs.bitfinex.com/reference#rest-public-status-hist
+func (ss *StatusService) DerivativeStatusHistory(key string) ([]interface{}, error) {
+	req := NewRequestWithMethod(path.Join("status", "deriv", key, "hist"), "GET")
+	raw, err := ss.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
 }

@@ -27,7 +27,7 @@ type Offer struct {
 }
 
 // Create new offer for LEND or LOAN a currency, use LEND or LOAN constants as direction
-func (s *OffersService) New(currency string, amount, rate float64, period int64, direction string) (Offer, error) {
+func (s *OffersService) V1New(currency string, amount, rate float64, period int64, direction string) (Offer, error) {
 
 	payload := map[string]interface{}{
 		"currency":  currency,
@@ -54,7 +54,7 @@ func (s *OffersService) New(currency string, amount, rate float64, period int64,
 
 }
 
-func (s *OffersService) Cancel(offerId int64) (Offer, error) {
+func (s *OffersService) V1Cancel(offerId int64) (Offer, error) {
 
 	payload := map[string]interface{}{
 		"offer_id": strconv.FormatInt(offerId, 10),
@@ -77,7 +77,7 @@ func (s *OffersService) Cancel(offerId int64) (Offer, error) {
 	return *offer, nil
 }
 
-func (s *OffersService) Status(offerId int64) (Offer, error) {
+func (s *OffersService) V1Status(offerId int64) (Offer, error) {
 
 	payload := map[string]interface{}{
 		"offer_id": strconv.FormatInt(offerId, 10),

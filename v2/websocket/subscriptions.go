@@ -112,7 +112,11 @@ func newSubscriptions(heartbeatTimeout time.Duration, log *logging.Logger) *subs
 		log:          log,
 		lock:         &sync.RWMutex{},
 	}
-	go subs.control()
+	subs.wg.Add(1)
+	go func() {
+		defer subs.wg.Done()
+		subs.control()
+	}()
 	return subs
 }
 
@@ -135,6 +139,7 @@ type subscriptions struct {
 	hbTimeout    time.Duration
 	hbSleep      time.Duration
 	hbShutdown   chan struct{}
+	wg           sync.WaitGroup
 }
 
 // SubscriptionSet is a typed version of an array of subscription pointers, intended to meet the sortable interface.
@@ -210,14 +215,15 @@ func (s *subscriptions) sweep(exp time.Time) {
 }
 
 func (s *subscriptions) control() {
+	ticker := time.NewTicker(s.hbSleep)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-s.hbShutdown:
 			return
-		default:
+		case <-ticker.C:
+			s.sweep(time.Now())
 		}
-		s.sweep(time.Now())
-		time.Sleep(s.hbSleep)
 	}
 }
 
@@ -225,6 +231,7 @@ func (s *subscriptions) control() {
 func (s *subscriptions) Close() {
 	s.ResetAll()
 	close(s.hbShutdown)
+	s.wg.Wait()
 }
 
 

@@ -13,9 +13,9 @@ package bitfinex
 //   api := bitfinex.NewClient().Auth(key, secret)
 //
 // Get all pairs
-//   api.Pairs.All()
+//   api.Pairs.V1All()
 //
 // Get account info
-//   api.Account.Info()
+//   api.Account.V1Info()
 //
 // See examples dir for more info.

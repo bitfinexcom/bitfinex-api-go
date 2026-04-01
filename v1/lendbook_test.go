@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -27,13 +27,13 @@ func TestLendbookGet(t *testing.T) {
         }`
 
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	book, err := NewClient().Lendbook.Get("usd", 0, 0)
+	book, err := NewClient().Lendbook.V1Get("usd", 0, 0)
 
 	if err != nil {
 		t.Error(err)
@@ -60,13 +60,13 @@ func TestLendbookLends(t *testing.T) {
         }]`
 
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	lends, err := NewClient().Lendbook.Lends("usd")
+	lends, err := NewClient().Lendbook.V1Lends("usd")
 
 	if err != nil {
 		t.Error(err)

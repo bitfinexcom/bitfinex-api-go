@@ -22,7 +22,7 @@ func (d *DepositResponse) Success() (bool, error) {
 	}
 }
 
-func (s *DepositService) New(method, walletName string, renew int) (DepositResponse, error) {
+func (s *DepositService) V1New(method, walletName string, renew int) (DepositResponse, error) {
 
 	payload := map[string]interface{}{
 		"method":      method,

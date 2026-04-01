@@ -15,7 +15,7 @@ type Credit struct {
 }
 
 // Returns an array of Credit
-func (c *CreditsService) All() ([]Credit, error) {
+func (c *CreditsService) V1All() ([]Credit, error) {
 	req, err := c.client.newAuthenticatedRequest("GET", "credits", nil)
 	if err != nil {
 		return nil, err

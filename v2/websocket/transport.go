@@ -73,7 +73,7 @@ func (w *ws) Connect() error {
 		if err == websocket.ErrBadHandshake {
 			w.log.Errorf("bad handshake: status code %d", resp.StatusCode)
 		}
-		return err
+		return fmt.Errorf("ws connect to %s: %w", w.BaseURL, err)
 	}
 	w.ws = ws
 	go w.listenWriteChannel()
@@ -177,12 +177,16 @@ func (w *ws) listenWs() {
 			}
 			w.log.Debugf("srv->ws: %s", string(msg))
 			w.lock.RLock()
-			if w.downstream == nil {
-				w.lock.RUnlock()
+			downstream := w.downstream
+			w.lock.RUnlock()
+			if downstream == nil {
 				return
 			}
-			w.downstream <- msg
-			w.lock.RUnlock()
+			select {
+			case downstream <- msg:
+			case <-w.kill:
+				return
+			}
 		}
 	}
 }

@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -20,13 +20,13 @@ func TestStatsAll(t *testing.T) {
             "volume":"275148.09653645"
           }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	stats, err := NewClient().Stats.All("btcusd", "10", "")
+	stats, err := NewClient().Stats.V1All("btcusd", "10", "")
 
 	if err != nil {
 		t.Error(err)

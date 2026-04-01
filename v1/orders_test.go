@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -28,13 +28,13 @@ func TestOrdersAll(t *testing.T) {
            "executed_amount":"0.0"
          }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	orders, err := NewClient().Orders.All()
+	orders, err := NewClient().Orders.V1All()
 
 	if err != nil {
 		t.Error(err)
@@ -87,7 +87,7 @@ func TestCreateMulti(t *testing.T) {
           "status":"success"
        }`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
@@ -104,7 +104,7 @@ func TestCreateMulti(t *testing.T) {
 		Price:  450.0,
 		Type:   OrderTypeLimit,
 	}}
-	response, err := NewClient().Orders.CreateMulti(reqOrders)
+	response, err := NewClient().Orders.V1CreateMulti(reqOrders)
 
 	if err != nil {
 		t.Error(err)
@@ -120,14 +120,14 @@ func TestCancelMulti(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `{"result":"Orders cancelled"}`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
 	orders := []int64{1000, 1001, 1002}
-	response, err := NewClient().Orders.CancelMulti(orders)
+	response, err := NewClient().Orders.V1CancelMulti(orders)
 
 	if err != nil {
 		t.Error(err)

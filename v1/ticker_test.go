@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -20,13 +20,13 @@ func TestTickerGet(t *testing.T) {
            "timestamp":"1444253422.348340958"
         }`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	tick, err := NewClient().Ticker.Get("btcusd")
+	tick, err := NewClient().Ticker.V1Get("btcusd")
 
 	if err != nil {
 		t.Error(err)

@@ -42,6 +42,12 @@ func (s *OrderService) All() (*order.Snapshot, error) {
 	return s.getActiveOrders("")
 }
 
+// AllActive - Retrieves all active orders (across all symbols)
+// See https://docs.bitfinex.com/reference#rest-auth-orders for more info
+func (s *OrderService) AllActive() (*order.Snapshot, error) {
+	return s.getActiveOrders("")
+}
+
 // Retrieves all of the active orders with for the given symbol
 // See https://docs.bitfinex.com/reference#rest-auth-orders for more info
 func (s *OrderService) GetBySymbol(symbol string) (*order.Snapshot, error) {

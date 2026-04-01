@@ -5,10 +5,10 @@ import (
 )
 
 func TestOrderBook(t *testing.T) {
-    order_book, err := client.OrderBook.Get("BTCUSD", 10, 10, true)
+    order_book, err := client.OrderBook.V1Get("BTCUSD", 10, 10, true)
 
     if err != nil {
-        t.Fatalf("OrderBook.Get() returned error: %v", err)
+        t.Fatalf(".OrderBook.V1Get() returned error: %v", err)
     }
 
     if len(order_book.Bids) == 0 {

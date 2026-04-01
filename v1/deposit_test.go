@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -16,13 +16,13 @@ func TestDepositNew(t *testing.T) {
             "address":"1A2wyHKJ4KWEoahDHVxwQy3kdd6g1qiSYV"
         }`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	deposit, err := NewClient().Deposit.New("bitcoin", "trading", 0)
+	deposit, err := NewClient().Deposit.V1New("bitcoin", "trading", 0)
 
 	if err != nil {
 		t.Error(err)

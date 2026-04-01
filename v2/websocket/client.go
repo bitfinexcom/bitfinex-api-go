@@ -115,6 +115,7 @@ type Client struct {
 	nonce              utils.NonceGenerator
 	terminal           bool
 	init               bool
+	closeOnce          sync.Once
 	log                *logging.Logger
 
 	// connection & operational behavior
@@ -153,7 +154,7 @@ func (c *Client) sign(msg string) (string, error) {
 	sig := hmac.New(sha512.New384, []byte(c.apiSecret))
 	_, err := sig.Write([]byte(msg))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("sign payload: %w", err)
 	}
 	return hex.EncodeToString(sig.Sum(nil)), nil
 }
@@ -243,10 +244,10 @@ func (c *Client) Listen() <-chan interface{} {
 // active sockets to be exited and the Done() function
 // to be called
 func (c *Client) Close() {
-	c.terminal = true
-	var wg sync.WaitGroup
-	socketCount := len(c.sockets)
-	if socketCount > 0 {
+	c.closeOnce.Do(func() {
+		c.mtx.Lock()
+		c.terminal = true
+		var wg sync.WaitGroup
 		for _, socket := range c.sockets {
 			if socket.IsConnected {
 				wg.Add(1)
@@ -257,10 +258,11 @@ func (c *Client) Close() {
 				}(socket)
 			}
 		}
+		c.mtx.Unlock()
 		wg.Wait()
-	}
-	c.subscriptions.Close()
-	close(c.listener)
+		c.subscriptions.Close()
+		close(c.listener)
+	})
 }
 
 // Unsubscribe from the existing subscription with the given id

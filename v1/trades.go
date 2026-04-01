@@ -25,7 +25,7 @@ func (el *Trade) Time() *time.Time {
 	return &t
 }
 
-func (s *TradesService) All(pair string, timestamp time.Time, limitTrades int) ([]Trade, error) {
+func (s *TradesService) V1All(pair string, timestamp time.Time, limitTrades int) ([]Trade, error) {
 	pair = strings.ToUpper(pair)
 
 	params := url.Values{}

@@ -2,12 +2,12 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
 
-func TestAccountInfo(t *testing.T) {
+func TestAccountV1Info(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `[{
            "maker_fees":"0.1",
@@ -28,13 +28,13 @@ func TestAccountInfo(t *testing.T) {
         }]`
 
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	info, err := NewClient().Account.Info()
+	info, err := NewClient().Account.V1Info()
 
 	if err != nil {
 		t.Error(err)
@@ -46,7 +46,7 @@ func TestAccountInfo(t *testing.T) {
 	}
 }
 
-func TestAccountKeyPermission(t *testing.T) {
+func TestAccountV1KeyPermission(t *testing.T) {
 	httpDo = func(req *http.Request) (*http.Response, error) {
 		msg := `{
             "account":{
@@ -80,12 +80,12 @@ func TestAccountKeyPermission(t *testing.T) {
         }`
 
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
-	perm, err := NewClient().Account.KeyPermission()
+	perm, err := NewClient().Account.V1KeyPermission()
 
 	if err != nil {
 		t.Error(err)

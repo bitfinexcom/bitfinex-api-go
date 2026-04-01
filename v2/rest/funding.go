@@ -218,3 +218,82 @@ func (fs *FundingService) KeepFunding(args KeepFundingRequest) (*notification.No
 
 	return notification.FromRaw(raw)
 }
+
+// CancelAllOffers - cancel all active funding offers
+// see https://docs.bitfinex.com/reference#rest-auth-funding-offer-cancel-all
+func (fs *FundingService) CancelAllOffers() (*notification.Notification, error) {
+	req, err := fs.requestFactory.NewAuthenticatedRequest(common.PermissionWrite, path.Join("funding", "offer", "cancel", "all"))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := fs.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return notification.FromRaw(raw)
+}
+
+// Info - get funding info for a given key
+// see https://docs.bitfinex.com/reference#rest-auth-info-funding
+func (fs *FundingService) Info(key string) ([]interface{}, error) {
+	req, err := fs.requestFactory.NewAuthenticatedRequest(common.PermissionRead, path.Join("info", "funding", key))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := fs.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+// AutoRenew - toggle auto-renew for funding
+// see https://docs.bitfinex.com/reference#rest-auth-funding-auto
+func (fs *FundingService) AutoRenew(currency string, amount float64, rate float64, period int, enabled bool) (*notification.Notification, error) {
+	status := 0
+	if enabled {
+		status = 1
+	}
+	data := map[string]interface{}{
+		"currency": currency,
+		"amount":   amount,
+		"rate":     rate,
+		"period":   period,
+		"status":   status,
+	}
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	req, err := fs.requestFactory.NewAuthenticatedRequestWithBytes(common.PermissionWrite, path.Join("funding", "auto"), b)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := fs.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return notification.FromRaw(raw)
+}
+
+// Close - close funding
+// see https://docs.bitfinex.com/reference#rest-auth-funding-close
+func (fs *FundingService) Close(id int64, fundingType string) (*notification.Notification, error) {
+	data := map[string]interface{}{
+		"id":   id,
+		"type": fundingType,
+	}
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	req, err := fs.requestFactory.NewAuthenticatedRequestWithBytes(common.PermissionWrite, path.Join("funding", "close"), b)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := fs.Request(req)
+	if err != nil {
+		return nil, err
+	}
+	return notification.FromRaw(raw)
+}

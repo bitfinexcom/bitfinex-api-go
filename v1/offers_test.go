@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 )
@@ -24,13 +24,13 @@ func TestOfferNew(t *testing.T) {
           "offer_id":13800585
         }`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	offer, err := NewClient().Offers.New("USD", 50, 20.0, 2, LEND)
+	offer, err := NewClient().Offers.V1New("USD", 50, 20.0, 2, LEND)
 
 	if err != nil {
 		t.Error(err)
@@ -56,7 +56,7 @@ func TestOfferNew(t *testing.T) {
 		t.Error("Actual ", offer.IsLive)
 	}
 
-	newOffer, err := NewClient().Offers.Cancel(offer.Id)
+	newOffer, err := NewClient().Offers.V1Cancel(offer.Id)
 
 	if err != nil {
 		t.Error(err)

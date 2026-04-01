@@ -44,7 +44,7 @@ type Order struct {
 }
 
 // All returns all orders for the authenticated account.
-func (s *OrderService) All() ([]Order, error) {
+func (s *OrderService) V1All() ([]Order, error) {
 	req, err := s.client.newAuthenticatedRequest("GET", "orders", nil)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (s *OrderService) All() ([]Order, error) {
 }
 
 // CancelAll active orders for the authenticated account.
-func (s *OrderService) CancelAll() error {
+func (s *OrderService) V1CancelAll() error {
 	req, err := s.client.newAuthenticatedRequest("POST", "order/cancel/all", nil)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (s *OrderService) CancelAll() error {
 }
 
 // Create a new order.
-func (s *OrderService) Create(symbol string, amount float64, price float64, orderType string) (*Order, error) {
+func (s *OrderService) V1Create(symbol string, amount float64, price float64, orderType string) (*Order, error) {
 	var side string
 	if amount < 0 {
 		amount = math.Abs(amount)
@@ -108,7 +108,7 @@ func (s *OrderService) Create(symbol string, amount float64, price float64, orde
 }
 
 // Cancel the order with id `orderID`.
-func (s *OrderService) Cancel(orderID int64) error {
+func (s *OrderService) V1Cancel(orderID int64) error {
 	payload := map[string]interface{}{
 		"order_id": orderID,
 	}
@@ -141,7 +141,7 @@ type MultipleOrderResponse struct {
 }
 
 // CreateMulti allows batch creation of orders.
-func (s *OrderService) CreateMulti(orders []SubmitOrder) (MultipleOrderResponse, error) {
+func (s *OrderService) V1CreateMulti(orders []SubmitOrder) (MultipleOrderResponse, error) {
 	ordersMap := make([]interface{}, 0)
 	for _, order := range orders {
 		var side string
@@ -178,7 +178,7 @@ func (s *OrderService) CreateMulti(orders []SubmitOrder) (MultipleOrderResponse,
 }
 
 // CancelMulti allows batch cancellation of orders.
-func (s *OrderService) CancelMulti(orderIDS []int64) (string, error) {
+func (s *OrderService) V1CancelMulti(orderIDS []int64) (string, error) {
 	payload := map[string]interface{}{
 		"order_ids": orderIDS,
 	}
@@ -196,7 +196,7 @@ func (s *OrderService) CancelMulti(orderIDS []int64) (string, error) {
 }
 
 // Replace an Order
-func (s *OrderService) Replace(orderID int64, useRemaining bool, newOrder SubmitOrder) (Order, error) {
+func (s *OrderService) V1Replace(orderID int64, useRemaining bool, newOrder SubmitOrder) (Order, error) {
 	var side string
 	if newOrder.Amount < 0 {
 		newOrder.Amount = math.Abs(newOrder.Amount)
@@ -231,7 +231,7 @@ func (s *OrderService) Replace(orderID int64, useRemaining bool, newOrder Submit
 }
 
 // Status retrieves the given order from the API.
-func (s *OrderService) Status(orderID int64) (Order, error) {
+func (s *OrderService) V1Status(orderID int64) (Order, error) {
 
 	payload := map[string]interface{}{
 		"order_id": orderID,

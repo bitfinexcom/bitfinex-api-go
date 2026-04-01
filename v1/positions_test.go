@@ -2,7 +2,7 @@ package bitfinex
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -23,14 +23,14 @@ func TestPositions(t *testing.T) {
             }
         ]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
 	client := NewClient()
-	positions, err := client.Positions.All()
+	positions, err := client.Positions.V1All()
 	if err != nil {
 		t.Error(err)
 	}
@@ -61,14 +61,14 @@ func TestPositionsWhenEmpty(t *testing.T) {
             "pl":"-2.2304"
         }]`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
 	client := NewClient()
-	positions, err := client.Positions.All()
+	positions, err := client.Positions.V1All()
 
 	if err != nil {
 		t.Error(err)
@@ -108,13 +108,13 @@ func TestClaimPosition(t *testing.T) {
                 "pl":"-2.22042"
             }`
 		resp := http.Response{
-			Body:       ioutil.NopCloser(bytes.NewBufferString(msg)),
+			Body:       io.NopCloser(bytes.NewBufferString(msg)),
 			StatusCode: 200,
 		}
 		return &resp, nil
 	}
 
-	position, err := NewClient().Positions.Claim(943715, "0.5")
+	position, err := NewClient().Positions.V1Claim(943715, "0.5")
 
 	if err != nil {
 		t.Error(err)

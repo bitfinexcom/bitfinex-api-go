@@ -46,14 +46,14 @@ func (s *MarginFundingService) new(currency, direction string, amount, rate floa
 	return v, nil
 }
 
-func (s *MarginFundingService) NewLend(currency string, amount, rate float64, period int) (MarginOffer, error) {
+func (s *MarginFundingService) V1NewLend(currency string, amount, rate float64, period int) (MarginOffer, error) {
 	return s.new(currency, "lend", amount, rate, period)
 }
-func (s *MarginFundingService) NewLoan(currency string, amount, rate float64, period int) (MarginOffer, error) {
+func (s *MarginFundingService) V1NewLoan(currency string, amount, rate float64, period int) (MarginOffer, error) {
 	return s.new(currency, "loan", amount, rate, period)
 }
 
-func (s *MarginFundingService) Cancel(offerId int64) (MarginOffer, error) {
+func (s *MarginFundingService) V1Cancel(offerId int64) (MarginOffer, error) {
 	payload := map[string]interface{}{"offer_id": offerId}
 
 	req, err := s.client.newAuthenticatedRequest("POST", "offer/cancel", payload)
@@ -71,7 +71,7 @@ func (s *MarginFundingService) Cancel(offerId int64) (MarginOffer, error) {
 	return v, nil
 }
 
-func (s *MarginFundingService) Status(offerId int64) (MarginOffer, error) {
+func (s *MarginFundingService) V1Status(offerId int64) (MarginOffer, error) {
 	payload := map[string]interface{}{"offer_id": offerId}
 
 	req, err := s.client.newAuthenticatedRequest("POST", "offer/status", payload)
@@ -103,7 +103,7 @@ type ActiveOffer struct {
 	ExecutedAmount  string `json:"executed_amount"`
 }
 
-func (s *MarginFundingService) Credits() ([]ActiveOffer, error) {
+func (s *MarginFundingService) V1Credits() ([]ActiveOffer, error) {
 
 	req, err := s.client.newAuthenticatedRequest("POST", "credits", nil)
 
@@ -120,7 +120,7 @@ func (s *MarginFundingService) Credits() ([]ActiveOffer, error) {
 	return v, nil
 }
 
-func (s *MarginFundingService) Offers() ([]ActiveOffer, error) {
+func (s *MarginFundingService) V1Offers() ([]ActiveOffer, error) {
 
 	req, err := s.client.newAuthenticatedRequest("POST", "offers", nil)
 

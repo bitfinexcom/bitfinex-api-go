@@ -14,7 +14,7 @@ type Balance struct {
 	Timestamp   string
 }
 
-func (s *HistoryService) Balance(currency, wallet string, since, until time.Time, limit int) ([]Balance, error) {
+func (s *HistoryService) V1Balance(currency, wallet string, since, until time.Time, limit int) ([]Balance, error) {
 
 	payload := map[string]interface{}{"currency": currency}
 
@@ -56,7 +56,7 @@ type Movement struct {
 	Timestamp   string
 }
 
-func (s *HistoryService) Movements(currency, method string, since, until time.Time, limit int) ([]Movement, error) {
+func (s *HistoryService) V1Movements(currency, method string, since, until time.Time, limit int) ([]Movement, error) {
 
 	payload := map[string]interface{}{"currency": currency, "method": method}
 
@@ -99,7 +99,7 @@ type PastTrade struct {
 	OrderId     int64 `json:"order_id,int"`
 }
 
-func (s *HistoryService) Trades(pair string, since, until time.Time, limit int, reverse bool) ([]PastTrade, error) {
+func (s *HistoryService) V1Trades(pair string, since, until time.Time, limit int, reverse bool) ([]PastTrade, error) {
 	payload := map[string]interface{}{"symbol": pair}
 
 	if !since.IsZero() {
